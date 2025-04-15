@@ -1,8 +1,6 @@
 # Alquilando  🚀
 
-> Una breve descripción de lo que hace el proyecto. Por ejemplo: "Aplicación web X construida con el stack moderno de Bun, Hono y Cloudflare".
-
-Este repositorio contiene el código fuente para alquilando, una aplicación web que permite alquilar vehículos. Está construido utilizando un stack enfocado en la velocidad y el despliegue en el edge.
+> Este repositorio contiene el código fuente para alquilando, una aplicación web que permite alquilar vehículos. Está construido utilizando un stack enfocado en la velocidad y el despliegue en el edge.
 
 ## Tabla de Contenidos
 
@@ -58,14 +56,14 @@ Antes de empezar, asegúrate de tener instalado lo siguiente:
 Para trabajar en el proyecto en tu máquina local:
 
 1.  **Aplica las migraciones de la base de datos local:**
-    Asegúrate de que tu esquema de base de datos local esté actualizado. Esto usará la configuración de D1 local definida (probablemente en `wrangler.toml`).
+    Asegúrate de que tu esquema de base de datos local esté actualizado. Esto usará la configuración de D1 local definida (probablemente en `wrangler.jsonc`).
     ```bash
     bun db:migrate:local
     ```
     *Nota: Ejecuta este comando cada vez que haya cambios en las migraciones o al configurar el proyecto por primera vez.*
 
 2.  **Inicia el servidor de desarrollo:**
-    Esto levantará la aplicación Hono, generalmente en `http://localhost:3000` (o el puerto configurado). El servidor se recargará automáticamente al detectar cambios en el código fuente.
+    Esto levantará la aplicación Hono, generalmente en `http://localhost:5173` (o el puerto configurado). El servidor se recargará automáticamente al detectar cambios en el código fuente.
     ```bash
     bun dev
     ```
@@ -83,7 +81,7 @@ Puedes crear nuevas migraciones usando Wrangler directamente (consulta la docume
 
 Para desplegar la aplicación en Cloudflare Pages y la base de datos en D1:
 
-1.  **Asegúrate de estar logueado en Wrangler:**
+1.  **Asegúrate de estar logueado en Wrangler y tener los permisos necesarios:**
     ```bash
     wrangler login
     ```
