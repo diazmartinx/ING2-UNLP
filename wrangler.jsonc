@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "alquilando",
+  "compatibility_date": "2025-04-15",
+  "pages_build_output_dir": "./dist",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  // "vars": {
+  //   "MY_VAR": "my-variable"
+  // },
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "MY_KV_NAMESPACE",
+  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "my-bucket"
+  //   }
+  // ],
+  "d1_databases": [
+     {
+       "binding": "alquilando_db",
+       "database_name": "alquilando_db",
+       "database_id": "60c617fc-32ac-41f5-aabc-098f6c5efb73",
+       "migrations_dir": "migrations"
+     }
+   ],
+  // "ai": {
+  //   "binding": "AI"
+  // }
+}

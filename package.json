@@ -1,0 +1,32 @@
+{
+  "name": "alquilando",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "wrangler pages dev",
+    "deploy": "bun run build && wrangler pages deploy",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate:local": "echo 'Applying migrations LOCALLY...' && bun wrangler d1 migrations apply alquilando_db --local",
+    "db:migrate:prod": "echo 'Applying migrations to PRODUCTION...' && bun wrangler d1 migrations apply alquilando_db",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.41.0",
+    "hono": "^4.7.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "@hono/vite-build": "^1.2.0",
+    "@hono/vite-dev-server": "^0.18.2",
+    "@tailwindcss/postcss": "^4.1.4",
+    "@types/node": "^22.14.1",
+    "drizzle-kit": "^0.30.6",
+    "tailwindcss": "^4.1.4",
+    "tsx": "^4.19.3",
+    "vite": "^6.1.1",
+    "wrangler": "^4.4.0"
+  }
+}
