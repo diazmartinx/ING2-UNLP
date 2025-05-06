@@ -7,6 +7,21 @@
     let fechaInicioError = $state('');
     let fechaFinError = $state('');
     let ubicacionError = $state('');
+    let showLoginModal = $state(false);
+    let showRegisterModal = $state(false);
+
+    function openLoginModal() {
+        showLoginModal = true;
+    }
+
+    function openRegisterModal() {
+        showRegisterModal = true;
+    }
+
+    function closeModals() {
+        showLoginModal = false;
+        showRegisterModal = false;
+    }
 
     // Helper to format date as YYYY-MM-DD
     function formatDate(date: Date): string {
@@ -89,8 +104,8 @@
         <span class="text-2xl font-bold">ALQUILANDO</span>
     
         <div class="flex gap-2">
-            <button class="btn">Iniciar Sesión</button>
-            <button class="btn btn-primary">Registrarse</button>
+            <button onclick={openLoginModal} class="btn">Iniciar Sesión</button>
+            <button onclick={openRegisterModal} class="btn btn-primary">Registrarse</button>
         </div>
     </nav>
     
@@ -140,4 +155,73 @@
             </form>
         </section>
     </main>
+
+    {#if showLoginModal}
+    <div class="modal modal-open">
+        <div class="modal-box">
+            <h2 class="font-bold text-lg">Iniciar Sesión</h2>
+            <form>
+                <div class="form-control">
+                    <label class="label" for="email">
+                        <span class="label-text">Correo Electrónico</span>
+                    </label>
+                    <input type="email" id="email" class="input input-bordered w-full" />
+                </div>
+                <div class="form-control">
+                    <label class="label" for="password">
+                        <span class="label-text">Contraseña</span>
+                    </label>
+                    <input type="password" id="password" class="input input-bordered w-full" />
+                </div>
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                </div>
+            </form>
+            <p class="text-sm mt-4 text-center">
+                ¿Aún no estás registrado? 
+                <button 
+                    type="button" 
+                    class="text-primary underline cursor-pointer" 
+                    onclick={() => { closeModals(); openRegisterModal(); }}
+                >
+                    Presiona acá
+                </button>
+            </p>
+        </div>
+    </div>
+    {/if}
+
+    <!-- Modal de Registrarse -->
+    {#if showRegisterModal}
+    <div class="modal modal-open">
+        <div class="modal-box">
+            <h2 class="font-bold text-lg">Registrarse</h2>
+            <form>
+                <div class="form-control">
+                    <label class="label" for="name">
+                        <span class="label-text">Nombre</span>
+                    </label>
+                    <input type="text" id="name" class="input input-bordered w-full" />
+                </div>
+                <div class="form-control">
+                    <label class="label" for="email">
+                        <span class="label-text">Correo Electrónico</span>
+                    </label>
+                    <input type="email" id="email" class="input input-bordered w-full" />
+                </div>
+                <div class="form-control">
+                    <label class="label" for="password">
+                        <span class="label-text">Contraseña</span>
+                    </label>
+                    <input type="password" id="password" class="input input-bordered w-full" />
+                </div>
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrarse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {/if}
 </div>
