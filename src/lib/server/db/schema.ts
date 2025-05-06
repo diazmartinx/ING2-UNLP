@@ -43,7 +43,7 @@ export const modelos_vehiculos = sqliteTable('modelos_vehiculos', {
 	anio: integer().notNull(),
 	capacidad_pasajeros: integer().notNull(),
 	precio_por_dia: real().notNull(),
-	porcentaje_reembolso_parcial: real().notNull(),
+	porcentaje_reembolso_parcial: real(),
 	imagen_url: text().notNull()
 })
 
