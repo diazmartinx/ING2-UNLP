@@ -1,0 +1,3 @@
+ALTER TABLE `reservas` RENAME COLUMN "patenteUnidad" TO "patenteUnidadReservada";--> statement-breakpoint
+ALTER TABLE `reservas` ADD `patenteUnidadAsignada` text NOT NULL REFERENCES unidades_vehiculos(patente);--> statement-breakpoint
+ALTER TABLE `reservas` ALTER COLUMN "patenteUnidadReservada" TO "patenteUnidadReservada" text NOT NULL REFERENCES unidades_vehiculos(patente) ON DELETE no action ON UPDATE no action;
