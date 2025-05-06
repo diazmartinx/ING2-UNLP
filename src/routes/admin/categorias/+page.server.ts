@@ -1,10 +1,10 @@
 import { db } from '$lib/server/db';
-import { categoriaTabla } from '$lib/server/db/schema';
+import { categorias_vehiculos } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
 
 export const load = (async () => {
 
-    const categorias = await db.select().from(categoriaTabla)
+    const categorias = await db.select().from(categorias_vehiculos);
 
     return {categorias};
     
