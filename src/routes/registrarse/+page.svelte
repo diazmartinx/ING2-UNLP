@@ -6,16 +6,16 @@
     let { data }: { data: PageData } = $props();
 </script>
 
-<div class="flex flex-col min-h-[100dvh]">
-    <nav class="flex justify-between items-center p-4 md:px-8">
-        <span class="text-2xl font-bold">ALQUILANDO</span>
+<div class="flex flex-col min-h-[100dvh] bg-gray-100">
+    <nav class="flex items-center justify-between bg-white p-4 shadow-md">
+        <a href="/" class="text-2xl font-bold hover:underline">ALQUILANDO</a>
 
         <div class="flex gap-2">
             <a href="/ingresar" class="btn">Iniciar Sesión</a>
         </div>
     </nav>
 
-    <main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center -mt-32">
+    <main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center">
         <section class="bg-base-200 p-8 rounded-lg shadow-lg w-full max-w-md">
             <h1 class="text-3xl font-bold text-center mb-6">Registrarse</h1>
             
