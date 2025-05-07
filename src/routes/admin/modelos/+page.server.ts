@@ -14,7 +14,8 @@ export const load = (async () => {
         precioPorDia: modelosVehiculos.precioPorDia,
         imagenUrl: modelosVehiculos.imagenUrl,
         categoria: categoriasVehiculos.nombre,
-        politicaCancelacion: politicasCancelacion.tipoPolitica
+        politicaCancelacion: politicasCancelacion.tipoPolitica,
+        porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial
     })
     .from(modelosVehiculos)
     .leftJoin(categoriasVehiculos, eq(modelosVehiculos.idCategoria, categoriasVehiculos.id))

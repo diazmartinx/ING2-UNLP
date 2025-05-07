@@ -83,6 +83,12 @@
                                     <span class="font-semibold text-gray-600 text-lg">Política:</span>
                                     <span class="badge badge-outline px-3 py-1 text-base">{modelo.politicaCancelacion}</span>
                                 </p>
+                                {#if modelo.politicaCancelacion === 'Reembolso Parcial'}
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Porcentaje de Reembolso Parcial:</span>
+                                        <span class="badge badge-outline px-3 py-1 text-base">{modelo.porcentajeReembolsoParcial}%</span>
+                                    </p>
+                                {/if}
                             </div>
                         </div>
                     </div>
