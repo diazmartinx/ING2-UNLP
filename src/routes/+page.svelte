@@ -105,9 +105,9 @@
     }
 </script>
 
-<div class="flex flex-col min-h-[100dvh]">
-    <nav class="flex justify-between items-center p-4 md:px-8">
-        <span class="text-2xl font-bold">ALQUILANDO</span>
+<div class="flex flex-col min-h-[100dvh] bg-gray-100">
+    <nav class="flex items-center justify-between bg-white p-4 shadow-md"> <!-- !<nav class="flex justify-between items-center p-4 md:px-8 bg-white shadow-md"> --->
+        <a href="/" class="text-2xl font-bold hover:underline">ALQUILANDO</a>
     
         <div class="flex gap-2">
             {#if isLoggedIn}
@@ -120,9 +120,8 @@
                         <li><a href="/perfil">Perfil</a></li>
                         <li><a href="/mis-reservas">Mis Reservas</a></li>
                         <li class="text-error">
-                            <form method="POST" action="?/logout">
-                                <button type="submit" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
-                            </form>
+                            <button type="submit" form="logout-form" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
+                            <form id="logout-form" method="POST" action="?/logout" class="hidden"></form>
                         </li>
                     </ul>
                 </div>
@@ -185,7 +184,7 @@
     <div class="modal modal-open">
         <div class="modal-box">
             <h2 class="font-bold text-lg">Iniciar Sesión</h2>
-            <form method="POST" action="/demo/lucia/login?/login">
+            <form method="POST" action="/ingresar?/login">
                 <div class="form-control">
                     <label class="label" for="email">
                         <span class="label-text">Correo Electrónico</span>
