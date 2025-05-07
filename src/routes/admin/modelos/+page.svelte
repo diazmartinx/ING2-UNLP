@@ -7,6 +7,9 @@
     let createError = $state('');
     let createImageUrl = $state('');
     let createImageError = $state(false);
+    let selectedPolitica = $state('');
+    let porcentajeReembolsoParcial = $state('');
+    let porcentajeReembolsoParcialError = $state('');
 
     function openCreateModal() {
         showCreateModal = true;
@@ -178,7 +181,7 @@
                 <label class="label" for="idPoliticaCancelacion">
                     <span class="label-text">Política de Cancelación</span>
                 </label>
-                <select id="idPoliticaCancelacion" name="idPoliticaCancelacion" class="select select-bordered w-full" required>
+                <select id="idPoliticaCancelacion" name="idPoliticaCancelacion" class="select select-bordered w-full" required oninput={e => selectedPolitica = (e.target as HTMLSelectElement).value}>
                     <option value="">Seleccione una política</option>
                     {#each data.politicas as politica}
                         <option value={politica.id}>{politica.tipoPolitica}</option>
@@ -186,13 +189,43 @@
                 </select>
             </div>
 
+            {#if data.politicas.find(p => String(p.id) === selectedPolitica)?.tipoPolitica === 'Reembolso Parcial'}
+                <div class="form-control mt-2">
+                    <label class="label" for="porcentajeReembolsoParcial">
+                        <span class="label-text">Porcentaje de Reembolso Parcial (%)</span>
+                    </label>
+                    <input
+                        type="number"
+                        id="porcentajeReembolsoParcial"
+                        name="porcentajeReembolsoParcial"
+                        class="input input-bordered w-full {porcentajeReembolsoParcialError ? 'border-red-500' : ''}"
+                        min="0"
+                        max="99"
+                        step="0.01"
+                        required
+                        bind:value={porcentajeReembolsoParcial}
+                        oninput={() => {
+                            const val = parseFloat(porcentajeReembolsoParcial);
+                            if (isNaN(val) || val < 0 || val > 99) {
+                                porcentajeReembolsoParcialError = 'El porcentaje debe ser entre 0 y 99';
+                            } else {
+                                porcentajeReembolsoParcialError = '';
+                            }
+                        }}
+                    />
+                    {#if porcentajeReembolsoParcialError}
+                        <span class="text-error text-sm mt-1">{porcentajeReembolsoParcialError}</span>
+                    {/if}
+                </div>
+            {/if}
+
             {#if createError}
                 <p class="text-error text-sm mt-2">{createError}</p>
             {/if}
 
             <div class="modal-action">
                 <button type="button" class="btn btn-ghost" onclick={closeModal}>Cancelar</button>
-                <button type="submit" class="btn btn-primary">Crear Modelo</button>
+                <button type="submit" class="btn btn-primary" disabled={!!porcentajeReembolsoParcialError}>Crear Modelo</button>
             </div>
         </form>
     </div>

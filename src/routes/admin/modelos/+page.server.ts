@@ -43,6 +43,17 @@ export const actions = {
             const imagenUrl = formData.get('imagenUrl') as string;
             const idCategoria = parseInt(formData.get('idCategoria') as string);
             const idPoliticaCancelacion = parseInt(formData.get('idPoliticaCancelacion') as string);
+            const porcentajeReembolsoParcialRaw = formData.get('porcentajeReembolsoParcial');
+            let porcentajeReembolsoParcial: number | null = null;
+            // Buscar la política seleccionada
+            const politicaSeleccionadaArr = await db.select().from(politicasCancelacion).where(eq(politicasCancelacion.id, idPoliticaCancelacion));
+            const politicaSeleccionada = politicaSeleccionadaArr[0];
+            if (politicaSeleccionada?.tipoPolitica === 'Reembolso Parcial') {
+                porcentajeReembolsoParcial = porcentajeReembolsoParcialRaw ? parseFloat(porcentajeReembolsoParcialRaw as string) : null;
+                if (porcentajeReembolsoParcial === null || isNaN(porcentajeReembolsoParcial) || porcentajeReembolsoParcial < 0 || porcentajeReembolsoParcial > 99) {
+                    return fail(400, { message: 'Debe ingresar un porcentaje de reembolso parcial válido (0-99)' });
+                }
+            }
 
             if (!marca || !modelo || !anio || !capacidadPasajeros || !precioPorDia || !imagenUrl || !idCategoria || !idPoliticaCancelacion) {
                 return fail(400, { message: 'Todos los campos son requeridos' });
@@ -56,7 +67,8 @@ export const actions = {
                 precioPorDia,
                 imagenUrl,
                 idCategoria,
-                idPoliticaCancelacion
+                idPoliticaCancelacion,
+                porcentajeReembolsoParcial
             });
 
             throw redirect(303, '/admin/modelos');
