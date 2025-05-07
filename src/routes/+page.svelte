@@ -1,6 +1,8 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
 
+    const { data } = $props<{ data: { user: { email: string } | null } }>();
+
     let fechaInicio = $state('');
     let fechaFin = $state('');
     let ubicacion = $state('');
@@ -9,6 +11,10 @@
     let ubicacionError = $state('');
     let showLoginModal = $state(false);
     let showRegisterModal = $state(false);
+
+    // Variable para manejar la sesión activa
+    let isLoggedIn = $state(data.user !== null);
+    let username = $state(data.user ? `${data.user.nombre || ''} ${data.user.apellido || ''}`.trim() || data.user.email : '');
 
     function openLoginModal() {
         showLoginModal = true;
@@ -104,12 +110,31 @@
         <span class="text-2xl font-bold">ALQUILANDO</span>
     
         <div class="flex gap-2">
-            <button onclick={openLoginModal} class="btn">Iniciar Sesión</button>
-            <button onclick={openRegisterModal} class="btn btn-primary">Registrarse</button>
+            {#if isLoggedIn}
+                <!-- Menú desplegable para usuario logueado -->
+                <div class="dropdown dropdown-end">
+                    <button class="btn btn-ghost">
+                        {username} <span class="ml-2">▼</span>
+                    </button>
+                    <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                        <li><a href="/perfil">Perfil</a></li>
+                        <li><a href="/mis-reservas">Mis Reservas</a></li>
+                        <li class="text-error">
+                            <form method="POST" action="?/logout">
+                                <button type="submit" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            {:else}
+                <!-- Botones para usuarios no logueados -->
+                <button onclick={openLoginModal} class="btn">Iniciar Sesión</button>
+                <button onclick={openRegisterModal} class="btn btn-primary">Registrarse</button>
+            {/if}
         </div>
     </nav>
     
-    <main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center -mt-32">
+    <main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center">
         <section class="bg-base-200 p-8 rounded-lg shadow-lg w-full max-w-md">
             <h1 class="text-3xl font-bold text-center mb-6">Encontrá tu auto ideal</h1>
             <form class="flex flex-col gap-4" onsubmit={handleSubmit}>
@@ -160,18 +185,18 @@
     <div class="modal modal-open">
         <div class="modal-box">
             <h2 class="font-bold text-lg">Iniciar Sesión</h2>
-            <form>
+            <form method="POST" action="/demo/lucia/login?/login">
                 <div class="form-control">
                     <label class="label" for="email">
                         <span class="label-text">Correo Electrónico</span>
                     </label>
-                    <input type="email" id="email" class="input input-bordered w-full" />
+                    <input type="email" id="email" name="email" class="input input-bordered w-full" required />
                 </div>
                 <div class="form-control">
                     <label class="label" for="password">
                         <span class="label-text">Contraseña</span>
                     </label>
-                    <input type="password" id="password" class="input input-bordered w-full" />
+                    <input type="password" id="password" name="password" class="input input-bordered w-full" required />
                 </div>
                 <div class="modal-action">
                     <button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
