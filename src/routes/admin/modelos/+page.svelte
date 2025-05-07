@@ -5,6 +5,8 @@
     let { data }: { data: PageData } = $props();
     let showCreateModal = $state(false);
     let createError = $state('');
+    let createImageUrl = $state('');
+    let createImageError = $state(false);
 
     function openCreateModal() {
         showCreateModal = true;
@@ -14,6 +16,16 @@
     function closeModal() {
         showCreateModal = false;
         createError = '';
+    }
+
+    function handleImageInput(e: Event) {
+        createImageUrl = (e.target as HTMLInputElement).value;
+        createImageError = false;
+    }
+
+    function handleImageError(event: Event) {
+        const img = event.currentTarget as HTMLImageElement;
+        img.src = '/no-image-icon.svg';
     }
 </script>
 
@@ -31,10 +43,11 @@
                 <div class="flex flex-row">
                     <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
                         <img 
-                            src={modelo.imagenUrl} 
+                            src={modelo.imagenUrl || '/no-image-icon.svg'} 
                             alt={`${modelo.marca} ${modelo.modelo}`} 
                             class="h-60 w-60 object-cover rounded-lg" 
                             style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
+                            onerror={handleImageError}
                         />
                     </figure>
                     <div class="card-body p-4 flex-1 flex flex-col justify-center">
@@ -133,8 +146,21 @@
                 <label class="label" for="imagenUrl">
                     <span class="label-text">URL de la Imagen</span>
                 </label>
-                <input type="url" id="imagenUrl" name="imagenUrl" class="input input-bordered w-full" required />
+                <input type="url" id="imagenUrl" name="imagenUrl" class="input input-bordered w-full" required oninput={handleImageInput} />
             </div>
+
+            {#if createImageUrl}
+                <div class="flex justify-center mt-2">
+                    <img
+                        src={createImageError ? '/no-image-icon.svg' : createImageUrl}
+                        alt="Preview imagen"
+                        class="h-40 w-40 object-cover rounded border"
+                        style="max-width: 160px; max-height: 160px;"
+                        onerror={() => createImageError = true}
+                        onload={() => createImageError = false}
+                    />
+                </div>
+            {/if}
 
             <div class="form-control">
                 <label class="label" for="idCategoria">
