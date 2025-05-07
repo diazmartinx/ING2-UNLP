@@ -11,7 +11,7 @@
         <span class="text-2xl font-bold">ALQUILANDO</span>
 
         <div class="flex gap-2">
-            <a href="/" class="btn">Iniciar Sesión</a>
+            <a href="/ingresar" class="btn">Iniciar Sesión</a>
         </div>
     </nav>
 

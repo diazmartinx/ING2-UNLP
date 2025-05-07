@@ -128,7 +128,7 @@
             {:else}
                 <!-- Botones para usuarios no logueados -->
                 <button onclick={openLoginModal} class="btn">Iniciar Sesión</button>
-                <button onclick={openRegisterModal} class="btn btn-primary">Registrarse</button>
+                <a href="/registrarse" class="btn btn-primary">Registrarse</a>
             {/if}
         </div>
     </nav>
@@ -216,36 +216,4 @@
     </div>
     {/if}
 
-    <!-- Modal de Registrarse -->
-    {#if showRegisterModal}
-    <div class="modal modal-open">
-        <div class="modal-box">
-            <h2 class="font-bold text-lg">Registrarse</h2>
-            <form>
-                <div class="form-control">
-                    <label class="label" for="name">
-                        <span class="label-text">Nombre</span>
-                    </label>
-                    <input type="text" id="name" class="input input-bordered w-full" />
-                </div>
-                <div class="form-control">
-                    <label class="label" for="email">
-                        <span class="label-text">Correo Electrónico</span>
-                    </label>
-                    <input type="email" id="email" class="input input-bordered w-full" />
-                </div>
-                <div class="form-control">
-                    <label class="label" for="password">
-                        <span class="label-text">Contraseña</span>
-                    </label>
-                    <input type="password" id="password" class="input input-bordered w-full" />
-                </div>
-                <div class="modal-action">
-                    <button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrarse</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    {/if}
 </div>
