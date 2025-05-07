@@ -15,7 +15,7 @@ export function generateSessionToken() {
 	return token;
 }
 
-export async function createSession(token: string, userId: string) {
+export async function createSession(token: string, userId: number) {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const session: table.Session = {
 		id: sessionId,
@@ -31,12 +31,7 @@ export async function validateSessionToken(token: string) {
 	const [result] = await db
 		.select({
 			// Adjust user table here to tweak returned data
-			user: { 
-				id: table.usuarios.id, 
-				email: table.usuarios.email,
-				nombre: table.usuarios.nombre,
-				apellido: table.usuarios.apellido
-			},
+			user: table.usuarios,
 			session: table.session
 		})
 		.from(table.session)

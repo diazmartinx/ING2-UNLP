@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 
-export const usuarios = sqliteTable('usuarios', {
+export const usuarios = sqliteTable('usuarios',{
 	id: integer().primaryKey({ autoIncrement: true }),
 	nombre: text(),
 	apellido: text(),
@@ -12,18 +12,18 @@ export const usuarios = sqliteTable('usuarios', {
 	rol: text({ enum: ["admin", "empleado", "cliente"] }).default('cliente')
 });
 
-export const categorias_vehiculos = sqliteTable ('categorias_vehiculos', {
+export const categoriasVehiculos = sqliteTable ('categorias_vehiculos', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	nombre: text().notNull().unique()
 })
 
-export const unidades_vehiculos = sqliteTable('unidades_vehiculos', {
+export const unidadesVehiculos = sqliteTable('unidades_vehiculos', {
 	patente: text().primaryKey(),
 	idSucursal: text().notNull().references(() => sucursales.id),
 	estado: text({ enum: ["Habilitado", "Inhabilitado", "Dado de baja"] }).default('Habilitado').notNull(),
 })
 
-export const politicas_cancelacion = sqliteTable('politicas_cancelacion', {
+export const politicasCancelacion = sqliteTable('politicas_cancelacion', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	tipoPolitica: text({ enum: ["Reembolso Total", "Reembolso Parcial", "Sin Reembolso"]}).unique().notNull()
 })
@@ -34,24 +34,24 @@ export const sucursales = sqliteTable('sucursales', {
 	direccion: text()
 })
 
-export const modelos_vehiculos = sqliteTable('modelos_vehiculos', {
+export const modelosVehiculos = sqliteTable('modelos_vehiculos', {
 	id: integer().primaryKey({ autoIncrement: true }),
-	idCategoria: integer().notNull().references(() => categorias_vehiculos.id),
-	idPoliticaCancelacion: integer().notNull().references(() => politicas_cancelacion.id),
+	idCategoria: integer().notNull().references(() => categoriasVehiculos.id),
+	idPoliticaCancelacion: integer().notNull().references(() => politicasCancelacion.id),
 	marca: text().notNull(),
 	modelo: text().notNull(),
 	anio: integer().notNull(),
 	capacidadPasajeros: integer().notNull(),
 	precioPorDia: real().notNull(),
 	porcentajeReembolsoParcial: real(),
-	imagen_url: text().notNull()
+	imagenUrl: text('imagen_url').notNull()
 })
 
 export const reservas = sqliteTable('reservas', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	idUsuario: integer().notNull().references(() => usuarios.id),
-	patenteUnidadReservada: text().notNull().references(() => unidades_vehiculos.patente),
-	patenteUnidadAsignada: text().notNull().references(() => unidades_vehiculos.patente),
+	patenteUnidadReservada: text().notNull().references(() => unidadesVehiculos.patente),
+	patenteUnidadAsignada: text().notNull().references(() => unidadesVehiculos.patente),
 	fechaInicio: integer({ mode: 'timestamp' }).notNull(),
 	fechaFin: integer({ mode: 'timestamp' }).notNull(),
 	estado: text({ enum: ["Pendiente", "Entregada", "Cancelada"] }).default('Pendiente').notNull(),
