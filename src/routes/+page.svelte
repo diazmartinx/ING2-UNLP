@@ -204,13 +204,12 @@
             </form>
             <p class="text-sm mt-4 text-center">
                 ¿Aún no estás registrado? 
-                <button 
-                    type="button" 
+                <a 
+                    href="/registrarse"
                     class="text-primary underline cursor-pointer" 
-                    onclick={() => { closeModals(); openRegisterModal(); }}
                 >
                     Presiona acá
-                </button>
+            </a>
             </p>
         </div>
     </div>

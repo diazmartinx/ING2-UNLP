@@ -4,17 +4,13 @@
 
 	let { form }: { form: ActionData } = $props();
 
-	function openRegisterModal() {
-		// Aquí puedes implementar la lógica para abrir un modal o redirigir a la página de registro
-		window.location.href = '?/register';
-	}
 </script>
 
 <div class="flex min-h-[100dvh] flex-col bg-gray-100">
 	<!-- Nav Bar -->
 	<nav class="flex items-center justify-between bg-white p-4 shadow-md">
 		<a href="/" class="text-2xl font-bold hover:underline">ALQUILANDO</a>
-		<button class="btn btn-primary" onclick={openRegisterModal}>Registrarse</button>
+		<a href="/registrarse" class="btn btn-primary">Registrarse</a>
 	</nav>
 
 	<main class="container mx-auto flex flex-1 flex-col items-center justify-center p-4 md:px-8">
