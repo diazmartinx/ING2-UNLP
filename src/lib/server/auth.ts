@@ -19,7 +19,7 @@ export async function createSession(token: string, userId: number) {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const session: table.Session = {
 		id: sessionId,
-		userId,
+		userId: Number(userId),
 		expiresAt: new Date(Date.now() + DAY_IN_MS * 30)
 	};
 	await db.insert(table.session).values(session);
