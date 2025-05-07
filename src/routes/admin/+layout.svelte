@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import type { LayoutData } from './$types';
+    import { page } from '$app/stores';
 
     let { data, children }: { data: LayoutData, children: Snippet } = $props();
     
     let adminMenu = [
-
-    {
+        {
             label: 'Reservas',
             href: '/admin'
         },
@@ -36,7 +36,12 @@
         <ul class="flex flex-col gap-2  w-full flex-1 items-start">
             {#each adminMenu as item}
                 <li class="w-full">
-                    <a href={item.href} class="btn text-lg font-medium btn-ghost hover:border-none w-full !text-right justify-end">{item.label}</a>
+                    <a 
+                        href={item.href} 
+                        class="btn text-lg font-medium w-full !text-right justify-end {$page.url.pathname === item.href ? 'btn-primary' : 'btn-ghost hover:border-none'}"
+                    >
+                        {item.label}
+                    </a>
                 </li>
             {/each}
         </ul>
