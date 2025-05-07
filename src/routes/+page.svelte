@@ -90,7 +90,7 @@
     
         <div class="flex gap-2">
             <button class="btn">Iniciar Sesión</button>
-            <button class="btn btn-primary">Registrarse</button>
+            <a href="/registrarse" class="btn btn-primary">Registrarse</a>
         </div>
     </nav>
     
