@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { enhance } from '$app/forms';
 
     const { data } = $props<{ data: { user: { email: string } | null } }>();
 
@@ -11,6 +12,7 @@
     let ubicacionError = $state('');
     let showLoginModal = $state(false);
     let showRegisterModal = $state(false);
+    let loginError = $state('');
 
     // Variable para manejar la sesión activa
     let isLoggedIn = $state(data.user !== null);
@@ -18,6 +20,7 @@
 
     function openLoginModal() {
         showLoginModal = true;
+        loginError = ''; // Reset error when opening modal
     }
 
     function openRegisterModal() {
@@ -27,6 +30,7 @@
     function closeModals() {
         showLoginModal = false;
         showRegisterModal = false;
+        loginError = ''; // Reset error when closing modal
     }
 
     // Helper to format date as YYYY-MM-DD
@@ -184,7 +188,20 @@
     <div class="modal modal-open">
         <div class="modal-box">
             <h2 class="font-bold text-lg">Iniciar Sesión</h2>
-            <form method="POST" action="/ingresar?/login">
+            <form 
+                method="POST" 
+                action="/ingresar?/login"
+                use:enhance={({ formData }) => {
+                    return async ({ result }) => {
+                        if (result.type === 'failure') {
+                            loginError = (result.data as { message: string })?.message || 'Error al iniciar sesión';
+                        } else if (result.type === 'redirect') {
+                            closeModals();
+                            window.location.reload(); // Recargar para actualizar el estado de login
+                        }
+                    };
+                }}
+            >
                 <div class="form-control">
                     <label class="label" for="email">
                         <span class="label-text">Correo Electrónico</span>
@@ -197,6 +214,9 @@
                     </label>
                     <input type="password" id="password" name="password" class="input input-bordered w-full" required />
                 </div>
+                {#if loginError}
+                    <p class="text-error text-sm mt-2">{loginError}</p>
+                {/if}
                 <div class="modal-action">
                     <button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
                     <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
@@ -209,7 +229,7 @@
                     class="text-primary underline cursor-pointer" 
                 >
                     Presiona acá
-            </a>
+                </a>
             </p>
         </div>
     </div>
