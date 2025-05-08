@@ -16,7 +16,7 @@ export async function load ({ params }) {
 
     const vehiculo = vehiculos[0];
     const reservasVehiculo = await db.select().from(reservas).where(eq(reservas.patenteUnidadReservada, vehiculo.patente));
-    const sucursal = await db.select().from(sucursales).where(eq(sucursales.id, vehiculo.idSucursal));
+    const sucursal = await db.select().from(sucursales).where(eq(sucursales.id, Number(vehiculo.idSucursal)));
     
     const vehiculoFinal = {
         ...vehiculo,
