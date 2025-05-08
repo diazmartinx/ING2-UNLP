@@ -5,8 +5,6 @@ import { error } from '@sveltejs/kit';
 
 export const load = (async () => {
     const vehiculos = await db.select().from(unidadesVehiculos);
-    
-    console.log(vehiculos);
 
     if (vehiculos.length === 0) {
         throw error(404, 'No hay vehículos registrados');
