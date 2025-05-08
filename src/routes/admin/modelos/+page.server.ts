@@ -72,7 +72,7 @@ export const actions = {
                 porcentajeReembolsoParcial
             });
 
-            throw redirect(303, '/admin/modelos');
+            return { success: true };
         } catch (error) {
             console.error('Error creating model:', error);
             return fail(500, { message: 'Error al crear el modelo' });

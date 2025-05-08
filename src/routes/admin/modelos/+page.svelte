@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
+    import { goto } from '$app/navigation';
+    import { invalidateAll } from '$app/navigation';
 
     let { data }: { data: PageData } = $props();
     let showCreateModal = $state(false);
@@ -10,6 +12,7 @@
     let selectedPolitica = $state('');
     let porcentajeReembolsoParcial = $state('');
     let porcentajeReembolsoParcialError = $state('');
+    let showSuccessToast = $state(false);
 
     function openCreateModal() {
         showCreateModal = true;
@@ -30,7 +33,26 @@
         const img = event.currentTarget as HTMLImageElement;
         img.src = '/no-image-icon.svg';
     }
+
+    async function showSuccessAndRedirect() {
+        showSuccessToast = true;
+        await invalidateAll();
+        setTimeout(() => {
+            goto('/admin/modelos');
+        }, 1500);
+    }
 </script>
+
+<div class="toast toast-top toast-end z-50">
+    {#if showSuccessToast}
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>¡Modelo creado exitosamente!</span>
+        </div>
+    {/if}
+</div>
 
 <div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-6">
@@ -109,9 +131,9 @@
                 return async ({ result }) => {
                     if (result.type === 'failure') {
                         createError = (result.data as { message: string })?.message || 'Error al crear el modelo';
-                    } else if (result.type === 'redirect') {
+                    } else if (result.type === 'success') {
                         closeModal();
-                        window.location.reload();
+                        showSuccessAndRedirect();
                     }
                 };
             }}
@@ -122,14 +144,26 @@
                 </label>
                 <input type="text" id="marca" name="marca" class="input input-bordered w-full" required />
             </div>
-
+            
             <div class="form-control">
                 <label class="label" for="modelo">
                     <span class="label-text">Modelo</span>
                 </label>
                 <input type="text" id="modelo" name="modelo" class="input input-bordered w-full" required />
             </div>
-
+            
+            <div class="form-control">
+                <label class="label" for="idCategoria">
+                    <span class="label-text">Categoría</span>
+                </label>
+                <select id="idCategoria" name="idCategoria" class="select select-bordered w-full" required>
+                    <option value="">Seleccione una categoría</option>
+                    {#each data.categorias as categoria}
+                        <option value={categoria.id}>{categoria.nombre}</option>
+                    {/each}
+                </select>
+            </div>
+            
             <div class="form-control">
                 <label class="label" for="anio">
                     <span class="label-text">Año</span>
@@ -171,17 +205,6 @@
                 </div>
             {/if}
 
-            <div class="form-control">
-                <label class="label" for="idCategoria">
-                    <span class="label-text">Categoría</span>
-                </label>
-                <select id="idCategoria" name="idCategoria" class="select select-bordered w-full" required>
-                    <option value="">Seleccione una categoría</option>
-                    {#each data.categorias as categoria}
-                        <option value={categoria.id}>{categoria.nombre}</option>
-                    {/each}
-                </select>
-            </div>
 
             <div class="form-control">
                 <label class="label" for="idPoliticaCancelacion">
