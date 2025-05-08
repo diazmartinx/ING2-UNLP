@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 
 export const load = (async () => {
 
-    const categorias = await db.select().from(categoriasVehiculos);
+    const categorias = await db.select().from(categoriasVehiculos)
 
     return {categorias};
     

@@ -1,13 +1,13 @@
 import { db } from '$lib/server/db';
 import { eq } from "drizzle-orm"
-import { categorias_vehiculos } from '$lib/server/db/schema';
+import { categoriasVehiculos } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 
 
 export const load = (async () => {
 
-	const categorias = await db.select().from(categorias_vehiculos);
+	const categorias = await db.select().from(categoriasVehiculos);
 
 	return {categorias};
 	
@@ -28,14 +28,14 @@ export const actions = {
 			return fail(400, { error: 'El nombre no debe contener espacios' });
 		}
 
-		const existeNombre = await db.select().from(categorias_vehiculos).where(eq(categorias_vehiculos.nombre, nombre));
+		const existeNombre = await db.select().from(categoriasVehiculos).where(eq(categoriasVehiculos.nombre, nombre));
 
 		// Validar que el nombre no exista en la base de datos
 		if (existeNombre.length > 0) {
 			return fail(400, { error: 'El nombre ingresado ya existe' });
 		}
 
-        await db.insert(categorias_vehiculos).values({ nombre });
+        await db.insert(categoriasVehiculos).values({ nombre });
 
         return { success: true, message: 'Categoría creada exitosamente' };
     }
