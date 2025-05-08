@@ -38,6 +38,7 @@
         showSuccessToast = true;
         await invalidateAll();
         setTimeout(() => {
+            showSuccessToast = false;
             goto('/admin/modelos');
         }, 1500);
     }
