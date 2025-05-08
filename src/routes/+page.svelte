@@ -228,7 +228,7 @@
                     href="/registrarse"
                     class="text-primary underline cursor-pointer" 
                 >
-                    Presiona acá
+                    Crea una cuenta
                 </a>
             </p>
         </div>
