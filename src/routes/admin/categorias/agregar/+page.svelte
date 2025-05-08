@@ -1,20 +1,31 @@
 <script>
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	let { data, form } = $props();
 	
+	onMount(() => {
+		if (form?.success) {
+			setTimeout(() => {
+				goto('/admin/categorias');
+			}, 1500);
+		}
+	});
 </script>
 
 <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
 	<form class="space-y-6" method="POST" action="?/create">
 		<h5 class="text-xl font-medium text-gray-900 dark:text-white">Ingresar nueva categoría</h5>
+		
 		<div>
 			<label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="nombre">
 				Nueva categoría:
-				<input class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Descapotable" 
-					name="nombre"
-					autocomplete="off"
-					required
-				/>
 			</label>
+			<input class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+				placeholder="Descapotable" 
+				name="nombre"
+				autocomplete="off"
+				required
+			/>
 		</div>
 		
 	</form>
@@ -31,22 +42,6 @@
 	  	</div>
 		
 	{/if}
-	
-
-	<ul class="todos">
-		{#each data.categorias as categoria (categoria.id)}
-			<li>
-				<form method="POST" action="?/delete">
-					<input type="hidden" name="id" value={categoria.id} />
-					<span>{categoria.nombre}</span>
-					<button aria-label="Mark as complete"></button>
-				</form>
-			</li>
-		{/each}
-	</ul>
-
-	
-
 </div>
 
 <style>
