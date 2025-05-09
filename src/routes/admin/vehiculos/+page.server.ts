@@ -1,10 +1,9 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import {unidadesVehiculos, sucursales, modelosVehiculos} from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, ne, and } from 'drizzle-orm';
 import { error, type Actions } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
-
 
 export const load = (async () => {
     const vehiculos = await db.select().from(unidadesVehiculos);
@@ -25,42 +24,88 @@ export const actions: Actions = {
         const idSucursal = Number(data.get('idSucursal'));
         const idModelo = Number(data.get('idModelo'));
 
-        // Validar que la patente no esté vacía
-        if (!patente || patente.trim() === '') {
-            return fail(400, { error: 'La patente es obligatoria.' });
-        }
-
-        // Validar que la patente no exista
+        // Validar que la patente no exista (excluyendo vehículos dados de baja)
         const existePatente = await db
-            .select()
-            .from(unidadesVehiculos)
-            .where(eq(unidadesVehiculos.patente, patente));
+        .select({ id: unidadesVehiculos.patente })
+        .from(unidadesVehiculos)
+        .where(
+          and(
+            eq(unidadesVehiculos.patente, patente),
+            ne(unidadesVehiculos.estado, 'Dado de baja')
+          )
+        )
+        .limit(1); // más eficiente
+        
+        console.log('Resultados de búsqueda por patente:', existePatente);
 
         if (existePatente.length > 0) {
-            return fail(400, { error: 'La patente ya existe en el sistema.' });
+            return fail(400, {
+                success: false,
+                error: 'La patente ya existe en el sistema.'
+            });
         }
 
-        // Validar que la sucursal y el modelo existan
-        const sucursalExiste = await db
-            .select()
-            .from(sucursales)
-            .where(eq(sucursales.id, idSucursal));
-        const modeloExiste = await db
-            .select()
-            .from(modelosVehiculos)
-            .where(eq(modelosVehiculos.id, idModelo));
+        try {
+            // Insertar el nuevo vehículo
+            const nuevoVehiculo = await db.insert(unidadesVehiculos).values({
+                patente,
+                idSucursal: String(idSucursal),
+                idModelo: String(idModelo),
+                estado: 'Habilitado'
+            }).returning();
 
-        if (sucursalExiste.length === 0 || modeloExiste.length === 0) {
-            return fail(400, { error: 'Sucursal o modelo inválido.' });
+            if (!nuevoVehiculo || nuevoVehiculo.length === 0) {
+                return fail(500, {
+                    success: false,
+                    error: 'Error al insertar el vehículo en la base de datos.'
+                });
+            }
+
+            return {
+                success: true,
+                vehiculo: {
+                    ...nuevoVehiculo[0],
+                    idSucursal: idSucursal,
+                    idModelo: idModelo,
+                    estado: 'Habilitado'
+                }
+            };
+
+        } catch (err) {
+            return fail(500, {
+                success: false,
+                error: 'Error al insertar el vehículo en la base de datos.'
+            });
         }
+    },
 
-        // Insertar el nuevo vehículo
-        await db.insert(unidadesVehiculos).values({
-            patente,
-            idSucursal: String(idSucursal),
-            estado: 'Habilitado'
-        });
+    darDeBaja: async ({ request }) => {
+        try {
+            const data = await request.json();
+            const { patente } = data;
 
-        return { success: true };
+            if (!patente) {
+                return fail(400, {
+                    success: false,
+                    error: 'La patente es obligatoria.'
+                });
+            }
+
+            // Actualizar el estado del vehículo
+            await db
+                .update(unidadesVehiculos)
+                .set({ estado: 'Dado de baja' })
+                .where(eq(unidadesVehiculos.patente, patente));
+
+            return {
+                success: true
+            };
+
+        } catch (err) {
+            return fail(500, {
+                success: false,
+                error: 'Error al dar de baja el vehículo.'
+            });
+        }
     }
 };

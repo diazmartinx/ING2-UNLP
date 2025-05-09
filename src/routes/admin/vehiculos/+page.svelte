@@ -5,36 +5,105 @@
     let { data }: { data: PageData } = $props();
 
     let mostrarModal = $state(false);
-    let patente = $state('');
+    let mostrarConfirmacion = $state(false);
+    let patenteSeleccionada = $state('');
+    let patente = ("");
     let sucursalSeleccionada = $state('');
     let modeloSeleccionado = $state('');
     let error = $state('');
+    let vehiculos = $state([...data.vehiculos])
 
     async function agregarVehiculo() {
+        if (!patente || !sucursalSeleccionada || !modeloSeleccionado) {
+            error = 'Por favor, complete todos los campos.';
+            return;
+        }
         const formData = new FormData();
         formData.append('patente', patente);
         formData.append('idSucursal', sucursalSeleccionada);
         formData.append('idModelo', modeloSeleccionado);
+        
+        try {
+            const response = await fetch('?/agregarVehiculo', {
+                method: 'POST',
+                body: formData
+            });
 
-        const response = await fetch('?agregarVehiculo', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (response.ok) {
-            mostrarModal = false;
-            patente = '';
-            sucursalSeleccionada = '';
-            modeloSeleccionado = '';
-            error = '';
-            await invalidate('/admin/vehiculos'); // Refresca los datos
-        } else {
             const result = await response.json();
-            error = result.error || 'Error al agregar el vehículo.'; // Accede al mensaje de error correctamente
+
+            // Parsear la respuesta del servidor
+            let serverResponse;
+            try {
+                serverResponse = JSON.parse(result.data);
+            } catch (e) {
+                error = 'Error al procesar la respuesta del servidor.';
+                return;
+            }
+
+            if (serverResponse[1] === true) { // El segundo elemento es el success
+                await invalidate('app:vehiculos');
+                mostrarModal = false;
+                patente = '';
+                sucursalSeleccionada = '';
+                modeloSeleccionado = '';
+                error = '';
+                
+                // Construir el objeto vehículo con los datos recibidos
+                const nuevoVehiculo = {
+                    patente: serverResponse[3], // patente
+                    idSucursal: serverResponse[4], // idSucursal
+                    idModelo: serverResponse[4], // idModelo
+                    estado: serverResponse[5] // estado
+                };
+                
+                vehiculos = [...vehiculos, nuevoVehiculo];
+            } else {
+                error = 'Error: la patente ya se encuentra en el sistema.';
+            }
+        } catch (err) {
+            error = 'Error al comunicarse con el servidor.';
         }
     }
+
+    function confirmarDarDeBaja(patente: string) {
+        patenteSeleccionada = patente;
+        mostrarConfirmacion = true;
+    }
+
+    async function darDeBaja() {
+        try {
+            const response = await fetch('?/darDeBaja', {
+                method: 'POST',
+                body: JSON.stringify({ patente: patenteSeleccionada })
+            });
+
+            const result = await response.json();
+            
+
+            // Verificar si la operación fue exitosa
+            if (result.type === 'success') {
+                // Primero actualizamos la lista local
+                vehiculos = vehiculos.map(v => 
+                    v.patente === patenteSeleccionada ? { ...v, estado: 'Dado de baja' } : v
+                );
+                // Luego invalidamos los datos
+                await invalidate('app:vehiculos');
+                patenteSeleccionada = '';
+                mostrarConfirmacion = false;
+            } else {
+                error = result.error || 'Error al dar de baja el vehículo.';
+            }
+        } catch (err) {
+            error = 'Error al comunicarse con el servidor.';
+        }
+    }
+
+    function cancelarDarDeBaja() {
+        mostrarConfirmacion = false;
+        patenteSeleccionada = '';
+    }
 </script>
-{#if data.vehiculos.length === 0}
+{#if vehiculos.length === 0}
     <div class="flex justify-center items-center h-screen">
         <div class="text-center">
             <h1 class="text-2xl font-bold mb-4">No hay vehículos disponibles</h1>
@@ -44,7 +113,8 @@
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Vehículos</h2>
         <button
-        onclick={() => (mostrarModal = true)}
+            onclick={() => (mostrarModal = true)}
+            type="button"
             class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition"
         >
         + Nuevo vehículo
@@ -63,10 +133,13 @@
                 <th scope="col" class="px-6 py-3">
                     Sucursal
                 </th>
+                <th scope="col" class="px-6 py-3">
+                    Acciones
+                </th>
             </tr>
         </thead>
         <tbody>
-            {#each data.vehiculos as { patente, idSucursal, estado }}
+            {#each vehiculos as { patente, idSucursal, estado }}
             <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {patente}
@@ -78,16 +151,51 @@
                     {idSucursal}
                 </td>
                 <td class="px-6 py-4">
-                    <a href="./vehiculos/{patente}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Detalles</a>
-                </td>
-                <td class="px-6 py-4">
-                    <a href="./vehiculos/{patente}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Editar</a>
+                    <div class="flex space-x-2">
+                        <a href="./vehiculos/{patente}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Detalles</a>
+                        <a href="./vehiculos/{patente}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Editar</a>
+                        {#if estado !== 'Dado de baja'}
+                            <button
+                                onclick={() => confirmarDarDeBaja(patente)}
+                                type="button"
+                                class="font-medium text-red-600 dark:text-red-500 hover:underline"
+                            >
+                                Dar de baja
+                            </button>
+                        {/if}
+                    </div>
                 </td>
             </tr>
             {/each}
         </tbody>
 
     </table>
+{/if}
+
+    <!-- Modal de confirmación -->
+{#if mostrarConfirmacion}
+<div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-xl font-semibold mb-4">Confirmar dar de baja</h3>
+        <p class="mb-4">¿Está seguro que desea dar de baja el vehículo con patente {patenteSeleccionada}?</p>
+        <div class="flex justify-end gap-2">
+            <button
+                onclick={cancelarDarDeBaja}
+                type="button"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+            >
+                Cancelar
+            </button>
+            <button
+                onclick={darDeBaja}
+                type="button"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+            >
+                Confirmar
+            </button>
+        </div>
+    </div>
+</div>
 {/if}
 
     <!-- Modal -->
@@ -134,12 +242,14 @@
         <div class="flex justify-end gap-2">
             <button
                 onclick={() => (mostrarModal = false)}
+                type="button"
                 class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
             >
                 Cancelar
             </button>
             <button
                 onclick={agregarVehiculo}
+                type="button"
                 class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-md"
             >
                 Aceptar
