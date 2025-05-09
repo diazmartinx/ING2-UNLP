@@ -13,25 +13,52 @@
     let porcentajeReembolsoParcial = $state('');
     let porcentajeReembolsoParcialError = $state('');
     let showSuccessToast = $state(false);
+    let displayImageUrl = $state('');
+    let imageLoadAttempted = $state(false);
+    let modelImages = $state(new Map());
 
     function openCreateModal() {
         showCreateModal = true;
         createError = '';
+        createImageUrl = '';
+        displayImageUrl = '';
+        createImageError = false;
+        imageLoadAttempted = false;
     }
 
     function closeModal() {
         showCreateModal = false;
         createError = '';
+        createImageUrl = '';
+        displayImageUrl = '';
+        createImageError = false;
+        imageLoadAttempted = false;
     }
 
     function handleImageInput(e: Event) {
-        createImageUrl = (e.target as HTMLInputElement).value;
+        const url = (e.target as HTMLInputElement).value;
+        createImageUrl = url;
+        displayImageUrl = url;
+        createImageError = false;
+        imageLoadAttempted = false;
+    }
+
+    function handleImageError() {
+        displayImageUrl = '/no-image-icon.svg';
+        createImageError = true;
+    }
+
+    function handleImageLoad() {
         createImageError = false;
     }
 
-    function handleImageError(event: Event) {
+    function handleModelImageError(event: Event) {
         const img = event.currentTarget as HTMLImageElement;
         img.src = '/no-image-icon.svg';
+    }
+
+    function handleModelImageLoad(modeloId: number, imageUrl: string) {
+        modelImages.set(modeloId, imageUrl);
     }
 
     async function showSuccessAndRedirect() {
@@ -73,7 +100,7 @@
                             alt={`${modelo.marca} ${modelo.modelo}`} 
                             class="h-60 w-60 object-cover rounded-lg" 
                             style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
-                            onerror={handleImageError}
+                            onerror={handleModelImageError}
                         />
                     </figure>
                     <div class="card-body p-4 flex-1 flex flex-col justify-center">
@@ -196,12 +223,12 @@
             {#if createImageUrl}
                 <div class="flex justify-center mt-2">
                     <img
-                        src={createImageError ? '/no-image-icon.svg' : createImageUrl}
+                        src={displayImageUrl}
                         alt="Preview imagen"
                         class="h-40 w-40 object-cover rounded border"
                         style="max-width: 160px; max-height: 160px;"
-                        onerror={() => createImageError = true}
-                        onload={() => createImageError = false}
+                        onerror={handleImageError}
+                        onload={handleImageLoad}
                     />
                 </div>
             {/if}
