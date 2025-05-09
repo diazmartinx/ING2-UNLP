@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "74cacb43-a225-4ec0-a495-12fad05feb1f",
+  "id": "59275634-2fea-47e2-b446-09ac02e01464",
   "prevId": "aa59a479-de37-49eb-9914-b8ac5d1248a4",
   "tables": {
     "categorias_vehiculos": {
@@ -394,7 +394,7 @@
           "name": "idModelo",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "estado": {
