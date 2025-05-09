@@ -201,7 +201,7 @@
                             loginError = (result.data as { message: string })?.message || 'Error al iniciar sesión';
                         } else if (result.type === 'redirect') {
                             closeModals();
-                            window.location.reload(); // Recargar para actualizar el estado de login
+                            window.location.href = result.location;
                         }
                     };
                 }}

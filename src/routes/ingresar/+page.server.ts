@@ -19,8 +19,8 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
     login: async (event) => {
         const formData = await event.request.formData();
-        const emailAddress = formData.get('email');
-        const password = formData.get('password');
+        const emailAddress = formData.get('email') as string;
+        const password = formData.get('password') as string;
 		
 
         if (!validateEmailAddress(emailAddress)) {
@@ -51,9 +51,13 @@ export const actions: Actions = {
         }
 
         const sessionToken = auth.generateSessionToken();
-        const session = await auth.createSession(sessionToken, existingUser.id.toString());
+        const session = await auth.createSession(sessionToken, existingUser.id);
         auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
+        // Redirect based on user role
+        if (existingUser.rol === 'admin') {
+            return redirect(302, '/admin');
+        }
         return redirect(302, '/');
     },
     register: async (event) => {
@@ -81,7 +85,7 @@ export const actions: Actions = {
             await db.insert(table.usuarios).values({ id: userId, email: emailAddress, passwordHash });
 
             const sessionToken = auth.generateSessionToken();
-            const session = await auth.createSession(sessionToken, userId.toString());
+            const session = await auth.createSession(sessionToken, userId);
             auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
         } catch (e) {
             return fail(500, { message: 'An error has occurred' });
