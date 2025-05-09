@@ -121,7 +121,11 @@
                         {username} <span class="ml-2">▼</span>
                     </button>
                     <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a href="/perfil">Perfil</a></li>
+                        {#if data.user?.rol === 'admin'}
+                            <li><a href="/admin">Panel de Administrador</a></li>
+                        {:else}
+                            <li><a href="/perfil">Perfil</a></li>
+                        {/if}
                         <li><a href="/mis-reservas">Mis Reservas</a></li>
                         <li class="text-error">
                             <button type="submit" form="logout-form" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
