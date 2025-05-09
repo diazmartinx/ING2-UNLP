@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -46,6 +46,22 @@ export const actions = {
             const idPoliticaCancelacion = parseInt(formData.get('idPoliticaCancelacion') as string);
             const porcentajeReembolsoParcialRaw = formData.get('porcentajeReembolsoParcial');
             let porcentajeReembolsoParcial: number | null = null;
+
+            // Check for duplicate model
+            const existingModel = await db.select()
+                .from(modelosVehiculos)
+                .where(
+                    and(
+                        eq(modelosVehiculos.marca, marca),
+                        eq(modelosVehiculos.modelo, modelo),
+                        eq(modelosVehiculos.anio, anio)
+                    )
+                );
+
+            if (existingModel.length > 0) {
+                return fail(400, { message: 'Ya existe un modelo con la misma marca, modelo y año' });
+            }
+
             // Buscar la política seleccionada
             const politicaSeleccionadaArr = await db.select().from(politicasCancelacion).where(eq(politicasCancelacion.id, idPoliticaCancelacion));
             const politicaSeleccionada = politicaSeleccionadaArr[0];
