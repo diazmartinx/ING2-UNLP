@@ -75,15 +75,8 @@
     {
       "idx": 10,
       "version": "6",
-      "when": 1746758982570,
-      "tag": "0010_spotty_vanisher",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "6",
-      "when": 1746759089506,
-      "tag": "0011_pale_shiver_man",
+      "when": 1746795037804,
+      "tag": "0010_superb_william_stryker",
       "breakpoints": true
     }
   ]

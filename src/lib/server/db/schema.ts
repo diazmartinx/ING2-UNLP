@@ -20,6 +20,7 @@ export const categoriasVehiculos = sqliteTable ('categorias_vehiculos', {
 export const unidadesVehiculos = sqliteTable('unidades_vehiculos', {
 	patente: text().primaryKey(),
 	idSucursal: text().notNull().references(() => sucursales.id),
+	idModelo: text().references(() => modelosVehiculos.id),
 	estado: text({ enum: ["Habilitado", "Inhabilitado", "Dado de baja"] }).default('Habilitado').notNull(),
 })
 
