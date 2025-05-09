@@ -9,6 +9,7 @@ export const usuarios = sqliteTable('usuarios',{
 	email: text(),
 	telefono: text(),
 	passwordHash: text('password_hash').notNull(),
+	otp: text(),
 	rol: text({ enum: ["admin", "empleado", "cliente"] }).default('cliente')
 });
 

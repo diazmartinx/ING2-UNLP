@@ -41,7 +41,9 @@
             {/each}
         </ul>
 
-        <p class="btn w-full">Cerrar sesión</p>
+        <form method="post" action="/?/logout" class="w-full">
+            <button type="submit" class="btn w-full">Cerrar sesión</button>
+        </form>
     </nav>
 
     <main class="flex-1 p-8">
