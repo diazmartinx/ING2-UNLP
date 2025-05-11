@@ -1,0 +1,1 @@
+ALTER TABLE `unidades_vehiculos` ADD `idModelo` text REFERENCES modelos_vehiculos(id);
