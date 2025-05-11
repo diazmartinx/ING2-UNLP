@@ -53,6 +53,7 @@
                     patente: serverResponse[3], // patente
                     idSucursal: serverResponse[4], // idSucursal
                     idModelo: serverResponse[4], // idModelo
+                    idCategoria: null, // idCategoria
                     estado: serverResponse[5] // estado
                 };
                 
@@ -78,9 +79,8 @@
             });
 
             const result = await response.json();
-            
+            mostrarConfirmacion = false;
 
-            // Verificar si la operación fue exitosa
             if (result.type === 'success') {
                 // Primero actualizamos la lista local
                 vehiculos = vehiculos.map(v => 
@@ -89,12 +89,14 @@
                 // Luego invalidamos los datos
                 await invalidate('app:vehiculos');
                 patenteSeleccionada = '';
-                mostrarConfirmacion = false;
             } else {
-                error = result.error || 'Error al dar de baja el vehículo.';
+                error = result.data?.error || 'Error: la unidad está en uso.';
+                // Mostrar el error en el modal de confirmación
+                mostrarConfirmacion = true;
             }
         } catch (err) {
             error = 'Error al comunicarse con el servidor.';
+            mostrarConfirmacion = true;
         }
     }
 
@@ -177,23 +179,39 @@
 <div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-xl font-semibold mb-4">Confirmar dar de baja</h3>
-        <p class="mb-4">¿Está seguro que desea dar de baja el vehículo con patente {patenteSeleccionada}?</p>
-        <div class="flex justify-end gap-2">
-            <button
-                onclick={cancelarDarDeBaja}
-                type="button"
-                class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-            >
-                Cancelar
-            </button>
-            <button
-                onclick={darDeBaja}
-                type="button"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-            >
-                Confirmar
-            </button>
-        </div>
+        {#if error}
+            <div class="text-red-500 mb-4">{error}</div>
+            <div class="flex justify-end">
+                <button
+                    onclick={() => {
+                        mostrarConfirmacion = false;
+                        error = '';
+                    }}
+                    type="button"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                >
+                    Cerrar
+                </button>
+            </div>
+        {:else}
+            <p class="mb-4">¿Está seguro que desea dar de baja el vehículo con patente {patenteSeleccionada}?</p>
+            <div class="flex justify-end gap-2">
+                <button
+                    onclick={cancelarDarDeBaja}
+                    type="button"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onclick={darDeBaja}
+                    type="button"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                >
+                    Confirmar
+                </button>
+            </div>
+        {/if}
     </div>
 </div>
 {/if}

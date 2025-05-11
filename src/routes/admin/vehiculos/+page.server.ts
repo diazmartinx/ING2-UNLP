@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
-import {unidadesVehiculos, sucursales, modelosVehiculos} from '$lib/server/db/schema';
+import {unidadesVehiculos, sucursales, modelosVehiculos, reservas} from '$lib/server/db/schema';
 import { eq, ne, and } from 'drizzle-orm';
 import { error, type Actions } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
@@ -35,8 +35,6 @@ export const actions: Actions = {
           )
         )
         .limit(1); // más eficiente
-        
-        console.log('Resultados de búsqueda por patente:', existePatente);
 
         if (existePatente.length > 0) {
             return fail(400, {
@@ -88,6 +86,25 @@ export const actions: Actions = {
                 return fail(400, {
                     success: false,
                     error: 'La patente es obligatoria.'
+                });
+            }
+
+            // Verificar si hay reservas pendientes
+            const reservasPendientes = await db
+                .select()
+                .from(reservas)
+                .where(
+                    and(
+                        eq(reservas.patenteUnidadAsignada, patente),
+                        eq(reservas.estado, 'Pendiente')
+                    )
+                )
+                .limit(1);
+
+            if (reservasPendientes.length > 0) {
+                return fail(400, {
+                    success: false,
+                    error: 'La unidad está en uso'
                 });
             }
 
