@@ -9,7 +9,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 		event.locals.session = null;
 
 		if (event.url.pathname.startsWith('/admin')) {
-			redirect(302, '/registrarse');
+			redirect(302, '/ingresar');
 		}
 
 		return resolve(event);
@@ -22,7 +22,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	} else {
 		auth.deleteSessionTokenCookie(event);
 		if (event.url.pathname.startsWith('/admin')) {
-			redirect(302, '/registrarse');
+			redirect(302, '/ingresar');
 		}
 	}
 

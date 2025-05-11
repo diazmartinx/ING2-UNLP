@@ -4,7 +4,7 @@ import type { Actions } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { hash } from 'bcrypt';
+import { hash } from '@node-rs/argon2';
 import * as auth from '$lib/server/auth';
 import { eq } from 'drizzle-orm';
 export const load = (async () => {
@@ -54,7 +54,7 @@ export const actions = {
             return fail(400, { error: 'Debes tener al menos 18 años para registrarte' });
         }
 
-        const hashedPassword = await hash(password, 10);
+        const hashedPassword = await hash(password);
 
         const [newUser] = await db.insert(usuarios).values({
             nombre,
