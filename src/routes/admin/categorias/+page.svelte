@@ -13,18 +13,18 @@
     }
 </script>
 
-<div class="p-4">
+<div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-bold text-gray-800">Categorías</h2>
         <button
           onclick={() => goto('/admin/categorias/agregar')}
-          class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition"
+          class="btn btn-primary"
         >
-          + Nueva Categoría
+          Crear Nueva Categoría
         </button>
     </div>
 
-    {#if categorias.length === 0}
+  {#if categorias.length === 0}
     <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md">
       <p class="font-bold">No hay categorías.</p>
     </div>
@@ -36,13 +36,13 @@
           <div class="flex gap-2">
             <button
               onclick={() => editarCategoria(categoria)}
-              class="bg-violet-100 hover:bg-violet-200 text-violet-700 px-3 py-1 rounded-md text-sm font-medium transition"
+              class="btn btn-primary"
             >
               Editar
             </button>
             <button
               onclick={() => eliminarCategoria(categoria.id)}
-              class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-md text-sm font-medium transition"
+              class="btn btn-error"
             >
               Eliminar
             </button>
