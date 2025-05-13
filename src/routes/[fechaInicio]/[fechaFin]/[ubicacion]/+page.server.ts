@@ -22,6 +22,13 @@ export const load: PageServerLoad = async ({ params }) => {
     const fechaInicioDate = new Date(fechaInicio);
     const fechaFinDate = new Date(fechaFin);
 
+    // Get all branches
+    const sucursalesList = await db.select({
+        nombre: sucursales.nombre
+    })
+    .from(sucursales)
+    .orderBy(sucursales.nombre);
+
     // Get available vehicles
     const unidadesDisponibles = await db.select({
         patente: unidadesVehiculos.patente,
@@ -66,6 +73,7 @@ export const load: PageServerLoad = async ({ params }) => {
         fechaInicio,
         fechaFin,
         ubicacion,
+        sucursales: sucursalesList.map(s => s.nombre),
         unidadesDisponibles: unidadesDisponibles as UnidadDisponible[]
     };
 }; 
