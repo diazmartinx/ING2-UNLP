@@ -9,7 +9,6 @@ export const load = (async () => {
         id: modelosVehiculos.id,
         marca: modelosVehiculos.marca,
         modelo: modelosVehiculos.modelo,
-        anio: modelosVehiculos.anio,
         capacidadPasajeros: modelosVehiculos.capacidadPasajeros,
         precioPorDia: modelosVehiculos.precioPorDia,
         imagenUrl: modelosVehiculos.imagenUrl,
@@ -38,7 +37,6 @@ export const actions = {
         try {
             const marca = formData.get('marca') as string;
             const modelo = formData.get('modelo') as string;
-            const anio = parseInt(formData.get('anio') as string);
             const capacidadPasajeros = parseInt(formData.get('capacidadPasajeros') as string);
             const precioPorDia = parseFloat(formData.get('precioPorDia') as string);
             const imagenUrl = formData.get('imagenUrl') as string;
@@ -53,13 +51,12 @@ export const actions = {
                 .where(
                     and(
                         eq(modelosVehiculos.marca, marca),
-                        eq(modelosVehiculos.modelo, modelo),
-                        eq(modelosVehiculos.anio, anio)
+                        eq(modelosVehiculos.modelo, modelo)
                     )
                 );
 
             if (existingModel.length > 0) {
-                return fail(400, { message: 'Ya existe un modelo con la misma marca, modelo y año' });
+                return fail(400, { message: 'Ya existe un modelo con la misma marca y modelo' });
             }
 
             // Buscar la política seleccionada
@@ -72,14 +69,13 @@ export const actions = {
                 }
             }
 
-            if (!marca || !modelo || !anio || !capacidadPasajeros || !precioPorDia || !imagenUrl || !idCategoria || !idPoliticaCancelacion) {
+            if (!marca || !modelo || !capacidadPasajeros || !precioPorDia || !imagenUrl || !idCategoria || !idPoliticaCancelacion) {
                 return fail(400, { message: 'Todos los campos son requeridos' });
             }
 
             await db.insert(modelosVehiculos).values({
                 marca,
                 modelo,
-                anio,
                 capacidadPasajeros,
                 precioPorDia,
                 imagenUrl,

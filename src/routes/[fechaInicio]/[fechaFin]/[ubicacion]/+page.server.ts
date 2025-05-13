@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ params }) => {
         estado: unidadesVehiculos.estado,
         marca: modelosVehiculos.marca,
         modelo: modelosVehiculos.modelo,
-        anio: modelosVehiculos.anio,
+        anio: unidadesVehiculos.anio,
         capacidadPasajeros: modelosVehiculos.capacidadPasajeros,
         precioPorDia: modelosVehiculos.precioPorDia,
         imagenUrl: modelosVehiculos.imagenUrl,
