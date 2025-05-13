@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { afterNavigate } from '$app/navigation';
     import type { PageData } from './$types';
     
     export let data: PageData;
@@ -7,6 +8,12 @@
     let fechaInicio = data.fechaInicio;
     let fechaFin = data.fechaFin;
     let ubicacion = decodeURIComponent(data.ubicacion);
+
+    afterNavigate(() => {
+        fechaInicio = data.fechaInicio;
+        fechaFin = data.fechaFin;
+        ubicacion = decodeURIComponent(data.ubicacion);
+    });
 
     function formatDate(dateStr: string): string {
         const [year, month, day] = dateStr.split('-');
@@ -26,8 +33,8 @@
         img.src = '/no-image-icon.svg';
     }
 
-    // Group vehicles by model
-    const groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
+    // Create a reactive statement for groupedVehicles that updates when data changes
+    $: groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
         const key = `${vehicle.marca}-${vehicle.modelo}`;
         if (!acc[key]) {
             acc[key] = {
