@@ -11,6 +11,7 @@
     let sucursalSeleccionada = $state('');
     let modeloSeleccionado = $state('');
     let error = $state('');
+    let successMessage = $state('');
     let vehiculos = $state([...data.vehiculos])
 
     async function agregarVehiculo() {
@@ -47,16 +48,23 @@
                 sucursalSeleccionada = '';
                 modeloSeleccionado = '';
                 error = '';
+                successMessage = 'Vehículo agregado exitosamente';
                 
                 // Construir el objeto vehículo con los datos recibidos
                 const nuevoVehiculo = {
                     patente: serverResponse[3], // patente
                     idSucursal: serverResponse[4], // idSucursal
                     idModelo: serverResponse[4], // idModelo
+                    idCategoria: null, // idCategoria
                     estado: serverResponse[5] // estado
                 };
                 
                 vehiculos = [...vehiculos, nuevoVehiculo];
+
+                // Limpiar el mensaje de éxito después de 3 segundos
+                setTimeout(() => {
+                    successMessage = '';
+                }, 3000);
             } else {
                 error = 'Error: la patente ya se encuentra en el sistema.';
             }
@@ -78,9 +86,8 @@
             });
 
             const result = await response.json();
-            
+            mostrarConfirmacion = false;
 
-            // Verificar si la operación fue exitosa
             if (result.type === 'success') {
                 // Primero actualizamos la lista local
                 vehiculos = vehiculos.map(v => 
@@ -89,12 +96,14 @@
                 // Luego invalidamos los datos
                 await invalidate('app:vehiculos');
                 patenteSeleccionada = '';
-                mostrarConfirmacion = false;
             } else {
-                error = result.error || 'Error al dar de baja el vehículo.';
+                error = result.data?.error || 'Error: la unidad está en uso.';
+                // Mostrar el error en el modal de confirmación
+                mostrarConfirmacion = true;
             }
         } catch (err) {
             error = 'Error al comunicarse con el servidor.';
+            mostrarConfirmacion = true;
         }
     }
 
@@ -103,6 +112,23 @@
         patenteSeleccionada = '';
     }
 </script>
+
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Vehículos</h2>
+    <div class="flex items-center gap-4">
+        {#if successMessage}
+            <div class="text-green-600 font-medium">{successMessage}</div>
+        {/if}
+        <button
+            onclick={() => (mostrarModal = true)}
+            type="button"
+            class="btn btn-primary"
+        >
+            Crear Nuevo vehículo
+        </button>
+    </div>
+</div>
+
 {#if vehiculos.length === 0}
     <div class="flex justify-center items-center h-screen">
         <div class="text-center">
@@ -110,17 +136,6 @@
         </div>
     </div> 
 {:else}
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">Vehículos</h2>
-        <button
-            onclick={() => (mostrarModal = true)}
-            type="button"
-            class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition"
-        >
-        + Nuevo vehículo
-        </button>
-    </div>
-
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
@@ -174,34 +189,50 @@
 
     <!-- Modal de confirmación -->
 {#if mostrarConfirmacion}
-<div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+<div class="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
         <h3 class="text-xl font-semibold mb-4">Confirmar dar de baja</h3>
-        <p class="mb-4">¿Está seguro que desea dar de baja el vehículo con patente {patenteSeleccionada}?</p>
-        <div class="flex justify-end gap-2">
-            <button
-                onclick={cancelarDarDeBaja}
-                type="button"
-                class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-            >
-                Cancelar
-            </button>
-            <button
-                onclick={darDeBaja}
-                type="button"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-            >
-                Confirmar
-            </button>
-        </div>
+        {#if error}
+            <div class="text-red-500 mb-4">{error}</div>
+            <div class="flex justify-end">
+                <button
+                    onclick={() => {
+                        mostrarConfirmacion = false;
+                        error = '';
+                    }}
+                    type="button"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                >
+                    Cerrar
+                </button>
+            </div>
+        {:else}
+            <p class="mb-4">¿Está seguro que desea dar de baja el vehículo con patente {patenteSeleccionada}?</p>
+            <div class="flex justify-end gap-2">
+                <button
+                    onclick={cancelarDarDeBaja}
+                    type="button"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onclick={darDeBaja}
+                    type="button"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                >
+                    Confirmar
+                </button>
+            </div>
+        {/if}
     </div>
 </div>
 {/if}
 
     <!-- Modal -->
 {#if mostrarModal}
-<div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+<div class="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
         <h3 class="text-xl font-semibold mb-4">Agregar Nuevo Vehículo</h3>
         {#if error}
         <div class="text-red-500 mb-4">{error}</div>
