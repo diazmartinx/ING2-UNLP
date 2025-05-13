@@ -20,7 +20,10 @@
 
 <div class="flex flex-col min-h-[100dvh] bg-gray-100">
 	<nav class="flex items-center justify-between bg-white p-4 shadow-md">
-		<a href="/" class="text-2xl font-bold hover:underline">ALQUILANDO</a>
+		<a href="/" class="flex items-center bg-white border border-gray-200 shadow-md rounded-lg px-3 py-1">
+			<img src="/banner_auto.svg" alt="Alquilando" class="h-10 w-10 mr-1.5" />
+			<span class="text-lg font-bold" style="color: #1E2A38;">Alquilando</span>
+		</a>
 		<div class="flex gap-2">
 			{#if isLoggedIn}
 				<div class="dropdown dropdown-end">
