@@ -112,10 +112,6 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-3">
                                 <p class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-600 text-lg">Año:</span>
-                                    <span class="badge badge-secondary badge-lg px-3 py-1 text-base">{modelo.anio}</span>
-                                </p>
-                                <p class="flex items-center gap-2">
                                     <span class="font-semibold text-gray-600 text-lg">Categoría:</span>
                                     <span class="badge badge-outline px-3 py-1 text-base">{modelo.categoria}</span>
                                 </p>
