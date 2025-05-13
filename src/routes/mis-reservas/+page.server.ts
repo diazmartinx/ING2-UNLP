@@ -1,8 +1,8 @@
 import { db } from '$lib/server/db';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { reservas, unidadesVehiculos, modelosVehiculos, sucursales, usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 
 export const load = (async ({ locals }) => {
     const session = locals.session;
@@ -36,7 +36,12 @@ export const load = (async ({ locals }) => {
         .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
         .where(eq(reservas.idUsuario, session.userId))
-        .orderBy(reservas.fechaCreacion);
+        .orderBy(
+            desc(sql`${reservas.estado} = 'Pendiente'`),
+            (reservas.fechaInicio)
+            
+        );
+
     return {
         reservas: reservasUsuario
     };

@@ -23,24 +23,29 @@ export const actions: Actions = {
         const patente = String(data.get('patente'));
         const idSucursal = Number(data.get('idSucursal'));
         const idModelo = Number(data.get('idModelo'));
+        const anio = Number(data.get('anio'));
 
-        // Validar que la patente no exista (excluyendo vehículos dados de baja)
+        // Validar que la patente no exista
         const existePatente = await db
-        .select({ id: unidadesVehiculos.patente })
+        .select()
         .from(unidadesVehiculos)
-        .where(
-          and(
-            eq(unidadesVehiculos.patente, patente),
-            ne(unidadesVehiculos.estado, 'Dado de baja')
-          )
-        )
+        .where(eq(unidadesVehiculos.patente, patente))
         .limit(1); // más eficiente
 
-        if (existePatente.length > 0) {
-            return fail(400, {
-                success: false,
-                error: 'La patente ya existe en el sistema.'
-            });
+        if (existePatente.length > 0){
+            if (existePatente[0].estado === 'Dado de baja'){
+                await db.update(unidadesVehiculos).set({estado: "Habilitado", idSucursal: String(idSucursal), idModelo: String(idModelo), anio: anio})
+                                            .where(eq(unidadesVehiculos.patente, patente));
+                return{
+                    success: true
+                }
+            }
+            else{
+                return {
+                    success: false,
+                    error: 'La patente ya existe en el sistema.'
+                };
+            }
         }
 
         try {
@@ -49,31 +54,30 @@ export const actions: Actions = {
                 patente,
                 idSucursal: String(idSucursal),
                 idModelo: String(idModelo),
-                estado: 'Habilitado'
+                estado: 'Habilitado',
+                anio: anio
             }).returning();
 
             if (!nuevoVehiculo || nuevoVehiculo.length === 0) {
-                return fail(500, {
+                return{
                     success: false,
                     error: 'Error al insertar el vehículo en la base de datos.'
-                });
+                };
             }
 
             return {
                 success: true,
-                vehiculo: {
-                    ...nuevoVehiculo[0],
-                    idSucursal: idSucursal,
-                    idModelo: idModelo,
-                    estado: 'Habilitado'
-                }
+                patente: nuevoVehiculo[0].patente,
+                idSucursal: String(idSucursal),
+                idModelo: String(idModelo),
+                anio: Number(nuevoVehiculo[0].anio),
             };
 
         } catch (err) {
-            return fail(500, {
+            return {
                 success: false,
                 error: 'Error al insertar el vehículo en la base de datos.'
-            });
+            };
         }
     },
 
@@ -81,13 +85,6 @@ export const actions: Actions = {
         try {
             const data = await request.json();
             const { patente } = data;
-
-            if (!patente) {
-                return fail(400, {
-                    success: false,
-                    error: 'La patente es obligatoria.'
-                });
-            }
 
             // Verificar si hay reservas pendientes
             const reservasPendientes = await db

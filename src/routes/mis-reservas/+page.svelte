@@ -39,10 +39,10 @@
                     <span class="font-semibold text-gray-600">Vehículo</span>
                 </div>
                 <div class="w-32 text-center">
-                    <span class="font-semibold text-gray-600">Inicio</span>
+                    <span class="font-semibold text-gray-600">Retiro</span>
                 </div>
                 <div class="w-32 text-center">
-                    <span class="font-semibold text-gray-600">Fin</span>
+                    <span class="font-semibold text-gray-600">Devolución</span>
                 </div>
                 <div class="w-32 text-center">
                     <span class="font-semibold text-gray-600">Estado</span>

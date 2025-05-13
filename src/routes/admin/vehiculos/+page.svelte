@@ -7,15 +7,16 @@
     let mostrarModal = $state(false);
     let mostrarConfirmacion = $state(false);
     let patenteSeleccionada = $state('');
-    let patente = ("");
+    let patente = $state("");
     let sucursalSeleccionada = $state('');
     let modeloSeleccionado = $state('');
     let error = $state('');
     let successMessage = $state('');
-    let vehiculos = $state([...data.vehiculos])
+    let vehiculos = $state(data.vehiculos);
+    let anio = $state('');
 
     async function agregarVehiculo() {
-        if (!patente || !sucursalSeleccionada || !modeloSeleccionado) {
+        if (!patente || !sucursalSeleccionada || !modeloSeleccionado || !anio) {
             error = 'Por favor, complete todos los campos.';
             return;
         }
@@ -23,7 +24,7 @@
         formData.append('patente', patente);
         formData.append('idSucursal', sucursalSeleccionada);
         formData.append('idModelo', modeloSeleccionado);
-        
+        formData.append('anio', anio);
         try {
             const response = await fetch('?/agregarVehiculo', {
                 method: 'POST',
@@ -32,39 +33,50 @@
 
             const result = await response.json();
 
-            // Parsear la respuesta del servidor
-            let serverResponse;
-            try {
-                serverResponse = JSON.parse(result.data);
-            } catch (e) {
-                error = 'Error al procesar la respuesta del servidor.';
-                return;
+
+            // Si el campo `data` es un string JSON, parsearlo
+            if (typeof result.data === 'string') {
+                result.data = JSON.parse(result.data);
             }
 
-            if (serverResponse[1] === true) { // El segundo elemento es el success
-                await invalidate('app:vehiculos');
-                mostrarModal = false;
-                patente = '';
-                sucursalSeleccionada = '';
-                modeloSeleccionado = '';
+            if (result.data[1] === true) { 
+                
                 error = '';
                 successMessage = 'Vehículo agregado exitosamente';
                 
                 // Construir el objeto vehículo con los datos recibidos
-                const nuevoVehiculo = {
-                    patente: serverResponse[3], // patente
-                    idSucursal: serverResponse[4], // idSucursal
-                    idModelo: serverResponse[4], // idModelo
-                    idCategoria: null, // idCategoria
-                    estado: serverResponse[5] // estado
-                };
-                
-                vehiculos = [...vehiculos, nuevoVehiculo];
-
+                if (result.data[2]){
+                    let nuevVehiculo = ({
+                        patente: patente,
+                        idSucursal: sucursalSeleccionada,
+                        idModelo: modeloSeleccionado,
+                        anio: Number(anio), // Ensure anio is a number
+                        estado: 'Habilitado' as 'Habilitado' // Explicitly cast to the allowed type
+                    });
+                    // Agregar el nuevo vehículo a la lista local
+                    vehiculos = [...vehiculos, nuevVehiculo];
+                }
+                else{
+                    vehiculos = vehiculos.map(v => 
+                    v.patente === patente ? { ...v, estado: 'Habilitado',
+                                                    idSucursal: sucursalSeleccionada,
+                                                    idModelo: modeloSeleccionado,
+                                                    anio: Number(anio) 
+                                     }           
+                    : v 
+                    );
+                }
                 // Limpiar el mensaje de éxito después de 3 segundos
                 setTimeout(() => {
                     successMessage = '';
                 }, 3000);
+                mostrarModal = false;
+                await invalidate('/vehiculos');
+                patente = '';
+                mostrarModal = false;
+                sucursalSeleccionada = '';
+                modeloSeleccionado = '';
+                anio = '';
             } else {
                 error = 'Error: la patente ya se encuentra en el sistema.';
             }
@@ -96,6 +108,10 @@
                 // Luego invalidamos los datos
                 await invalidate('app:vehiculos');
                 patenteSeleccionada = '';
+                successMessage = 'Vehículo dado de baja exitosamente'
+                setTimeout(() => {
+                    successMessage = '';
+                }, 3000);
             } else {
                 error = result.data?.error || 'Error: la unidad está en uso.';
                 // Mostrar el error en el modal de confirmación
@@ -110,6 +126,7 @@
     function cancelarDarDeBaja() {
         mostrarConfirmacion = false;
         patenteSeleccionada = '';
+        error = '';
     }
 </script>
 
@@ -143,6 +160,9 @@
                     Patente
                 </th>
                 <th scope="col" class="px-6 py-3">
+                    Año
+                </th>
+                <th scope="col" class="px-6 py-3">
                     Estado
                 </th>
                 <th scope="col" class="px-6 py-3">
@@ -154,10 +174,13 @@
             </tr>
         </thead>
         <tbody>
-            {#each vehiculos as { patente, idSucursal, estado }}
+            {#each vehiculos as { patente, idSucursal, estado, anio }}
             <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     {patente}
+                </th>
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {anio}
                 </th>
                 <td class="px-6 py-4">
                     {estado}	
@@ -246,6 +269,12 @@
                 class="w-full p-2 border border-gray-300 rounded-md"
             />
         </div>
+        <div class="form-control">
+            <label class="label" for="anio">
+                <span class="label-text">Año</span>
+            </label>
+            <input type="number" id="anio" name="anio" bind:value={anio} class="input input-bordered w-full" required min="1900" max={new Date().getFullYear()} />
+        </div>
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700">Sucursal</label>
             <select
@@ -272,7 +301,10 @@
         </div>
         <div class="flex justify-end gap-2">
             <button
-                onclick={() => (mostrarModal = false)}
+                onclick={() => {
+                    mostrarModal = false;
+                    error = '';
+                }}
                 type="button"
                 class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
             >
