@@ -4,6 +4,11 @@
     
     export let data: PageData;
 
+    function formatDate(dateStr: string): string {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}-${month}-${year}`;
+    }
+
     function handleReservar(patente: string) {
         goto(`/reservar/${data.fechaInicio}/${data.fechaFin}/${data.ubicacion}/${patente}`);
     }
@@ -16,7 +21,7 @@
 
 <div class="container mx-auto p-8">
     <h1 class="text-2xl font-bold mb-4">Resultados de Búsqueda</h1>
-    <p class="mb-6">Buscando alquileres desde el <strong>{data.fechaInicio}</strong> hasta el <strong>{data.fechaFin}</strong> en <strong>{data.ubicacion}</strong>.</p>
+    <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(data.fechaInicio)}</strong> hasta el <strong>{formatDate(data.fechaFin)}</strong> en <strong>{data.ubicacion}</strong>.</p>
     
     {#if !data.unidadesDisponibles || data.unidadesDisponibles.length === 0}
         <div class="alert alert-info">
