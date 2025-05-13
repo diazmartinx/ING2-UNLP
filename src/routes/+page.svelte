@@ -60,15 +60,10 @@
 
     function setRandomDates() {
         const todayDate = new Date();
-        const maxDaysOut = 14;
-        const randomStartDays = Math.floor(Math.random() * maxDaysOut);
-        const startDate = new Date(todayDate);
-        startDate.setDate(todayDate.getDate() + randomStartDays);
-        const remainingDays = maxDaysOut - randomStartDays;
-        const randomEndDaysOffset = Math.floor(Math.random() * (remainingDays - 1)) + 1;
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + randomEndDaysOffset);
-        fechaInicio = formatDate(startDate);
+        const endDate = new Date(todayDate);
+        endDate.setDate(todayDate.getDate() + 14);
+        
+        fechaInicio = formatDate(todayDate);
         fechaFin = formatDate(endDate);
         fechaInicioError = '';
         fechaFinError = '';
