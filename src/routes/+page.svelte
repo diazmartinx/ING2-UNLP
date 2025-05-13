@@ -8,6 +8,8 @@
     let fechaFinError = $state('');
     let ubicacionError = $state('');
 
+    const { data } = $props();
+
     // Helper to format date as YYYY-MM-DD
     function formatDate(date: Date): string {
         return date.toISOString().split('T')[0];
@@ -95,20 +97,13 @@
 
             <div class="form-control">
                 <label class="label" for="location">
-                    <span class="label-text">Ubicación</span>
+                    <span class="label-text">Sucursal</span>
                 </label>
                 <select id="location" class="select select-bordered w-full" bind:value={ubicacion}>
-                    <option disabled selected value="">Elige una ciudad</option>
-                    <option>Buenos Aires</option>
-                    <option>Córdoba</option>
-                    <option>Rosario</option>
-                    <option>Mendoza</option>
-                    <option>La Plata</option>
-                    <option>San Miguel de Tucumán</option>
-                    <option>Mar del Plata</option>
-                    <option>Salta</option>
-                    <option>Santa Fe</option>
-                    <option>San Juan</option>
+                    <option disabled selected value="">Elige una sucursal</option>
+                    {#each data.sucursales as sucursal}
+                        <option value={sucursal.nombre}>{sucursal.nombre}</option>
+                    {/each}
                 </select>
                 {#if ubicacionError}<p class="text-error text-sm mt-1">{ubicacionError}</p>{/if}
             </div>

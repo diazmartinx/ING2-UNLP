@@ -1,10 +1,14 @@
 import type { PageServerLoad, Actions } from './$types';
 import * as auth from '$lib/server/auth';
 import { fail, redirect } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { sucursales } from '$lib/server/db/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
+    const sucursalesDisponibles = await db.select().from(sucursales);
     return {
-        user: locals.user || null
+        user: locals.user || null,
+        sucursales: sucursalesDisponibles
     };
 };
 
