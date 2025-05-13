@@ -9,14 +9,33 @@
         return `${day}-${month}-${year}`;
     }
 
-    function handleReservar(patente: string) {
-        goto(`/reservar/${data.fechaInicio}/${data.fechaFin}/${data.ubicacion}/${patente}`);
+    function handleReservar(marca: string, modelo: string) {
+        goto(`/reservar/${data.fechaInicio}/${data.fechaFin}/${data.ubicacion}/${marca}/${modelo}`);
     }
 
     function handleImageError(event: Event) {
         const img = event.currentTarget as HTMLImageElement;
         img.src = '/no-image-icon.svg';
     }
+
+    // Group vehicles by model
+    const groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
+        const key = `${vehicle.marca}-${vehicle.modelo}`;
+        if (!acc[key]) {
+            acc[key] = {
+                marca: vehicle.marca,
+                modelo: vehicle.modelo,
+                imagenUrl: vehicle.imagenUrl,
+                capacidadPasajeros: vehicle.capacidadPasajeros,
+                precioPorDia: vehicle.precioPorDia,
+                nombreSucursal: vehicle.nombreSucursal,
+                count: 1
+            };
+        } else {
+            acc[key].count++;
+        }
+        return acc;
+    }, {} as Record<string, any>);
 </script>
 
 <div class="container mx-auto p-8">
@@ -32,7 +51,7 @@
         </div>
     {:else}
         <div class="flex flex-col gap-6">
-            {#each data.unidadesDisponibles as unidad}
+            {#each Object.values(groupedVehicles) as unidad}
                 <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
                     <div class="flex flex-row">
                         <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
@@ -49,34 +68,28 @@
                                 <h2 class="card-title text-2xl font-bold text-gray-800">
                                     {unidad.marca} {unidad.modelo}
                                 </h2>
-                                <div class="badge badge-primary badge-lg">Patente: {unidad.patente}</div>
+                                <div class="badge badge-primary badge-lg">Unidades disponibles: {unidad.count}</div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="space-y-3">
-                                    <p class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-600 text-lg">Año:</span>
-                                        <span class="badge badge-secondary badge-lg px-3 py-1 text-base">{unidad.anio}</span>
-                                    </p>
+                                <div class="space-y-4">
                                     <p class="flex items-center gap-2">
                                         <span class="font-semibold text-gray-600 text-lg">Capacidad:</span>
                                         <span class="badge badge-outline px-3 py-1 text-base">{unidad.capacidadPasajeros} pasajeros</span>
                                     </p>
-                                </div>
-                                <div class="space-y-3">
-                                    <p class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-600 text-lg">Precio por día:</span>
-                                        <span class="badge badge-primary px-3 py-1 text-base">${unidad.precioPorDia}</span>
-                                    </p>
                                     <p class="flex items-center gap-2">
                                         <span class="font-semibold text-gray-600 text-lg">Sucursal:</span>
                                         <span class="badge badge-outline px-3 py-1 text-base">{unidad.nombreSucursal}</span>
+                                    </p>
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Precio por día:</span>
+                                        <span class="badge badge-primary px-3 py-1 text-base">${unidad.precioPorDia}</span>
                                     </p>
                                 </div>
                             </div>
                             <div class="card-actions justify-end mt-4">
                                 <button 
                                     class="btn btn-primary"
-                                    on:click={() => handleReservar(unidad.patente)}
+                                    on:click={() => handleReservar(unidad.marca, unidad.modelo)}
                                 >
                                     Reservar
                                 </button>
