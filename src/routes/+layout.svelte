@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	
 	// Define el tipo de usuario si lo deseas
 	type User = {
@@ -14,17 +15,7 @@
 	
 	let isLoggedIn = data.user !== undefined && data.user !== null;
 	let username = data.user ? `${data.user.nombre || ''} ${data.user.apellido || ''}`.trim() || data.user.email : '';
-	let showLoginModal = false;
-	let loginError = '';
 
-	function openLoginModal() {
-		showLoginModal = true;
-		loginError = '';
-	}
-	function closeModals() {
-		showLoginModal = false;
-		loginError = '';
-	}
 </script>
 
 <div class="flex flex-col min-h-[100dvh] bg-gray-100">
@@ -50,61 +41,14 @@
 					</ul>
 				</div>
 			{:else}
-				<button onclick={openLoginModal} class="btn">Iniciar Sesión</button>
-				<a href="/registrarse" class="btn btn-primary">Registrarse</a>
+				{#if $page.url.pathname !== '/ingresar'}
+					<a href="/ingresar" class="btn">Iniciar Sesión</a>
+				{/if}
+				{#if $page.url.pathname !== '/registrarse'}
+					<a href="/registrarse" class="btn btn-primary">Registrarse</a>
+				{/if}
 			{/if}
 		</div>
 	</nav>
 	<slot />
 </div>
-
-{#if showLoginModal}
-<div class="modal modal-open">
-	<div class="modal-box">
-		<h2 class="font-bold text-lg">Iniciar Sesión</h2>
-		<form 
-			method="POST" 
-			action="/ingresar?/login"
-			use:enhance={({ formData }: { formData: FormData }) => {
-				return async ({ result }: { result: any }) => {
-					if (result.type === 'failure') {
-						loginError = (result.data as { message: string })?.message || 'Error al iniciar sesión';
-					} else if (result.type === 'redirect') {
-						closeModals();
-						window.location.href = result.location;
-					}
-				};
-			}}
-		>
-			<div class="form-control">
-				<label class="label" for="email">
-					<span class="label-text">Correo Electrónico</span>
-				</label>
-				<input type="email" id="email" name="email" class="input input-bordered w-full" required />
-			</div>
-			<div class="form-control">
-				<label class="label" for="password">
-					<span class="label-text">Contraseña</span>
-				</label>
-				<input type="password" id="password" name="password" class="input input-bordered w-full" required />
-			</div>
-			{#if loginError}
-				<p class="text-error text-sm mt-2">{loginError}</p>
-			{/if}
-			<div class="modal-action">
-				<button type="button" class="btn btn-ghost" onclick={closeModals}>Cancelar</button>
-				<button type="submit" class="btn btn-primary">Iniciar Sesión</button>
-			</div>
-		</form>
-		<p class="text-sm mt-4 text-center">
-			¿Aún no estás registrado? 
-			<a 
-				href="/registrarse"
-				class="text-primary underline cursor-pointer" 
-			>
-				Crea una cuenta
-			</a>
-		</p>
-	</div>
-</div>
-{/if}
