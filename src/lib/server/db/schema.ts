@@ -22,6 +22,7 @@ export const unidadesVehiculos = sqliteTable('unidades_vehiculos', {
 	patente: text().primaryKey(),
 	idSucursal: text().notNull().references(() => sucursales.id),
 	idModelo: text().references(() => modelosVehiculos.id),
+	anio: integer().notNull().default(2025),
 	estado: text({ enum: ["Habilitado", "Inhabilitado", "Dado de baja"] }).default('Habilitado').notNull(),
 })
 
@@ -42,7 +43,6 @@ export const modelosVehiculos = sqliteTable('modelos_vehiculos', {
 	idPoliticaCancelacion: integer().notNull().references(() => politicasCancelacion.id),
 	marca: text().notNull(),
 	modelo: text().notNull(),
-	anio: integer().notNull(),
 	capacidadPasajeros: integer().notNull(),
 	precioPorDia: real().notNull(),
 	porcentajeReembolsoParcial: real(),
