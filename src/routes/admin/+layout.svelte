@@ -31,7 +31,6 @@
 
 <div class="flex min-h-[100dvh]">
     <nav class="flex flex-col w-96 items-end gap-6  p-4 md:px-8 sticky top-0 bg-base-200 border-r border-base-300">
-        <a href="/" class="text-2xl font-bold hover:underline">ALQUILANDO</a>
 
         <ul class="flex flex-col gap-2  w-full flex-1 items-start">
             {#each adminMenu as item}
