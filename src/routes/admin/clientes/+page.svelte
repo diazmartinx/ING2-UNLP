@@ -12,7 +12,6 @@
                 <th>Apellido</th>
                 <th>Nombre</th>
                 <th>Email</th>
-                
             </tr>
         </thead>
         <tbody>
@@ -24,7 +23,7 @@
                     <td>{cliente.nombre}</td>
                     <td>{cliente.email}</td>
                     <th>
-                        <a href="./clientes/{cliente.id}" role="button" class="btn btn-ghost">Detalles</a>
+                        <a href="./clientes/{cliente.id}" role="button" class="btn btn-ghost btn-disabled">Detalles</a>
                     </th>
                 </tr>
             {/each}
