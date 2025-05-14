@@ -1,12 +1,27 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { afterNavigate } from '$app/navigation';
     import type { PageData } from './$types';
     
     export let data: PageData;
 
+    let fechaInicio = data.fechaInicio;
+    let fechaFin = data.fechaFin;
+    let ubicacion = decodeURIComponent(data.ubicacion);
+
+    afterNavigate(() => {
+        fechaInicio = data.fechaInicio;
+        fechaFin = data.fechaFin;
+        ubicacion = decodeURIComponent(data.ubicacion);
+    });
+
     function formatDate(dateStr: string): string {
         const [year, month, day] = dateStr.split('-');
         return `${day}-${month}-${year}`;
+    }
+
+    function handleSearch() {
+        goto(`/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacion)}`);
     }
 
     function handleReservar(marca: string, modelo: string) {
@@ -18,8 +33,8 @@
         img.src = '/no-image-icon.svg';
     }
 
-    // Group vehicles by model
-    const groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
+    // Create a reactive statement for groupedVehicles that updates when data changes
+    $: groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
         const key = `${vehicle.marca}-${vehicle.modelo}`;
         if (!acc[key]) {
             acc[key] = {
@@ -39,6 +54,55 @@
 </script>
 
 <div class="container mx-auto p-8">
+    <div class="bg-base-100 shadow-lg rounded-lg p-6 mb-8">
+        <form on:submit|preventDefault={handleSearch} class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="form-control">
+                <label class="label" for="fechaInicio">
+                    <span class="label-text">Fecha de inicio</span>
+                </label>
+                <input 
+                    id="fechaInicio"
+                    type="date" 
+                    bind:value={fechaInicio}
+                    class="input input-bordered w-full" 
+                    required
+                />
+            </div>
+            <div class="form-control">
+                <label class="label" for="fechaFin">
+                    <span class="label-text">Fecha de fin</span>
+                </label>
+                <input 
+                    id="fechaFin"
+                    type="date" 
+                    bind:value={fechaFin}
+                    class="input input-bordered w-full" 
+                    required
+                />
+            </div>
+            <div class="form-control">
+                <label class="label" for="ubicacion">
+                    <span class="label-text">Sucursal</span>
+                </label>
+                <select 
+                    id="ubicacion"
+                    bind:value={ubicacion}
+                    class="select select-bordered w-full"
+                    required
+                >
+                    {#each data.sucursales as sucursal}
+                        <option value={sucursal}>{sucursal}</option>
+                    {/each}
+                </select>
+            </div>
+            <div class="form-control flex items-end">
+                <button type="submit" class="btn btn-primary w-full">
+                    Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
     <h1 class="text-2xl font-bold mb-4">Resultados de Búsqueda</h1>
     <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(data.fechaInicio)}</strong> hasta el <strong>{formatDate(data.fechaFin)}</strong> en <strong>{data.ubicacion}</strong>.</p>
     

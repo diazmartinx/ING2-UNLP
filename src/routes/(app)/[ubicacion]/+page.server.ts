@@ -17,10 +17,18 @@ type UnidadDisponible = {
 
 export const load: PageServerLoad = async ({ params }) => {
     const { fechaInicio, fechaFin, ubicacion } = params;
+    const ubicacionDecoded = decodeURIComponent(ubicacion);
     
     // Convert string dates to Date objects
     const fechaInicioDate = new Date(fechaInicio);
     const fechaFinDate = new Date(fechaFin);
+
+    // Get all branches
+    const sucursalesList = await db.select({
+        nombre: sucursales.nombre
+    })
+    .from(sucursales)
+    .orderBy(sucursales.nombre);
 
     // Get available vehicles
     const unidadesDisponibles = await db.select({
@@ -40,7 +48,7 @@ export const load: PageServerLoad = async ({ params }) => {
     .where(
         and(
             eq(unidadesVehiculos.estado, 'Habilitado'),
-            eq(sucursales.nombre, ubicacion),
+            eq(sucursales.nombre, ubicacionDecoded),
             not(
                 exists(
                     db.select()
@@ -65,7 +73,8 @@ export const load: PageServerLoad = async ({ params }) => {
     return {
         fechaInicio,
         fechaFin,
-        ubicacion,
+        ubicacion: ubicacionDecoded,
+        sucursales: sucursalesList.map(s => s.nombre),
         unidadesDisponibles: unidadesDisponibles as UnidadDisponible[]
     };
 }; 
