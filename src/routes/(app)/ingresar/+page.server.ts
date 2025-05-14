@@ -65,7 +65,7 @@ export const actions: Actions = {
             return fail(400, { message: 'Correo electrónico o contraseña invalida' });
         }
 
-        if (userWithEmail.rol !== 'admin') {
+        if (userWithEmail.rol == 'admin') {
             const otp = Math.floor(100000 + Math.random() * 900000).toString().padStart(4, '0');
             await db.update(table.usuarios).set({ otp }).where(eq(table.usuarios.email, emailAddress));
             console.log('OTP generated:', otp);

@@ -31,13 +31,27 @@
             href: '/admin/sucursales'
         }
     ]
+
+    let clienteMenu = [
+        {
+            label: 'Reservas',
+            href: '/admin'
+        },
+        {
+            label: 'Cuenta',
+            href: '/admin/cuenta'
+        }
+    ]
+
+    let finalMenu = data.user.rol === 'admin' ? adminMenu : clienteMenu;
+
 </script>
 
 <div class="flex min-h-[100dvh]">
     <nav class="flex flex-col w-96 items-end gap-6  p-4 md:px-8 sticky top-0 bg-base-200 border-r border-base-300">
 
         <ul class="flex flex-col gap-2  w-full flex-1 items-start">
-            {#each adminMenu as item (item.href)}
+            {#each finalMenu as item (item.href)}
                 <li class="w-full">
                     <a 
                         href={item.href} 
