@@ -5,6 +5,7 @@ import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
+import { sendOtpEmail } from '$lib/server/resend';
 
 function validateEmailAddress(email: string) {
     if (typeof email !== 'string') {
@@ -68,6 +69,7 @@ export const actions: Actions = {
             const otp = Math.floor(100000 + Math.random() * 900000).toString().padStart(4, '0');
             await db.update(table.usuarios).set({ otp }).where(eq(table.usuarios.email, emailAddress));
             console.log('OTP generated:', otp);
+            await sendOtpEmail(emailAddress, Number(otp));
             return redirect(302, '/ingresar/otp?email=' + userWithEmail.email);
         }
 
