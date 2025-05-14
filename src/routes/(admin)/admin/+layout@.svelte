@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import type { LayoutData } from './$types';
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
 
     let { data, children }: { data: LayoutData, children: Snippet } = $props();
     
@@ -26,6 +26,10 @@
             label: 'Clientes',
             href: '/admin/clientes'
         },
+        {
+            label: 'Sucursales',
+            href: '/admin/sucursales'
+        }
     ]
 </script>
 
@@ -33,11 +37,11 @@
     <nav class="flex flex-col w-96 items-end gap-6  p-4 md:px-8 sticky top-0 bg-base-200 border-r border-base-300">
 
         <ul class="flex flex-col gap-2  w-full flex-1 items-start">
-            {#each adminMenu as item}
+            {#each adminMenu as item (item.href)}
                 <li class="w-full">
                     <a 
                         href={item.href} 
-                        class="btn text-lg font-medium w-full !text-right justify-end {$page.url.pathname === item.href ? 'btn-primary' : 'btn-ghost hover:border-none'}"
+                        class="btn text-lg font-medium w-full !text-right justify-end {page.url.pathname === item.href ? 'btn-primary' : 'btn-ghost hover:border-none'}"
                     >
                         {item.label}
                     </a>
