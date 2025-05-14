@@ -3,17 +3,6 @@ import { unidadesVehiculos, modelosVehiculos, reservas, sucursales } from '$lib/
 import { eq, and, or, not, exists, lte, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
-type UnidadDisponible = {
-    patente: string;
-    estado: string;
-    marca: string;
-    modelo: string;
-    anio: number;
-    capacidadPasajeros: number;
-    precioPorDia: number;
-    imagenUrl: string;
-    nombreSucursal: string;
-};
 
 export const load: PageServerLoad = async ({ params }) => {
     const { fechaInicio, fechaFin, ubicacion } = params;
@@ -75,6 +64,6 @@ export const load: PageServerLoad = async ({ params }) => {
         fechaFin,
         ubicacion: ubicacionDecoded,
         sucursales: sucursalesList.map(s => s.nombre),
-        unidadesDisponibles: unidadesDisponibles as UnidadDisponible[]
+        unidadesDisponibles
     };
 }; 
