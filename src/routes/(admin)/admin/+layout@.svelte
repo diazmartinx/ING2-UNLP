@@ -35,7 +35,7 @@
     let clienteMenu = [
         {
             label: 'Reservas',
-            href: '/admin'
+            href: '/admin/mis-reservas'
         },
         {
             label: 'Cuenta',
