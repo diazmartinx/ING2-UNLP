@@ -25,7 +25,16 @@
     }
 
     function handleReservar(marca: string, modelo: string) {
-        goto(`/reservar/${data.fechaInicio}/${data.fechaFin}/${data.ubicacion}/${marca}/${modelo}`);
+        console.log('is logged: ', data.isLoggedIn);
+        const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}`;
+        
+        if (data.isLoggedIn === false) {
+            // Redirigir al inicio de sesión con redirectTo
+            goto(`/ingresar?redirectTo=${encodeURIComponent(pagoPagina)}`);
+        } else {
+            console.log('entra al else - usuario logueado');
+            goto(pagoPagina);
+        }
     }
 
     function handleImageError(event: Event) {
