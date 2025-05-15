@@ -22,6 +22,9 @@ export const actions = {
         const telefono = formData.get('telefono') as string;
         const password = formData.get('password') as string;
         const passwordConfirm = formData.get('passwordConfirm') as string;
+        const redirectTo = formData.get('redirectTo') as string || '/admin';
+        
+        console.log('redireccion a pago desde registrar', redirectTo);
 
         if (!nombre || !apellido || !dni || !fechaNacimiento || !email || !telefono || !password || !passwordConfirm) {
             return fail(400, { error: 'Todos los campos son requeridos' });
@@ -72,10 +75,13 @@ export const actions = {
             return fail(500, { error: 'Error al crear el usuario' });
         }
 
+        // Crear sesión automáticamente para el nuevo usuario
         const sessionToken = auth.generateSessionToken();
         const session = await auth.createSession(sessionToken, newUser.id);
         auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
-        redirect(302, '/admin');
+        // Redirigir al pago si hay un parámetro redirectTo
+        const url = new URL(event.request.url);
+        throw redirect(302, redirectTo);
     }
 } satisfies Actions;

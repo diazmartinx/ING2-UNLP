@@ -6,6 +6,7 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 import { sendOtpEmail } from '$lib/server/resend';
+import { page } from '$app/stores';
 
 function validateEmailAddress(email: string) {
     if (typeof email !== 'string') {
@@ -25,6 +26,11 @@ function validatePassword(password: string) {
 
 export const load: PageServerLoad = async (event) => {
     if (event.locals.user) {
+        // Si el usuario ya está logueado, ver si hay un redirectTo
+        const redirectTo = event.url.searchParams.get('redirectTo');
+        if (redirectTo) {
+            return redirect(302, redirectTo);
+        }
         return redirect(302, '/');
     }
     return {
@@ -37,6 +43,7 @@ export const actions: Actions = {
         const formData = await event.request.formData();
         const emailAddress = formData.get('email') as string;
         const password = formData.get('password') as string;
+        const redirectTo = formData.get('redirectTo') as string || '/admin';
 		
         console.log(emailAddress, password);
 
@@ -77,7 +84,8 @@ export const actions: Actions = {
         const session = await auth.createSession(sessionToken, userWithEmail.id);
         auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
-        return redirect(302, '/admin');
+        console.log('Redirecting to (hacia el pago desde logIn):', redirectTo);
+        throw redirect(302, redirectTo);
     }
 };
 
