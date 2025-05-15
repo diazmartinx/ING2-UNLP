@@ -4,10 +4,17 @@ import { eq, and, or, not, exists, lte, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
     const { fechaInicio, fechaFin, ubicacion } = params;
     const ubicacionDecoded = decodeURIComponent(ubicacion);
     
+    // Verificar si el usuario tiene una sesión iniciada
+    const session = locals.session;
+    let isLoggedIn = false;
+    if (session) {
+        isLoggedIn = true;
+    }
+
     // Convert string dates to Date objects
     const fechaInicioDate = new Date(fechaInicio);
     const fechaFinDate = new Date(fechaFin);
@@ -64,6 +71,7 @@ export const load: PageServerLoad = async ({ params }) => {
         fechaFin,
         ubicacion: ubicacionDecoded,
         sucursales: sucursalesList.map(s => s.nombre),
-        unidadesDisponibles
+        unidadesDisponibles,
+        isLoggedIn // Agregar esta propiedad al retorno
     };
 }; 
