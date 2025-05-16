@@ -3,6 +3,9 @@ import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$li
 import { eq, and } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 export const load = (async () => {
     const modelos = await db.select({
@@ -39,7 +42,6 @@ export const actions = {
             const modelo = formData.get('modelo') as string;
             const capacidadPasajeros = parseInt(formData.get('capacidadPasajeros') as string);
             const precioPorDia = parseFloat(formData.get('precioPorDia') as string);
-            const imagenUrl = formData.get('imagenUrl') as string;
             const idCategoria = parseInt(formData.get('idCategoria') as string);
             const idPoliticaCancelacion = parseInt(formData.get('idPoliticaCancelacion') as string);
             const porcentajeReembolsoParcialRaw = formData.get('porcentajeReembolsoParcial');
@@ -69,9 +71,34 @@ export const actions = {
                 }
             }
 
-            if (!marca || !modelo || !capacidadPasajeros || !precioPorDia || !imagenUrl || !idCategoria || !idPoliticaCancelacion) {
+            if (!marca || !modelo || !capacidadPasajeros || !precioPorDia || !idCategoria || !idPoliticaCancelacion) {
                 return fail(400, { message: 'Todos los campos son requeridos' });
             }
+
+            // Manejar la subida de la imagen
+            const imagen = formData.get('imagen') as File;
+            if (!imagen) {
+                return fail(400, { message: 'La imagen es requerida' });
+            }
+
+            // Validar que el archivo sea una imagen
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+            if (!allowedTypes.includes(imagen.type)) {
+                return fail(400, { message: 'El archivo debe ser una imagen (JPEG, PNG, GIF o WEBP)' });
+            }
+
+            // Generar un nombre único para el archivo
+            const extension = imagen.name.split('.').pop();
+            const fileName = `${uuidv4()}.${extension}`;
+            const filePath = join(process.cwd(), 'static', 'uploads', 'modelos', fileName);
+
+            // Guardar el archivo
+            const bytes = await imagen.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            await writeFile(filePath, buffer);
+
+            // Guardar la ruta relativa en la base de datos
+            const imagenUrl = `/uploads/modelos/${fileName}`;
 
             await db.insert(modelosVehiculos).values({
                 marca,

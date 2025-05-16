@@ -16,6 +16,7 @@
     let displayImageUrl = $state('');
     let imageLoadAttempted = $state(false);
     let modelImages = $state(new Map());
+    let selectedFile = $state<File | null>(null);
 
     function openCreateModal() {
         showCreateModal = true;
@@ -24,6 +25,7 @@
         displayImageUrl = '';
         createImageError = false;
         imageLoadAttempted = false;
+        selectedFile = null;
     }
 
     function closeModal() {
@@ -33,14 +35,17 @@
         displayImageUrl = '';
         createImageError = false;
         imageLoadAttempted = false;
+        selectedFile = null;
     }
 
     function handleImageInput(e: Event) {
-        const url = (e.target as HTMLInputElement).value;
-        createImageUrl = url;
-        displayImageUrl = url;
-        createImageError = false;
-        imageLoadAttempted = false;
+        const input = e.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            displayImageUrl = URL.createObjectURL(selectedFile);
+            createImageError = false;
+            imageLoadAttempted = false;
+        }
     }
 
     function handleImageError() {
@@ -151,6 +156,7 @@
         <form 
             method="POST" 
             action="?/create"
+            enctype="multipart/form-data"
             use:enhance={({ formData }) => {
                 return async ({ result }) => {
                     if (result.type === 'failure') {
@@ -187,13 +193,6 @@
                     {/each}
                 </select>
             </div>
-            
-            <div class="form-control">
-                <label class="label" for="anio">
-                    <span class="label-text">Año</span>
-                </label>
-                <input type="number" id="anio" name="anio" class="input input-bordered w-full" required min="1900" max={new Date().getFullYear()} />
-            </div>
 
             <div class="form-control">
                 <label class="label" for="capacidadPasajeros">
@@ -210,13 +209,21 @@
             </div>
 
             <div class="form-control">
-                <label class="label" for="imagenUrl">
-                    <span class="label-text">URL de la Imagen</span>
+                <label class="label" for="imagen">
+                    <span class="label-text">Imagen del Vehículo</span>
                 </label>
-                <input type="url" id="imagenUrl" name="imagenUrl" class="input input-bordered w-full" required oninput={handleImageInput} />
+                <input 
+                    type="file" 
+                    id="imagen" 
+                    name="imagen" 
+                    class="file-input file-input-bordered w-full" 
+                    accept="image/*"
+                    required 
+                    onchange={handleImageInput} 
+                />
             </div>
 
-            {#if createImageUrl}
+            {#if displayImageUrl}
                 <div class="flex justify-center mt-2">
                     <img
                         src={displayImageUrl}
@@ -228,7 +235,6 @@
                     />
                 </div>
             {/if}
-
 
             <div class="form-control">
                 <label class="label" for="idPoliticaCancelacion">
