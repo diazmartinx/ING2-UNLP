@@ -101,7 +101,7 @@ export const actions: Actions = {
             if (reservasPendientes.length > 0) {
                 return fail(400, {
                     success: false,
-                    error: 'La unidad está en uso'
+                    error: 'La unidad posee reservas pendientes'
                 });
             }
 

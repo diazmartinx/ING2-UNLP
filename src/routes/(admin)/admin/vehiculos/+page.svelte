@@ -99,21 +99,22 @@
 				);
 				await invalidate('app:vehiculos');
 				patenteSeleccionada = '';
-				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : 'inhabilitado'} exitosamente`;
+				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : nuevoEstado === 'Inhabilitado' ? 'inhabilitado' : 'habilitado'} exitosamente`;
 				setTimeout(() => {
 					successMessage = '';
 				}, 3000);
 			} else {
-				error = result.data?.error || 'Error: la unidad está en uso.';
+				error = result.data?.error || 'Error al actualizar el estado del vehículo';
 				mostrarConfirmacion = true;
 			}
 		} catch (err) {
-			error = 'Error al comunicarse con el servidor.';
+			error = 'Error al actualizar el estado del vehículo';
 			mostrarConfirmacion = true;
 		}
 	}
 
-	function confirmarAccion(patente: string, accion: string) {
+	function confirmarAccion(patente: string, accion: EstadoVehiculo) {
+		console.log(accion);
 		patenteSeleccionada = patente;
 		accionSeleccionada = accion;
 		mostrarConfirmacion = true;
@@ -187,16 +188,25 @@
 							>
 							{#if estado == 'Habilitado'}
 								<button
-                                    onclick={() => confirmarAccion(patente, 'Inhabilitado')}
+									onclick={() => confirmarAccion(patente, 'Inhabilitado')}
 									type="button"
-									class="font-medium text-600 hover:underline dark:text-red-500"
+									class="text-600 font-medium hover:underline dark:text-red-500"
 								>
 									Inhabilitar
 								</button>
+							{:else if estado == 'Inhabilitado'}
+								<button
+									onclick={() => confirmarAccion(patente, 'Habilitado')}
+									type="button"
+									class="text-600 font-medium hover:underline dark:text-red-500"
+								>
+									Habilitar
+								</button>
 							{/if}
+
 							{#if estado !== 'Dado de baja'}
 								<button
-                                    onclick={() => confirmarAccion(patente, 'Dar de baja')}
+									onclick={() => confirmarAccion(patente, 'Dado de baja')}
 									type="button"
 									class="font-medium text-red-600 hover:underline dark:text-red-500"
 								>
@@ -230,14 +240,16 @@
 					</button>
 				</div>
 			{:else}
-				{#if accionSeleccionada === 'Dar de baja'}
-				<p class="mb-4">
-					¿Está seguro que desea <span class="font-bold">dar de baja</span> el vehículo con patente {patenteSeleccionada}?
-				</p>
+				{#if accionSeleccionada === 'Dado de baja'}
+					<p class="mb-4">
+						¿Está seguro que desea <span class="font-bold">dar de baja</span> el vehículo con
+						patente {patenteSeleccionada}?
+					</p>
 				{:else}
-				<p class="mb-4">
-					¿Está seguro que desea <span class="font-bold">inhabilitar</span> el vehículo con patente {patenteSeleccionada}?
-				</p>
+					<p class="mb-4">
+						¿Está seguro que desea <span class="font-bold">inhabilitar</span> el vehículo con
+						patente {patenteSeleccionada}?
+					</p>
 				{/if}
 				<div class="flex justify-end gap-2">
 					<button
@@ -338,5 +350,3 @@
 		</div>
 	</div>
 {/if}
-
-
