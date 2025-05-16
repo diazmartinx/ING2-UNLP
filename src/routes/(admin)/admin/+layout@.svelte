@@ -8,7 +8,7 @@
     let adminMenu = [
         {
             label: 'Reservas',
-            href: '/admin'
+            href: '/admin/reservas'
         },
         {
             label: 'Categorías',
