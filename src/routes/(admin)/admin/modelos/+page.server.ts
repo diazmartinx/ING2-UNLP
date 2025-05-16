@@ -3,10 +3,6 @@ import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$li
 import { eq, and } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { mkdir } from 'fs/promises';
 
 export const load = (async () => {
     const modelos = await db.select({
@@ -15,7 +11,7 @@ export const load = (async () => {
         modelo: modelosVehiculos.modelo,
         capacidadPasajeros: modelosVehiculos.capacidadPasajeros,
         precioPorDia: modelosVehiculos.precioPorDia,
-        imagenUrl: modelosVehiculos.imagenUrl,
+        imagenBlob: modelosVehiculos.imagenBlob,
         categoria: categoriasVehiculos.nombre,
         politicaCancelacion: politicasCancelacion.tipoPolitica,
         porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial
@@ -24,11 +20,17 @@ export const load = (async () => {
     .leftJoin(categoriasVehiculos, eq(modelosVehiculos.idCategoria, categoriasVehiculos.id))
     .leftJoin(politicasCancelacion, eq(modelosVehiculos.idPoliticaCancelacion, politicasCancelacion.id));
 
+    // Convertir los blobs a base64 para la serialización
+    const modelosSerializados = modelos.map(modelo => ({
+        ...modelo,
+        imagenBlob: modelo.imagenBlob instanceof Buffer ? modelo.imagenBlob.toString('base64') : null
+    }));
+
     const categorias = await db.select().from(categoriasVehiculos);
     const politicas = await db.select().from(politicasCancelacion);
 
     return {
-        modelos,
+        modelos: modelosSerializados,
         categorias,
         politicas
     };
@@ -76,46 +78,38 @@ export const actions = {
                 return fail(400, { message: 'Todos los campos son requeridos' });
             }
 
-            // Manejar la subida de la imagen
+            // Manejar la imagen como binario
             const imagen = formData.get('imagen') as File;
-            if (!imagen) {
-                return fail(400, { message: 'La imagen es requerida' });
-            }
+            let imagenBlob: Buffer | null = null;
 
-            // Validar que el archivo sea una imagen
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
-            if (!allowedTypes.includes(imagen.type)) {
-                return fail(400, { message: 'El archivo debe ser una imagen (JPEG, PNG, GIF, WEBP o AVIF)' });
+            if (imagen) {
+                // Validar que el archivo sea una imagen
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+                if (!allowedTypes.includes(imagen.type)) {
+                    return fail(400, { message: 'El archivo debe ser una imagen (JPEG, PNG, GIF, WEBP o AVIF)' });
+                }
+
+                try {
+                    // Convertir la imagen a ArrayBuffer y luego a Buffer
+                    const bytes = await imagen.arrayBuffer();
+                    imagenBlob = Buffer.from(bytes);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    return fail(500, { message: 'Error al procesar la imagen' });
+                }
             }
 
             try {
-                // Generar un nombre único para el archivo
-                const extension = imagen.name.split('.').pop();
-                const fileName = `${uuidv4()}.${extension}`;
-                const filePath = join(process.cwd(), 'static', 'uploads', 'modelos', fileName);
-
-                // Asegurarse de que el directorio existe
-                await mkdir(join(process.cwd(), 'static', 'uploads', 'modelos'), { recursive: true });
-
-                // Guardar el archivo
-                const bytes = await imagen.arrayBuffer();
-                const buffer = Buffer.from(bytes);
-                await writeFile(filePath, buffer);
-
-                // Guardar la ruta relativa en la base de datos
-                const imagenUrl = `/uploads/modelos/${fileName}`;
-
                 await db.insert(modelosVehiculos).values({
                     marca,
                     modelo,
                     capacidadPasajeros,
                     precioPorDia,
-                    imagenUrl,
+                    imagenBlob,
                     idCategoria,
                     idPoliticaCancelacion,
                     porcentajeReembolsoParcial
                 });
-
                 return { success: true };
             } catch (error) {
                 console.error('Error detallado:', error);

@@ -3,6 +3,35 @@
     import { enhance } from '$app/forms';
     import { goto } from '$app/navigation';
     import { invalidateAll } from '$app/navigation';
+    import { onDestroy } from 'svelte';
+
+    interface Modelo {
+        id: number;
+        marca: string;
+        modelo: string;
+        capacidadPasajeros: number;
+        precioPorDia: number;
+        imagenBlob: string | null;
+        categoria: string;
+        politicaCancelacion: string;
+        porcentajeReembolsoParcial: number | null;
+    }
+
+    interface Categoria {
+        id: number;
+        nombre: string;
+    }
+
+    interface Politica {
+        id: number;
+        tipoPolitica: string;
+    }
+
+    interface PageData {
+        modelos: Modelo[];
+        categorias: Categoria[];
+        politicas: Politica[];
+    }
 
     let { data }: { data: PageData } = $props();
     let showCreateModal = $state(false);
@@ -62,8 +91,28 @@
         img.src = '/no-image-icon.svg';
     }
 
-    function handleModelImageLoad(modeloId: number, imageUrl: string) {
-        modelImages.set(modeloId, imageUrl);
+    function getImageUrlFromBlob(base64Data: string | null) {
+        if (!base64Data) {
+            return '/no-image-icon.svg';
+        }
+        try {
+            return `data:image/jpeg;base64,${base64Data}`;
+        } catch (error) {
+            return '/no-image-icon.svg';
+        }
+    }
+
+    function getMimeType(buffer: ArrayBuffer): string {
+        const arr = new Uint8Array(buffer.slice(0, 4));
+        const header = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        if (header.startsWith('89504e47')) return 'image/png';
+        if (header.startsWith('ffd8ffe0') || header.startsWith('ffd8ffe1')) return 'image/jpeg';
+        if (header.startsWith('47494638')) return 'image/gif';
+        if (header.startsWith('52494646')) return 'image/webp';
+        if (header.startsWith('0000001c6674797061766966')) return 'image/avif';
+        
+        return 'application/octet-stream';
     }
 
     async function showSuccessAndRedirect() {
@@ -74,6 +123,18 @@
             goto('/admin/modelos');
         }, 1500);
     }
+
+    // Cleanup function to revoke object URLs
+    function cleanup() {
+        modelImages.forEach(url => {
+            if (url.startsWith('blob:')) {
+                URL.revokeObjectURL(url);
+            }
+        });
+    }
+
+    // Call cleanup when component is destroyed
+    onDestroy(cleanup);
 </script>
 
 <div class="toast toast-top toast-end z-50">
@@ -101,7 +162,7 @@
                 <div class="flex flex-row">
                     <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
                         <img 
-                            src={modelo.imagenUrl || '/no-image-icon.svg'} 
+                            src={modelo.imagenBlob ? getImageUrlFromBlob(modelo.imagenBlob) : '/no-image-icon.svg'} 
                             alt={`${modelo.marca} ${modelo.modelo}`} 
                             class="h-60 w-60 object-cover rounded-lg" 
                             style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
@@ -218,7 +279,6 @@
                     name="imagen" 
                     class="file-input file-input-bordered w-full" 
                     accept="image/*"
-                    required 
                     onchange={handleImageInput} 
                 />
             </div>

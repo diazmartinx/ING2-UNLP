@@ -92,6 +92,20 @@
       "when": 1747155039867,
       "tag": "0012_certain_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1747410184909,
+      "tag": "0013_sharp_stingray",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1747410220502,
+      "tag": "0014_demonic_spot",
+      "breakpoints": true
     }
   ]
 }
