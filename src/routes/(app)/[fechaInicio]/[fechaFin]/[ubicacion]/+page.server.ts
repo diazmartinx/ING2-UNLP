@@ -1,13 +1,13 @@
 import { db } from '$lib/server/db';
 import { unidadesVehiculos, modelosVehiculos, reservas, sucursales } from '$lib/server/db/schema';
-import { eq, and, or, not, exists, lte, gte } from 'drizzle-orm';
+import { eq, and, or, not, exists, gt, lt, lte, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 
 export const load: PageServerLoad = async ({ params, locals }) => {
     const { fechaInicio, fechaFin, ubicacion } = params;
     const ubicacionDecoded = decodeURIComponent(ubicacion);
-    
+
     // Verificar si el usuario tiene una sesión iniciada
     const session = locals.session;
     let isLoggedIn = false;
@@ -15,16 +15,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         isLoggedIn = true;
     }
 
-    // Convert string dates to Date objects
-    const fechaInicioDate = new Date(fechaInicio);
-    const fechaFinDate = new Date(fechaFin);
+    // Crear fechas en GMT-3 para comparar correctamente con la base
+    const fechaInicioDate = new Date(`${fechaInicio}T00:00:00-03:00`);
+    const fechaFinDate = new Date(`${fechaFin}T23:59:59-03:00`);
 
     // Get all branches
     const sucursalesList = await db.select({
         nombre: sucursales.nombre
     })
-    .from(sucursales)
-    .orderBy(sucursales.nombre);
+        .from(sucursales)
+        .orderBy(sucursales.nombre);
 
     // Get available vehicles
     const unidadesDisponibles = await db.select({
@@ -38,33 +38,32 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         imagenUrl: modelosVehiculos.imagenUrl,
         nombreSucursal: sucursales.nombre
     })
-    .from(unidadesVehiculos)
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
-    .where(
-        and(
-            eq(unidadesVehiculos.estado, 'Habilitado'),
-            eq(sucursales.nombre, ubicacionDecoded),
-            not(
-                exists(
-                    db.select()
-                    .from(reservas)
-                    .where(
-                        and(
-                            eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                            or(
+        .from(unidadesVehiculos)
+        .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
+        .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
+        .where(
+            and(
+                eq(unidadesVehiculos.estado, 'Habilitado'),
+                eq(sucursales.nombre, ubicacionDecoded),
+                not(
+                    exists(
+                        db.select()
+                            .from(reservas)
+                            .where(
                                 and(
+                                    eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
+                                    gte(reservas.fechaFin, fechaInicioDate),
                                     lte(reservas.fechaInicio, fechaFinDate),
-                                    gte(reservas.fechaFin, fechaInicioDate)
+                                    or(
+                                        eq(reservas.estado, 'Pendiente'),
+                                        eq(reservas.estado, 'Entregada')
+                                    )
                                 )
-                            ),
-                            eq(reservas.estado, 'Pendiente')
-                        )
+                            )
                     )
                 )
             )
-        )
-    );
+        );
 
     return {
         fechaInicio,

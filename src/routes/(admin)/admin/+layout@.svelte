@@ -63,7 +63,9 @@
             {/each}
         </ul>
 
-        <form method="post" action="/?/logout" class="w-full">
+        <a href="/" class="btn w-full">Volver a inicio</a>
+
+        <form method="post" action="/?/logout" class="w-full -mt-2">
             <button type="submit" class="btn w-full">Cerrar sesión</button>
         </form>
     </nav>
