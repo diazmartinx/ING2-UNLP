@@ -6,6 +6,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { mkdir } from 'fs/promises';
 
 export const load = (async () => {
     const modelos = await db.select({
@@ -84,37 +85,51 @@ export const actions = {
             // Validar que el archivo sea una imagen
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
             if (!allowedTypes.includes(imagen.type)) {
-                return fail(400, { message: 'El archivo debe ser una imagen (JPEG, PNG, GIF o WEBP)' });
+                return fail(400, { message: 'El archivo debe ser una imagen (JPEG, PNG, GIF, WEBP o AVIF)' });
             }
 
-            // Generar un nombre único para el archivo
-            const extension = imagen.name.split('.').pop();
-            const fileName = `${uuidv4()}.${extension}`;
-            const filePath = join(process.cwd(), 'static', 'uploads', 'modelos', fileName);
+            try {
+                // Generar un nombre único para el archivo
+                const extension = imagen.name.split('.').pop();
+                const fileName = `${uuidv4()}.${extension}`;
+                const filePath = join(process.cwd(), 'static', 'uploads', 'modelos', fileName);
 
-            // Guardar el archivo
-            const bytes = await imagen.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            await writeFile(filePath, buffer);
+                // Asegurarse de que el directorio existe
+                await mkdir(join(process.cwd(), 'static', 'uploads', 'modelos'), { recursive: true });
 
-            // Guardar la ruta relativa en la base de datos
-            const imagenUrl = `/uploads/modelos/${fileName}`;
+                // Guardar el archivo
+                const bytes = await imagen.arrayBuffer();
+                const buffer = Buffer.from(bytes);
+                await writeFile(filePath, buffer);
 
-            await db.insert(modelosVehiculos).values({
-                marca,
-                modelo,
-                capacidadPasajeros,
-                precioPorDia,
-                imagenUrl,
-                idCategoria,
-                idPoliticaCancelacion,
-                porcentajeReembolsoParcial
-            });
+                // Guardar la ruta relativa en la base de datos
+                const imagenUrl = `/uploads/modelos/${fileName}`;
 
-            return { success: true };
+                await db.insert(modelosVehiculos).values({
+                    marca,
+                    modelo,
+                    capacidadPasajeros,
+                    precioPorDia,
+                    imagenUrl,
+                    idCategoria,
+                    idPoliticaCancelacion,
+                    porcentajeReembolsoParcial
+                });
+
+                return { success: true };
+            } catch (error) {
+                console.error('Error detallado:', error);
+                if (error instanceof Error) {
+                    return fail(500, { message: `Error al crear el modelo: ${error.message}` });
+                }
+                return fail(500, { message: 'Error al crear el modelo' });
+            }
         } catch (error) {
-            console.error('Error creating model:', error);
-            return fail(500, { message: 'Error al crear el modelo' });
+            console.error('Error general:', error);
+            if (error instanceof Error) {
+                return fail(500, { message: `Error al procesar la solicitud: ${error.message}` });
+            }
+            return fail(500, { message: 'Error al procesar la solicitud' });
         }
     }
 } satisfies Actions;
