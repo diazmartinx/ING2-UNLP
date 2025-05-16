@@ -1,6 +1,21 @@
 <script lang="ts">
     import type { PageData } from './$types';
+    import { enhance } from '$app/forms';
+    import { fly } from 'svelte/transition';
+
     const { data } = $props<{ data: PageData }>();
+
+    let modalOpen = $state(false);
+    let reservaSeleccionada = $state<{
+        id: number;
+        marca: string;
+        modelo: string;
+        tipoPolitica: string;
+        importeTotal: number;
+        porcentajeReembolsoParcial: number;
+    } | null>(null);
+
+    let showSuccessMessage = $state(false);
 
     function formatDate(timestamp: number): string {
         return new Date(timestamp).toLocaleDateString('es-AR', {
@@ -25,7 +40,15 @@
 </script>
 
 <div class="container mx-auto p-4 max-w-4xl">
-    <h1 class="text-3xl font-bold mb-6">Mis Reservas</h1>
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold">Mis Reservas</h1>
+        {#if showSuccessMessage}
+            <div class="alert alert-success" transition:fly={{ x: 200, duration: 2000 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Reserva cancelada con éxito.</span>
+            </div>
+        {/if}
+    </div>
 
     {#if data.reservas.length === 0}
         <div class="text-center py-8">
@@ -58,7 +81,7 @@
                         <div class="flex flex-wrap items-center justify-center gap-4">
                             <div class="min-w-[250px] max-w-[350px] text-center">
                                 <span class="badge badge-outline px-3 py-1 truncate">
-                                    {reserva.marca} {reserva.modelo}
+                                    {reserva.marca} {reserva.modelo} {reserva.tipoReembolso}
                                 </span>
                             </div>
                             <div class="w-32 text-center">
@@ -78,9 +101,12 @@
                             </div>
                             <div class="w-32 text-center">
                                 {#if reserva.estado === 'Pendiente'}
-                                <button class="btn btn-error btn-sm">
-                                    Cancelar
-                                </button>
+                                    <button class="btn btn-error btn-sm" onclick={() => {
+                                        modalOpen = true;
+                                        reservaSeleccionada = reserva;
+                                    }}>
+                                        Cancelar
+                                    </button>
                                 {/if}
                             </div>
                         </div>
@@ -89,4 +115,52 @@
             {/each}
         </div>
     {/if}
-</div> 
+
+    <!-- Modal de confirmación -->
+    {#if modalOpen}
+        <div class="modal modal-open">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Confirmar Cancelación</h3>
+                {#if reservaSeleccionada}
+                    <p class="py-4">
+                        ¿Está seguro de que desea cancelar su reserva de {reservaSeleccionada.marca} {reservaSeleccionada.modelo}?
+                        <!-- Aquí deberías mostrar el tipo de reembolso y el porcentaje -->
+                        <br>
+                        Tipo de Reembolso: {reservaSeleccionada.tipoPolitica}
+                        {#if (reservaSeleccionada.tipoPolitica === 'Reembolso Parcial')}
+                            <br>
+                            Porcentaje de Reembolso: {reservaSeleccionada.porcentajeReembolsoParcial}%. Se le reembolsará ${(reservaSeleccionada.importeTotal * reservaSeleccionada.porcentajeReembolsoParcial) / 100} al cancelar la reserva.
+                        {/if}
+                    </p>
+                {/if}
+                <div class="modal-action">
+                    <button class="btn btn-ghost" onclick={() => {
+                        modalOpen = false;
+                        reservaSeleccionada = null;
+                    }}>Cancelar</button>
+                    <form method="POST" action="?/cancelarReserva" use:enhance={() => {
+                        return ({ result }) => {
+                            if (result.type === 'success') {
+                                showSuccessMessage = true;
+                                setTimeout(() => {
+                                    showSuccessMessage = false;
+                                    window.location.reload();
+                                }, 3000); // Ocultar después de 3 segundos
+                            } else if (result.type === 'error') {
+                                console.error("Error al cancelar la reserva");
+                                alert("Ocurrió un error al cancelar la reserva.");
+                            } else if (result.type === 'redirect') {
+                                window.location.href = result.location;
+                            }
+                            modalOpen = false;
+                            reservaSeleccionada = null;
+                        };
+                    }}>
+                        <input type="hidden" name="idReserva" value={reservaSeleccionada?.id} />
+                        <button type="submit" class="btn btn-error">Confirmar cancelación</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {/if}
+</div>

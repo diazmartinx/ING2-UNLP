@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { error, redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
+import type { PageServerLoad, Actions } from './$types';
+import { reservas, unidadesVehiculos, modelosVehiculos, usuarios, politicasCancelacion } from '$lib/server/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 
 export const load = (async ({ locals }) => {
@@ -30,11 +30,14 @@ export const load = (async ({ locals }) => {
             estado: reservas.estado,
             importeTotal: reservas.importeTotal,
             marca: modelosVehiculos.marca,
-            modelo: modelosVehiculos.modelo
+            modelo: modelosVehiculos.modelo, 
+            tipoPolitica: politicasCancelacion.tipoPolitica,
+            porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial,
         })
         .from(reservas)
         .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
+        .leftJoin(politicasCancelacion, eq(modelosVehiculos.idPoliticaCancelacion, politicasCancelacion.id))
         .where(eq(reservas.idUsuario, session.userId))
         .orderBy(
             desc(sql`${reservas.estado} = 'Pendiente'`),
@@ -46,3 +49,21 @@ export const load = (async ({ locals }) => {
         reservas: reservasUsuario
     };
 }) satisfies PageServerLoad; 
+
+export const actions: Actions = {
+    cancelarReserva: async ({ request }) => {
+        const data = await request.formData();
+        const idReserva = Number(data.get('idReserva'));
+
+        try {
+            await db.update(reservas)
+                .set({ estado: 'Cancelada' })
+                .where(eq(reservas.id, idReserva));
+        } catch (error) {
+            console.error('Error al cancelar la reserva:', error);
+            return { success: false, error: (error as any).message };
+        }
+
+        return { success: true };
+    }
+};
