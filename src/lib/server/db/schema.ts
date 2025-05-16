@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core';
 
 export const usuarios = sqliteTable('usuarios',{
 	id: integer().primaryKey({ autoIncrement: true }),
@@ -46,7 +46,7 @@ export const modelosVehiculos = sqliteTable('modelos_vehiculos', {
 	capacidadPasajeros: integer().notNull(),
 	precioPorDia: real().notNull(),
 	porcentajeReembolsoParcial: real(),
-	imagenUrl: text('imagen_url').notNull()
+	imagenBlob: blob('imagen_blob')
 })
 
 export const reservas = sqliteTable('reservas', {

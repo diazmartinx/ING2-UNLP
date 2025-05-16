@@ -42,6 +42,17 @@
         img.src = '/no-image-icon.svg';
     }
 
+    function getImageUrlFromBlob(base64Data: string | null) {
+        if (!base64Data) {
+            return '/no-image-icon.svg';
+        }
+        try {
+            return `data:image/jpeg;base64,${base64Data}`;
+        } catch (error) {
+            return '/no-image-icon.svg';
+        }
+    }
+
     // Create a reactive statement for groupedVehicles that updates when data changes
     $: groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
         const key = `${vehicle.marca}-${vehicle.modelo}`;
@@ -49,7 +60,7 @@
             acc[key] = {
                 marca: vehicle.marca,
                 modelo: vehicle.modelo,
-                imagenUrl: vehicle.imagenUrl,
+                imagenBlob: vehicle.imagenBlob,
                 capacidadPasajeros: vehicle.capacidadPasajeros,
                 precioPorDia: vehicle.precioPorDia,
                 nombreSucursal: vehicle.nombreSucursal,
@@ -129,7 +140,7 @@
                     <div class="flex flex-row">
                         <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
                             <img 
-                                src={unidad.imagenUrl || '/no-image-icon.svg'} 
+                                src={unidad.imagenBlob ? getImageUrlFromBlob(unidad.imagenBlob) : '/no-image-icon.svg'} 
                                 alt={`${unidad.marca} ${unidad.modelo}`} 
                                 class="h-60 w-60 object-cover rounded-lg" 
                                 style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"

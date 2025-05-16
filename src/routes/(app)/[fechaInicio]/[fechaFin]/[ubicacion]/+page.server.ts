@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         anio: unidadesVehiculos.anio,
         capacidadPasajeros: modelosVehiculos.capacidadPasajeros,
         precioPorDia: modelosVehiculos.precioPorDia,
-        imagenUrl: modelosVehiculos.imagenUrl,
+        imagenBlob: modelosVehiculos.imagenBlob,
         nombreSucursal: sucursales.nombre
     })
         .from(unidadesVehiculos)
@@ -65,12 +65,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             )
         );
 
+    // Convertir los blobs a base64 para la serialización
+    const unidadesSerializadas = unidadesDisponibles.map(unidad => ({
+        ...unidad,
+        imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
+    }));
+
     return {
         fechaInicio,
         fechaFin,
         ubicacion: ubicacionDecoded,
         sucursales: sucursalesList.map(s => s.nombre),
-        unidadesDisponibles,
-        isLoggedIn // Agregar esta propiedad al retorno
+        unidadesDisponibles: unidadesSerializadas,
+        isLoggedIn
     };
 }; 
