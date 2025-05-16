@@ -55,8 +55,10 @@
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
 		"@types/bcrypt": "^5.0.2",
+		"@types/uuid": "^10.0.0",
 		"bcrypt": "^5.1.1",
 		"drizzle-orm": "^0.40.0",
-		"resend": "^4.5.1"
+		"resend": "^4.5.1",
+		"uuid": "^11.1.0"
 	}
 }
