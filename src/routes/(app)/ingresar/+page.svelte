@@ -9,9 +9,9 @@
 	let redirectTo = $page.url.searchParams.get('redirectTo') || '/admin';
 
 	function redirectToRegister() {
-		const pagoPagina = `${encodeURIComponent(redirectTo)}`;
+		const pagoPagina = redirectTo;
 		console.log('Redirecting to register with redirectTo:', redirectTo);
-		goto(`/registrarse?redirectTo=${encodeURIComponent(pagoPagina)}`);
+		goto(`/registrarse?redirectTo=${pagoPagina}`);
 	}
 </script>
 
