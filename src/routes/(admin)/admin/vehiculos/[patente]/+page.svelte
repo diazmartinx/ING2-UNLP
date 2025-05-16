@@ -9,16 +9,65 @@
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Número de patente:</dt>
         <dd class="text-lg font-semibold">{data.vehiculo.patente}</dd>
     </div>
+
+    {#if data.vehiculo.modelo}
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Modelo</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.modelo.modelo}</dd>
+    </div>
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Marca</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.modelo.marca}</dd>
+    </div>
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Capacidad</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.modelo.capacidadPasajeros}</dd>
+    </div>
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Precio por día</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.modelo.precioPorDia}</dd>
+    </div>
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Política de cancelación</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.modelo.idPoliticaCancelacion}</dd>
+    </div>
+    {:else}
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Modelo</dt>
+        <dd class="text-lg font-semibold">No hay modelo asignado</dd>
+    </div>
+    {/if}
+
+    {#if data.vehiculo.categoria}
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Categoria</dt>
+        <dd class="text-lg font-semibold">{data.vehiculo.categoria.nombre}</dd>
+    </div>
+    {:else}
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Categoría</dt>
+        <dd class="text-lg font-semibold">No hay categoría asignada</dd>
+    </div>
+    {/if}
+
     <div class="flex flex-col py-3">
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Estado del vehículo</dt>
         <dd class="text-lg font-semibold">{data.vehiculo.estado}</dd>
     </div>
-    {#if data.vehiculo.sucursal && data.vehiculo.sucursal.length > 0}
+
+    {#if data.vehiculo.sucursal}
     <div class="flex flex-col py-3">
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Sucursal y dirección</dt>
-        <dd class="text-lg font-semibold">{data.vehiculo.sucursal[0].nombre} -  {data.vehiculo.sucursal[0].direccion}</dd>
+        <dd class="text-lg font-semibold">{data.vehiculo.sucursal.nombre} -  {data.vehiculo.sucursal.direccion}</dd>
+    </div>
+    {:else}
+    <div class="flex flex-col py-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Sucursal y dirección</dt>
+        <dd class="text-lg font-semibold">No hay sucursal asignada</dd>
     </div>
     {/if}
+
+    {#if data.vehiculo.reservas.length > 0}
     <div class="flex flex-col pt-3">
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Reservas</dt>
         {#each data.vehiculo.reservas as { fechaInicio, fechaFin, estado, importeTotal, fechaCreacion }}
@@ -29,4 +78,10 @@
             </ol>
         {/each}
     </div>
+    {:else}
+    <div class="flex flex-col pt-3">
+        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Reservas</dt>
+        <dd class="text-lg font-semibold">No hay reservas</dd>
+    </div>
+    {/if}
 </dl>
