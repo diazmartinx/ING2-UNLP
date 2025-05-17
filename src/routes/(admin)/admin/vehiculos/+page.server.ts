@@ -81,10 +81,10 @@ export const actions: Actions = {
         }
     },
 
-    darDeBaja: async ({ request }) => {
+    actualizarEstadoVehiculo: async ({ request }) => {
         try {
             const data = await request.json();
-            const { patente } = data;
+            const { patente, nuevoEstado } = data;
 
             // Verificar si hay reservas pendientes
             const reservasPendientes = await db
@@ -108,7 +108,7 @@ export const actions: Actions = {
             // Actualizar el estado del vehículo
             await db
                 .update(unidadesVehiculos)
-                .set({ estado: 'Dado de baja' })
+                .set({ estado: nuevoEstado })
                 .where(eq(unidadesVehiculos.patente, patente));
 
             return {
@@ -118,7 +118,7 @@ export const actions: Actions = {
         } catch (err) {
             return fail(500, {
                 success: false,
-                error: 'Error al dar de baja el vehículo.'
+                error: 'Error al actualizar el estado del vehículo.'
             });
         }
     }
