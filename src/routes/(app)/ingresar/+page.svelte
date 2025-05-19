@@ -44,7 +44,13 @@
 		<p class="text-error mt-4 text-center text-sm">{form?.message ?? ''}</p>
 		<p class="mt-4 text-center text-sm">
 			¿No tenés una cuenta?
-			<a on:click={redirectToRegister} class="text-primary cursor-pointer underline">Registrate acá</a>
+			<button 
+				type="button"
+				onclick={redirectToRegister}
+				class="text-primary cursor-pointer underline bg-transparent border-none p-0"
+			>
+				Registrate acá
+			</button>
 		</p>
 	</section>
 </main>

@@ -4,8 +4,8 @@
     let { data }: { data: PageData } = $props();
 </script>
 
-
-        <p>user:</p>
-        {#each Object.entries(data.user) as [key, value]}
-            <p class="text-left">{key}: {value}</p>
-        {/each}
+<div class="flex items-center justify-center h-full">
+    <p class="text-lg text-gray-600">
+        Para continuar, seleccione una de las opciones en el menú de la izquierda
+    </p>
+</div>
