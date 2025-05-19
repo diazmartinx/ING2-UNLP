@@ -6,7 +6,6 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 import { sendOtpEmail } from '$lib/server/resend';
-import { page } from '$app/stores';
 
 function validateEmailAddress(email: string) {
     if (typeof email !== 'string') {
@@ -45,15 +44,13 @@ export const actions: Actions = {
         const password = formData.get('password') as string;
         const redirectTo = formData.get('redirectTo') as string || '/admin';
 		
-        console.log(emailAddress, password);
-
         if (!validateEmailAddress(emailAddress)) {
             return fail(400, {
-                message: 'Correo electrónico inválido'
+                message: 'Credenciales inválidas'
             });
         }
         if (!validatePassword(password)) {
-            return fail(400, { message: 'Correo electrónico o contraseña invalida' });
+            return fail(400, { message: 'Credenciales inválidas' });
         }
 
         const [userWithEmail] = await db
@@ -62,14 +59,13 @@ export const actions: Actions = {
             .where(eq(table.usuarios.email, emailAddress));
 
         if (!userWithEmail) {
-            return fail(400, { message: 'Correo electrónico o contraseña invalida' });
+            return fail(400, { message: 'Credenciales inválidas' });
         }
 
-        console.log('Retrieved passwordHash from DB:', userWithEmail.passwordHash);
         const validPassword = await verify(userWithEmail.passwordHash, password);
 
         if (!validPassword) {
-            return fail(400, { message: 'Correo electrónico o contraseña invalida' });
+            return fail(400, { message: 'Credenciales inválidas' });
         }
 
         if (userWithEmail.rol == 'admin') {
