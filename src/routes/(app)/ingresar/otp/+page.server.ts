@@ -17,13 +17,13 @@ export const actions = {
         const emailAddress = formData.get('email') as string;
 
         if (!otp || !emailAddress) {
-            return fail(400, { message: 'OTP y correo electrónico requeridos' });
+            return fail(400, { message: 'OTP incorrecto' });
         }
 
         const [existingUser] = await db.select().from(table.usuarios).where(and(eq(table.usuarios.email, emailAddress), eq(table.usuarios.otp, otp)));
 
         if (!existingUser) {
-            return fail(400, { message: 'Usuario no encontrado o OTP incorrecto' });
+            return fail(400, { message: 'OTP incorrecto' });
         }
 
         await db.update(table.usuarios).set({ otp: null }).where(eq(table.usuarios.email, emailAddress));
