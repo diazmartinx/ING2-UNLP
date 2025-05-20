@@ -3,8 +3,27 @@
     import { formatDate } from '$lib/utils';
     import type { PageData } from './$types';
 
+    interface Reserva {
+        id: number;
+        fechaInicio: Date;
+        fechaFin: Date;
+        fechaCreacion: Date;
+        estado: string;
+        dniCliente: string;
+        patenteUnidadAsignada: string;
+        nombreCliente: string;
+        apellidoCliente: string;
+        emailCliente: string;
+        telefonoCliente: string;
+        modeloVehiculo: string;
+        anioVehiculo: number;
+        imagenVehiculo: string | null;
+        marcaVehiculo: string;
+        nombreModelo: string;
+    }
+
     export let data: PageData;
-    const { reserva } = data;
+    const { reserva } = data as { reserva: Reserva };
 
     const getEstadoColor = (estado: string) => {
         switch (estado) {
@@ -38,6 +57,22 @@
             minute: '2-digit',
             timeZone: 'America/Argentina/Buenos_Aires'
         });
+    }
+
+    function getImageUrlFromBlob(base64Data: string | null) {
+        if (!base64Data) {
+            return '/no-image-icon.svg';
+        }
+        try {
+            return `data:image/jpeg;base64,${base64Data}`;
+        } catch (error) {
+            return '/no-image-icon.svg';
+        }
+    }
+
+    function handleImageError(event: Event) {
+        const img = event.currentTarget as HTMLImageElement;
+        img.src = '/no-image-icon.svg';
     }
 </script>
 
@@ -75,15 +110,15 @@
                 <!-- Información del Vehículo -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Vehículo</h2>
-                    {#if reserva.imagenVehiculo}
-                        <div class="mb-4">
-                            <img 
-                                src={`data:image/jpeg;base64,${reserva.imagenVehiculo}`}
-                                alt="Imagen del vehículo" 
-                                class="w-full h-48 object-cover rounded-lg"
-                            />
-                        </div>
-                    {/if}
+                    <div class="mb-4 flex items-center justify-center bg-gray-100 rounded-lg p-4">
+                        <img 
+                            src={getImageUrlFromBlob(reserva.imagenVehiculo)}
+                            alt={`${reserva.marcaVehiculo} ${reserva.nombreModelo}`}
+                            class="h-60 w-60 object-cover rounded-lg"
+                            style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
+                            onerror={handleImageError}
+                        />
+                    </div>
                     <div class="space-y-3">
                         <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadAsignada}</p>
                         <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculo}</p>

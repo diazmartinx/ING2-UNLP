@@ -40,7 +40,13 @@ export const load = (async ({ params }) => {
         throw error(404, 'Reserva no encontrada');
     }
 
+    // Convertir el blob de imagen a base64
+    const reservaSerializada = {
+        ...reserva[0],
+        imagenVehiculo: reserva[0].imagenVehiculo instanceof Buffer ? reserva[0].imagenVehiculo.toString('base64') : null
+    };
+
     return {
-        reserva: reserva[0]
+        reserva: reservaSerializada
     };
 }) satisfies PageServerLoad; 
