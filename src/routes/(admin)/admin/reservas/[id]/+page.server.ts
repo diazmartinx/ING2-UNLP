@@ -8,7 +8,9 @@ export const load = (async ({ params }) => {
     const id = Number(params.id);
     
     if (isNaN(id)) {
-        throw error(400, 'ID de reserva inválido');
+        return {
+            error: 'ID de reserva inválido'
+        };
     }
 
     const reserva = await db.select({
@@ -25,9 +27,10 @@ export const load = (async ({ params }) => {
         telefonoCliente: usuarios.telefono,
         modeloVehiculo: unidadesVehiculos.idModelo,
         anioVehiculo: unidadesVehiculos.anio,
-        imagenVehiculo: modelosVehiculos.imagenBlob,
         marcaVehiculo: modelosVehiculos.marca,
-        nombreModelo: modelosVehiculos.modelo
+        nombreModelo: modelosVehiculos.modelo,
+        precioPorDia: modelosVehiculos.precioPorDia,
+        importeTotal: reservas.importeTotal
     })
     .from(reservas)
     .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))
@@ -37,16 +40,12 @@ export const load = (async ({ params }) => {
     .limit(1);
 
     if (!reserva || reserva.length === 0) {
-        throw error(404, 'Reserva no encontrada');
+        return {
+            error: 'La reserva especificada no existe'
+        };
     }
 
-    // Convertir el blob de imagen a base64
-    const reservaSerializada = {
-        ...reserva[0],
-        imagenVehiculo: reserva[0].imagenVehiculo instanceof Buffer ? reserva[0].imagenVehiculo.toString('base64') : null
-    };
-
     return {
-        reserva: reservaSerializada
+        reserva: reserva[0]
     };
 }) satisfies PageServerLoad; 

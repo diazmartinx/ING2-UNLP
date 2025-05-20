@@ -17,13 +17,14 @@
         telefonoCliente: string;
         modeloVehiculo: string;
         anioVehiculo: number;
-        imagenVehiculo: string | null;
         marcaVehiculo: string;
         nombreModelo: string;
+        precioPorDia: number;
+        importeTotal: number;
     }
 
     export let data: PageData;
-    const { reserva } = data as { reserva: Reserva };
+    const { reserva, error } = data as { reserva?: Reserva; error?: string };
 
     const getEstadoColor = (estado: string) => {
         switch (estado) {
@@ -59,20 +60,11 @@
         });
     }
 
-    function getImageUrlFromBlob(base64Data: string | null) {
-        if (!base64Data) {
-            return '/no-image-icon.svg';
-        }
-        try {
-            return `data:image/jpeg;base64,${base64Data}`;
-        } catch (error) {
-            return '/no-image-icon.svg';
-        }
-    }
-
-    function handleImageError(event: Event) {
-        const img = event.currentTarget as HTMLImageElement;
-        img.src = '/no-image-icon.svg';
+    function formatCurrency(amount: number): string {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS'
+        }).format(amount);
     }
 </script>
 
@@ -88,57 +80,58 @@
 
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
         <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Detalles de la Reserva #{reserva.id}</h1>
-                <span class={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(reserva.estado)}`}>
-                    {reserva.estado}
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Información del Cliente -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Cliente</h2>
-                    <div class="space-y-3">
-                        <p><span class="font-medium">Nombre:</span> {reserva.nombreCliente} {reserva.apellidoCliente}</p>
-                        <p><span class="font-medium">DNI:</span> {reserva.dniCliente}</p>
-                        <p><span class="font-medium">Email:</span> {reserva.emailCliente}</p>
-                        <p><span class="font-medium">Teléfono:</span> {reserva.telefonoCliente}</p>
-                    </div>
+            {#if error}
+                <div class="text-center py-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Error</h2>
+                    <p class="text-gray-600">{error}</p>
+                </div>
+            {:else if reserva}
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">Detalles de la Reserva #{reserva.id}</h1>
+                    <span class={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(reserva.estado)}`}>
+                        {reserva.estado}
+                    </span>
                 </div>
 
-                <!-- Información del Vehículo -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Vehículo</h2>
-                    <div class="mb-4 flex items-center justify-center bg-gray-100 rounded-lg p-4">
-                        <img 
-                            src={getImageUrlFromBlob(reserva.imagenVehiculo)}
-                            alt={`${reserva.marcaVehiculo} ${reserva.nombreModelo}`}
-                            class="h-60 w-60 object-cover rounded-lg"
-                            style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
-                            onerror={handleImageError}
-                        />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Información del Cliente -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Cliente</h2>
+                        <div class="space-y-3">
+                            <p><span class="font-medium">Nombre:</span> {reserva.nombreCliente} {reserva.apellidoCliente}</p>
+                            <p><span class="font-medium">DNI:</span> {reserva.dniCliente}</p>
+                            <p><span class="font-medium">Email:</span> {reserva.emailCliente}</p>
+                            <p><span class="font-medium">Teléfono:</span> {reserva.telefonoCliente}</p>
+                        </div>
                     </div>
-                    <div class="space-y-3">
-                        <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadAsignada}</p>
-                        <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculo}</p>
-                        <p><span class="font-medium">Modelo:</span> {reserva.nombreModelo}</p>
-                        <p><span class="font-medium">Año:</span> {reserva.anioVehiculo}</p>
-                    </div>
-                </div>
 
-                <!-- Información de la Reserva -->
-                <div class="bg-gray-50 p-4 rounded-lg md:col-span-2">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-900">Detalles de la Reserva</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <p><span class="font-medium">Fecha de Inicio:</span> {formatDateOnly(reserva.fechaInicio)}</p>
-                            <p><span class="font-medium">Fecha de Fin:</span> {formatDateOnly(reserva.fechaFin)}</p>
-                            <p><span class="font-medium">Fecha de Creación:</span> {formatDateTime(reserva.fechaCreacion)}</p>
+                    <!-- Información del Vehículo -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Vehículo</h2>
+                        <div class="space-y-3">
+                            <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadAsignada}</p>
+                            <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculo}</p>
+                            <p><span class="font-medium">Modelo:</span> {reserva.nombreModelo}</p>
+                            <p><span class="font-medium">Año:</span> {reserva.anioVehiculo}</p>
+                        </div>
+                    </div>
+
+                    <!-- Información de la Reserva -->
+                    <div class="bg-gray-50 p-4 rounded-lg md:col-span-2">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900">Detalles de la Reserva</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p><span class="font-medium">Fecha de Inicio:</span> {formatDateOnly(reserva.fechaInicio)}</p>
+                                <p><span class="font-medium">Fecha de Fin:</span> {formatDateOnly(reserva.fechaFin)}</p>
+                                <p><span class="font-medium">Fecha de Creación:</span> {formatDateTime(reserva.fechaCreacion)}</p>
+                            </div>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-900">Importe Total: {formatCurrency(reserva.importeTotal)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            {/if}
         </div>
     </div>
 </div> 
