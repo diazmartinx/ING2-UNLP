@@ -172,7 +172,7 @@
                             <td>
                                 <div class="flex space-x-2">
                                     <a 
-                                        href="./reservas/{reserva.id}" 
+                                        href="/admin/reservas/{reserva.id}" 
                                         class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                                     >
                                         Detalles
