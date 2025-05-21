@@ -42,6 +42,11 @@
 
     async function cambiarEstado() {
         try {
+            if (estadoReserva === 'Cancelada' && data.reserva.estado === 'Entregada') {
+                error = 'No se puede cancelar una reserva que ya fue entregada';
+                return;
+            }
+
             const formData = new FormData();
             formData.append('reservaId', data.reserva.id.toString());
             formData.append('estado', estadoReserva);

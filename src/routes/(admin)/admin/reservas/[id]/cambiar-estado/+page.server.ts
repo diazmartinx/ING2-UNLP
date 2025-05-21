@@ -67,6 +67,25 @@ export const actions: Actions = {
             };
         }
 
+        // Get current reservation state
+        const [currentReserva] = await db.select({ estado: reservas.estado })
+            .from(reservas)
+            .where(eq(reservas.id, reservaId));
+
+        if (!currentReserva) {
+            return {
+                type: 'error',
+                data: { error: 'Reserva no encontrada' }
+            };
+        }
+
+        if (estado === 'Cancelada' && currentReserva.estado === 'Entregada') {
+            return {
+                type: 'error',
+                data: { error: 'No se puede cancelar una reserva que ya fue entregada' }
+            };
+        }
+
         if (estado === 'Entregada' && !patente) {
             return {
                 type: 'error',
