@@ -48,7 +48,7 @@
             
             if (estadoReserva === 'Entregada') {
                 if (!patenteSeleccionada) {
-                    error = 'Debe seleccionar una unidad para asignar';
+                    error = 'Se debe asignar un vehículo';
                     return;
                 }
                 formData.append('patente', patenteSeleccionada);
@@ -142,12 +142,6 @@
         <div class="card-body">
             <h3 class="card-title">Cambiar Estado de la Reserva</h3>
             
-            {#if error}
-                <div class="alert alert-error">
-                    <span>{error}</span>
-                </div>
-            {/if}
-
             <div class="form-control w-full mb-4">
                 <label class="label" for="estado">
                     <span class="label-text">Estado de la Reserva</span>
@@ -221,10 +215,15 @@
             {/if}
 
             <div class="card-actions justify-end mt-4">
+                {#if error}
+                    <div class="text-red-600 mr-4 bg-red-50 px-4 py-2 rounded-lg flex items-center">
+                        {error}
+                    </div>
+                {/if}
                 <button 
                     class="btn btn-primary"
                     onclick={cambiarEstado}
-                    disabled={!estadoReserva || (estadoReserva === 'Entregada' && !patenteSeleccionada)}
+                    disabled={!estadoReserva}
                 >
                     Cambiar Estado
                 </button>
