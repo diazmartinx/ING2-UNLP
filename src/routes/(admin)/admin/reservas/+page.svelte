@@ -133,7 +133,8 @@
                         <th>ID</th>
                         <th>Cliente</th>
                         <th>DNI</th>
-                        <th>Vehículo</th>
+                        <th>Unidad Reservada</th>
+                        <th>Unidad Asignada</th>
                         <th>
                             <button 
                                 class="flex items-center gap-2"
@@ -160,6 +161,7 @@
                             <td>{reserva.id}</td>
                             <td>{reserva.nombreCliente} {reserva.apellidoCliente}</td>
                             <td>{reserva.dniCliente}</td>
+                            <td>{reserva.patenteUnidadReservada}</td>
                             <td>{reserva.patenteUnidadAsignada}</td>
                             <td>{new Date(reserva.fechaInicio).toLocaleDateString()}</td>
                             <td>{new Date(reserva.fechaFin).toLocaleDateString()}</td>
