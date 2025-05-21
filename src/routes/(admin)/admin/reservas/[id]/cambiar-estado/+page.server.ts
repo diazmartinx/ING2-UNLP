@@ -4,6 +4,8 @@ import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
+type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
+
 export const load: PageServerLoad = async ({ params }) => {
     const reservaId = parseInt(params.id);
     
@@ -55,21 +57,29 @@ export const actions: Actions = {
     asignarUnidad: async ({ request }) => {
         const formData = await request.formData();
         const reservaId = parseInt(formData.get('reservaId') as string);
+        const estado = formData.get('estado') as EstadoReserva;
         const patente = formData.get('patente') as string;
 
-        if (!reservaId || !patente) {
+        if (!reservaId || !estado) {
             return {
                 type: 'error',
                 data: { error: 'Datos incompletos' }
             };
         }
 
+        if (estado === 'Entregada' && !patente) {
+            return {
+                type: 'error',
+                data: { error: 'Debe seleccionar una unidad para asignar' }
+            };
+        }
+
         try {
-            // Update the reservation with the new assigned unit
+            // Update the reservation with the new state and unit (if applicable)
             await db.update(reservas)
                 .set({
-                    patenteUnidadAsignada: patente,
-                    estado: 'Entregada'
+                    patenteUnidadAsignada: estado === 'Entregada' ? patente : null,
+                    estado: estado
                 })
                 .where(eq(reservas.id, reservaId));
 
@@ -79,7 +89,7 @@ export const actions: Actions = {
         } catch (err) {
             return {
                 type: 'error',
-                data: { error: 'Error al asignar la unidad' }
+                data: { error: 'Error al cambiar el estado de la reserva' }
             };
         }
     }

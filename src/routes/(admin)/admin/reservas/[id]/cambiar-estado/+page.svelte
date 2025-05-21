@@ -11,12 +11,18 @@
     let marcaSeleccionada = $state('');
     let modeloSeleccionado = $state('');
     let patenteSeleccionada = $state('');
+    let estadoReserva = $state('');
 
     type Unidad = {
         patente: string;
         marca: string | null;
         modelo: string | null;
     };
+
+    const estadosReserva = [
+        { value: 'Entregada', label: 'Entregada' },
+        { value: 'Cancelada', label: 'Cancelada' }
+    ];
 
     const marcas = $derived([...new Set(data.unidades
         .filter((u: Unidad) => u.marca !== null)
@@ -34,11 +40,19 @@
             .map((u: Unidad) => u.patente)
         : []);
 
-    async function asignarUnidad() {
+    async function cambiarEstado() {
         try {
             const formData = new FormData();
             formData.append('reservaId', data.reserva.id.toString());
-            formData.append('patente', patenteSeleccionada);
+            formData.append('estado', estadoReserva);
+            
+            if (estadoReserva === 'Entregada') {
+                if (!patenteSeleccionada) {
+                    error = 'Debe seleccionar una unidad para asignar';
+                    return;
+                }
+                formData.append('patente', patenteSeleccionada);
+            }
 
             const response = await fetch('?/asignarUnidad', {
                 method: 'POST',
@@ -53,7 +67,7 @@
                     goto('/admin/reservas');
                 }, 1500);
             } else {
-                error = result.data?.error || 'Error al asignar la unidad';
+                error = result.data?.error || 'Error al cambiar el estado de la reserva';
             }
         } catch (err) {
             error = 'Error al comunicarse con el servidor';
@@ -111,7 +125,7 @@
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            <h3 class="card-title">Seleccionar Unidad a Asignar</h3>
+            <h3 class="card-title">Cambiar Estado de la Reserva</h3>
             
             {#if error}
                 <div class="alert alert-error">
@@ -119,65 +133,85 @@
                 </div>
             {/if}
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="form-control w-full">
-                    <label class="label" for="marca">
-                        <span class="label-text">Marca</span>
-                    </label>
-                    <select 
-                        id="marca"
-                        bind:value={marcaSeleccionada}
-                        class="select select-bordered w-full"
-                    >
-                        <option value="">Seleccione una marca</option>
-                        {#each marcas as marca}
-                            <option value={marca}>{marca}</option>
-                        {/each}
-                    </select>
-                </div>
-
-                <div class="form-control w-full">
-                    <label class="label" for="modelo">
-                        <span class="label-text">Modelo</span>
-                    </label>
-                    <select 
-                        id="modelo"
-                        bind:value={modeloSeleccionado}
-                        class="select select-bordered w-full"
-                        disabled={!marcaSeleccionada}
-                    >
-                        <option value="">Seleccione un modelo</option>
-                        {#each modelos as modelo}
-                            <option value={modelo}>{modelo}</option>
-                        {/each}
-                    </select>
-                </div>
-
-                <div class="form-control w-full">
-                    <label class="label" for="patente">
-                        <span class="label-text">Patente</span>
-                    </label>
-                    <select 
-                        id="patente"
-                        bind:value={patenteSeleccionada}
-                        class="select select-bordered w-full"
-                        disabled={!modeloSeleccionado}
-                    >
-                        <option value="">Seleccione una patente</option>
-                        {#each patentes as patente}
-                            <option value={patente}>{patente}</option>
-                        {/each}
-                    </select>
-                </div>
+            <div class="form-control w-full mb-4">
+                <label class="label" for="estado">
+                    <span class="label-text">Estado de la Reserva</span>
+                </label>
+                <select 
+                    id="estado"
+                    bind:value={estadoReserva}
+                    class="select select-bordered w-full"
+                >
+                    <option value="">Seleccione un estado</option>
+                    {#each estadosReserva as estado}
+                        <option value={estado.value}>{estado.label}</option>
+                    {/each}
+                </select>
             </div>
+
+            {#if estadoReserva === 'Entregada'}
+                <h3 class="card-title mt-4">Seleccionar Unidad a Asignar</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control w-full">
+                        <label class="label" for="marca">
+                            <span class="label-text">Marca</span>
+                        </label>
+                        <select 
+                            id="marca"
+                            bind:value={marcaSeleccionada}
+                            class="select select-bordered w-full"
+                        >
+                            <option value="">Seleccione una marca</option>
+                            {#each marcas as marca}
+                                <option value={marca}>{marca}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div class="form-control w-full">
+                        <label class="label" for="modelo">
+                            <span class="label-text">Modelo</span>
+                        </label>
+                        <select 
+                            id="modelo"
+                            bind:value={modeloSeleccionado}
+                            class="select select-bordered w-full"
+                            disabled={!marcaSeleccionada}
+                        >
+                            <option value="">Seleccione un modelo</option>
+                            {#each modelos as modelo}
+                                <option value={modelo}>{modelo}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div class="form-control w-full">
+                        <label class="label" for="patente">
+                            <span class="label-text">Patente</span>
+                        </label>
+                        <select 
+                            id="patente"
+                            bind:value={patenteSeleccionada}
+                            class="select select-bordered w-full"
+                            disabled={!modeloSeleccionado}
+                        >
+                            <option value="">Seleccione una patente</option>
+                            {#each patentes as patente}
+                                <option value={patente}>{patente}</option>
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+            {/if}
 
             <div class="card-actions justify-end mt-4">
                 <button 
                     class="btn btn-primary"
-                    onclick={asignarUnidad}
-                    disabled={!patenteSeleccionada}
+                    onclick={cambiarEstado}
+                    disabled={!estadoReserva || (estadoReserva === 'Entregada' && !patenteSeleccionada)}
                 >
-                    Asignar Unidad
+                    Cambiar Estado
                 </button>
                 <a href="/admin/reservas" class="btn">Cancelar</a>
             </div>
