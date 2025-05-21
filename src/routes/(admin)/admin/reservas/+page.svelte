@@ -162,7 +162,7 @@
                             <td>{reserva.nombreCliente} {reserva.apellidoCliente}</td>
                             <td>{reserva.dniCliente}</td>
                             <td>{reserva.patenteUnidadReservada}</td>
-                            <td>{reserva.patenteUnidadAsignada}</td>
+                            <td>{reserva.patenteUnidadAsignada || 'No asignada'}</td>
                             <td>{new Date(reserva.fechaInicio).toLocaleDateString()}</td>
                             <td>{new Date(reserva.fechaFin).toLocaleDateString()}</td>
                             <td>
@@ -179,16 +179,12 @@
                                     >
                                         Detalles
                                     </a>
-                                    <button
+                                    <a
+                                        href="/admin/reservas/{reserva.id}/cambiar-estado"
                                         class="font-medium text-green-600 dark:text-green-500 hover:underline cursor-pointer"
-                                        onclick={() => {
-                                            const nuevoEstado = reserva.estado === 'Pendiente' ? 'Entregada' : 
-                                                              reserva.estado === 'Entregada' ? 'Cancelada' : 'Pendiente';
-                                            actualizarEstado(reserva.id, nuevoEstado);
-                                        }}
                                     >
                                         Cambiar estado
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
