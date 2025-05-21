@@ -48,7 +48,7 @@
             
             if (estadoReserva === 'Entregada') {
                 if (!patenteSeleccionada) {
-                    error = 'Se debe asignar un vehículo';
+                    error = 'Se debe asignar una unidad';
                     return;
                 }
                 formData.append('patente', patenteSeleccionada);
