@@ -53,7 +53,7 @@ export const reservas = sqliteTable('reservas', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	idUsuario: integer().notNull().references(() => usuarios.id),
 	patenteUnidadReservada: text().notNull().references(() => unidadesVehiculos.patente),
-	patenteUnidadAsignada: text().notNull().references(() => unidadesVehiculos.patente),
+	patenteUnidadAsignada: text().references(() => unidadesVehiculos.patente),
 	fechaInicio: integer({ mode: 'timestamp' }).notNull(),
 	fechaFin: integer({ mode: 'timestamp' }).notNull(),
 	estado: text({ enum: ["Pendiente", "Entregada", "Cancelada"] }).default('Pendiente').notNull(),
