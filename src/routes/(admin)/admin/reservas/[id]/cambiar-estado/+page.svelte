@@ -7,6 +7,7 @@
     
     let error = $state('');
     let successMessage = $state('');
+    let showSuccessToast = $state(false);
     let marcaSeleccionada = $state('');
     let modeloSeleccionado = $state('');
     let patenteSeleccionada = $state('');
@@ -47,10 +48,10 @@
             const result = await response.json();
 
             if (result.type === 'success') {
-                successMessage = 'Unidad asignada exitosamente';
+                showSuccessToast = true;
                 setTimeout(() => {
                     goto('/admin/reservas');
-                }, 2000);
+                }, 1500);
             } else {
                 error = result.data?.error || 'Error al asignar la unidad';
             }
@@ -60,9 +61,27 @@
     }
 </script>
 
+<div class="toast toast-top toast-end z-50">
+    {#if showSuccessToast}
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>¡Unidad asignada exitosamente!</span>
+        </div>
+    {/if}
+</div>
+
 <div class="flex flex-col gap-6">
     <div class="flex justify-between items-center">
-        <h2 class="text-3xl font-bold text-gray-800">Asignar Unidad a Reserva #{data.reserva.id}</h2>
+        <div class="mb-6">
+            <a href="/admin/reservas" class="text-blue-600 hover:text-blue-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Volver a Reservas
+            </a>
+        </div>
         {#if successMessage}
             <div class="text-green-600 font-medium">{successMessage}</div>
         {/if}
@@ -92,7 +111,7 @@
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            <h3 class="card-title">Seleccionar Unidad</h3>
+            <h3 class="card-title">Seleccionar Unidad a Asignar</h3>
             
             {#if error}
                 <div class="alert alert-error">
@@ -102,10 +121,11 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="form-control w-full">
-                    <label class="label">
+                    <label class="label" for="marca">
                         <span class="label-text">Marca</span>
                     </label>
                     <select 
+                        id="marca"
                         bind:value={marcaSeleccionada}
                         class="select select-bordered w-full"
                     >
@@ -117,10 +137,11 @@
                 </div>
 
                 <div class="form-control w-full">
-                    <label class="label">
+                    <label class="label" for="modelo">
                         <span class="label-text">Modelo</span>
                     </label>
                     <select 
+                        id="modelo"
                         bind:value={modeloSeleccionado}
                         class="select select-bordered w-full"
                         disabled={!marcaSeleccionada}
@@ -133,10 +154,11 @@
                 </div>
 
                 <div class="form-control w-full">
-                    <label class="label">
+                    <label class="label" for="patente">
                         <span class="label-text">Patente</span>
                     </label>
                     <select 
+                        id="patente"
                         bind:value={patenteSeleccionada}
                         class="select select-bordered w-full"
                         disabled={!modeloSeleccionado}
