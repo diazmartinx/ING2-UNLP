@@ -120,6 +120,13 @@
                 <div>
                     <p><span class="font-semibold">Fecha Inicio:</span> {new Date(data.reserva.fechaInicio).toLocaleDateString()}</p>
                     <p><span class="font-semibold">Fecha Fin:</span> {new Date(data.reserva.fechaFin).toLocaleDateString()}</p>
+                    <p class="mt-2">
+                        <span class="font-semibold">Estado:</span>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {data.reserva.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 
+                            data.reserva.estado === 'Entregada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            {data.reserva.estado}
+                        </span>
+                    </p>
                 </div>
             </div>
             <div class="mt-4">
