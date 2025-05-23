@@ -10,15 +10,20 @@
         fechaCreacion: Date;
         estado: string;
         dniCliente: string;
+        patenteUnidadReservada: string;
         patenteUnidadAsignada: string;
         nombreCliente: string;
         apellidoCliente: string;
         emailCliente: string;
         telefonoCliente: string;
-        modeloVehiculo: string;
-        anioVehiculo: number;
-        marcaVehiculo: string;
-        nombreModelo: string;
+        modeloVehiculoReservado: string;
+        modeloVehiculoAsignado: string;
+        anioVehiculoReservado: number;
+        anioVehiculoAsignado: number;
+        marcaVehiculoReservado: string;
+        marcaVehiculoAsignado: string;
+        nombreModeloReservado: string;
+        nombreModeloAsignado: string;
         precioPorDia: number;
         importeTotal: number;
     }
@@ -107,12 +112,34 @@
 
                     <!-- Información del Vehículo -->
                     <div class="bg-gray-50 p-4 rounded-lg">
-                        <h2 class="text-lg font-semibold mb-4 text-gray-900">Información del Vehículo</h2>
-                        <div class="space-y-3">
-                            <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadAsignada}</p>
-                            <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculo}</p>
-                            <p><span class="font-medium">Modelo:</span> {reserva.nombreModelo}</p>
-                            <p><span class="font-medium">Año:</span> {reserva.anioVehiculo}</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Información de la Unidad</h2>
+                            <a href="/admin/reservas/{reserva.id}/cambiar-estado" class="text-blue-600 hover:text-blue-800 flex items-center">
+                                Cambiar unidad asignada
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="border-b pb-3">
+                                <h3 class="font-medium text-gray-700 mb-2">Unidad Reservada</h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadReservada}</p>
+                                    <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculoReservado}</p>
+                                    <p><span class="font-medium">Modelo:</span> {reserva.nombreModeloReservado}</p>
+                                    <p><span class="font-medium">Año:</span> {reserva.anioVehiculoReservado}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-700 mb-2">Unidad Asignada</h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadAsignada}</p>
+                                    <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculoAsignado}</p>
+                                    <p><span class="font-medium">Modelo:</span> {reserva.nombreModeloAsignado}</p>
+                                    <p><span class="font-medium">Año:</span> {reserva.anioVehiculoAsignado}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

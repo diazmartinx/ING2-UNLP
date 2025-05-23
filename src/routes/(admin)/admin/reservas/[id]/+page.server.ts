@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import { reservas, unidadesVehiculos, usuarios, modelosVehiculos } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
 export const load = (async ({ params }) => {
@@ -20,15 +20,20 @@ export const load = (async ({ params }) => {
         fechaCreacion: reservas.fechaCreacion,
         estado: reservas.estado,
         dniCliente: usuarios.dni,
+        patenteUnidadReservada: reservas.patenteUnidadReservada,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         nombreCliente: usuarios.nombre,
         apellidoCliente: usuarios.apellido,
         emailCliente: usuarios.email,
         telefonoCliente: usuarios.telefono,
-        modeloVehiculo: unidadesVehiculos.idModelo,
-        anioVehiculo: unidadesVehiculos.anio,
-        marcaVehiculo: modelosVehiculos.marca,
-        nombreModelo: modelosVehiculos.modelo,
+        modeloVehiculoReservado: sql<string>`(SELECT idModelo FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadReservada})`,
+        modeloVehiculoAsignado: sql<string>`(SELECT idModelo FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
+        anioVehiculoReservado: sql<number>`(SELECT anio FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadReservada})`,
+        anioVehiculoAsignado: sql<number>`(SELECT anio FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
+        marcaVehiculoReservado: sql<string>`(SELECT m.marca FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadReservada})`,
+        marcaVehiculoAsignado: sql<string>`(SELECT m.marca FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadAsignada})`,
+        nombreModeloReservado: sql<string>`(SELECT m.modelo FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadReservada})`,
+        nombreModeloAsignado: sql<string>`(SELECT m.modelo FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadAsignada})`,
         precioPorDia: modelosVehiculos.precioPorDia,
         importeTotal: reservas.importeTotal
     })
