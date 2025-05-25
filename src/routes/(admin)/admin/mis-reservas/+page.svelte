@@ -39,14 +39,14 @@
     }
 </script>
 
-<div class="container mx-auto p-4 max-w-4xl">
+<div class="container mx-auto p-4">
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-3xl font-bold">Mis Reservas</h1>
         {#if showSuccessMessage}
-            <div class="alert alert-success" transition:fly={{ x: 200, duration: 2000 }}>
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Reserva cancelada con éxito.</span>
-            </div>
+        <div class="alert alert-success" transition:fly={{ x: 200, duration: 2000 }}>
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>Reserva cancelada con éxito.</span>
+        </div>
         {/if}
     </div>
 
@@ -55,64 +55,47 @@
             <p class="text-gray-600">Aún no hay reservas.</p>
         </div>
     {:else}
-        <div class="flex flex-col gap-4">
+        <div class="overflow-x-auto">
             <!-- Encabezados -->
-            <div class="flex flex-wrap items-center justify-center gap-4 px-4 py-2 bg-gray-50 rounded-lg">
-                <div class="min-w-[250px] max-w-[350px] text-center">
-                    <span class="font-semibold text-gray-600">Vehículo</span>
+            <div class="grid grid-cols-6 gap-4 px-4 py-2 bg-gray-50 rounded-lg text-center">
+            <div class="font-semibold text-gray-600">Vehículo</div>
+            <div class="font-semibold text-gray-600">Sucursal</div>
+            <div class="font-semibold text-gray-600">Retiro</div>
+            <div class="font-semibold text-gray-600">Devolución</div>
+            <div class="font-semibold text-gray-600">Estado</div>
+            <div></div>
+        </div>
+
+        <!-- Tarjetas -->
+        {#each data.reservas as reserva}
+            <div class="grid grid-cols-6 gap-4 px-4 py-2 rounded-lg items-center">
+                <div class="text-center">
+                    <span class="badge badge-outline px-3 py-1 truncate">{reserva.marca} {reserva.modelo}</span>
                 </div>
-                <div class="w-32 text-center">
-                    <span class="font-semibold text-gray-600">Retiro</span>
+                <div class="text-center">
+                    <span class="badge badge-outline px-3 py-1 truncate">{reserva.nombreSucursal} - {reserva.direccionSucursal}</span>
                 </div>
-                <div class="w-32 text-center">
-                    <span class="font-semibold text-gray-600">Devolución</span>
+                <div class="text-center">
+                    <span class="badge badge-ghost px-3 py-1">{formatDate(reserva.fechaInicio)}</span>
                 </div>
-                <div class="w-32 text-center">
-                    <span class="font-semibold text-gray-600">Estado</span>
+                <div class="text-center">
+                    <span class="badge badge-ghost px-3 py-1">{formatDate(reserva.fechaFin)}</span>
                 </div>
-                <div class="w-32 text-center">
+                <div class="text-center">
+                    <span class="badge {getEstadoClass(reserva.estado)} px-3 py-1">{reserva.estado}</span>
+                </div>
+                <div class="text-center">
+                    {#if reserva.estado === 'Pendiente'}
+                        <button class="btn btn-error btn-sm" onclick={() => {
+                            modalOpen = true;
+                            reservaSeleccionada = reserva;
+                        }}>
+                            Cancelar
+                        </button>
+                    {/if}
                 </div>
             </div>
-
-            <!-- Tarjetas -->
-            {#each data.reservas as reserva}
-                <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
-                    <div class="card-body p-4">
-                        <div class="flex flex-wrap items-center justify-center gap-4">
-                            <div class="min-w-[250px] max-w-[350px] text-center">
-                                <span class="badge badge-outline px-3 py-1 truncate">
-                                    {reserva.marca} {reserva.modelo} {reserva.tipoReembolso}
-                                </span>
-                            </div>
-                            <div class="w-32 text-center">
-                                <span class="badge badge-ghost px-3 py-1">
-                                    {formatDate(reserva.fechaInicio)}
-                                </span>
-                            </div>
-                            <div class="w-32 text-center">
-                                <span class="badge badge-ghost px-3 py-1">
-                                    {formatDate(reserva.fechaFin)}
-                                </span>
-                            </div>
-                            <div class="w-32 text-center">
-                                <span class="badge {getEstadoClass(reserva.estado)} px-3 py-1">
-                                    {reserva.estado}
-                                </span>
-                            </div>
-                            <div class="w-32 text-center">
-                                {#if reserva.estado === 'Pendiente'}
-                                    <button class="btn btn-error btn-sm" onclick={() => {
-                                        modalOpen = true;
-                                        reservaSeleccionada = reserva;
-                                    }}>
-                                        Cancelar
-                                    </button>
-                                {/if}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {/each}
+        {/each}
         </div>
     {/if}
 
