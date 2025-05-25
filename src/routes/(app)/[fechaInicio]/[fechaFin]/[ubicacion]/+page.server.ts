@@ -1,8 +1,8 @@
 import { db } from '$lib/server/db';
-import { unidadesVehiculos, modelosVehiculos, reservas, sucursales } from '$lib/server/db/schema';
+import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios } from '$lib/server/db/schema';
 import { eq, and, or, not, exists, gt, lt, lte, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
-
+import { json } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
     const { fechaInicio, fechaFin, ubicacion } = params;
@@ -36,7 +36,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         capacidadPasajeros: modelosVehiculos.capacidadPasajeros,
         precioPorDia: modelosVehiculos.precioPorDia,
         imagenBlob: modelosVehiculos.imagenBlob,
-        nombreSucursal: sucursales.nombre
+        nombreSucursal: sucursales.nombre,
+        direccionSucursal: sucursales.direccion
     })
         .from(unidadesVehiculos)
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
@@ -79,4 +80,45 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         unidadesDisponibles: unidadesSerializadas,
         isLoggedIn
     };
-}; 
+};
+
+export const actions = {
+    tieneReservasEnRango: async ({ request, locals }) => {
+        const data = await request.formData();
+        const fechaInicio = String(data.get('fechaInicio'));
+        const fechaFin = String(data.get('fechaFin'));
+
+        console.log('Fechas recibidas:', fechaInicio, fechaFin);
+
+        const session = locals.session;
+
+        if (session === null || session === undefined) {
+            return { solapamiento: false };
+        }
+
+        const usuario = await db.select().from(usuarios).where(eq(usuarios.id, session.userId));
+
+        if (!usuario || usuario.length === 0) {
+            return { solapamiento: false };
+        }
+
+        const fechaInicioDate = new Date(fechaInicio);
+        const fechaFinDate = new Date(fechaFin);
+
+        const reservasPendientes = await db
+            .select()
+            .from(reservas)
+            .where(
+                and(
+                    eq(reservas.idUsuario, usuario[0].id),
+                    eq(reservas.estado, 'Pendiente'),
+                    and(
+                        lte(reservas.fechaInicio, fechaFinDate),
+                        gte(reservas.fechaFin, fechaInicioDate)
+                    )
+                )
+            );
+
+        return { solapamiento: reservasPendientes.length > 0 };
+    }
+};

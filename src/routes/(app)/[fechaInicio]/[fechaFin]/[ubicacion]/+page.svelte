@@ -8,6 +8,7 @@
     let fechaInicio = data.fechaInicio;
     let fechaFin = data.fechaFin;
     let ubicacion = decodeURIComponent(data.ubicacion);
+    let mensajeSolapamiento = '';
 
     afterNavigate(() => {
         fechaInicio = data.fechaInicio;
@@ -24,16 +25,40 @@
         goto(`/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacion)}`);
     }
 
-    function handleReservar(marca: string, modelo: string) {
+    async function handleReservar(marca: string, modelo: string) {
         console.log('is logged: ', data.isLoggedIn);
         const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}`;
+        const paginaActual = window.location.pathname;
         
         if (data.isLoggedIn === false) {
             // Redirigir al inicio de sesión con redirectTo
-            goto(`/ingresar?redirectTo=${encodeURIComponent(pagoPagina)}`);
+            goto(`/ingresar?redirectTo=${encodeURIComponent(paginaActual)}`);
         } else {
-            console.log('entra al else - usuario logueado');
-            goto(pagoPagina);
+            const formData = new FormData();
+            formData.append('fechaInicio', data.fechaInicio);
+            formData.append('fechaFin', data.fechaFin);
+
+            const response = await fetch('?/tieneReservasEnRango', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            console.log('Response from server:', result);
+
+            if (typeof result.data === 'string') {
+                result.data = JSON.parse(result.data);
+            }
+
+            console.log('Parsed response:', result.data);
+
+            if (result.data[1] == false){
+                goto(pagoPagina);
+            } else {
+                mensajeSolapamiento = 'Ya tiene una reserva pendiente en el rango de fechas seleccionado.';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     }
 
@@ -64,6 +89,7 @@
                 capacidadPasajeros: vehicle.capacidadPasajeros,
                 precioPorDia: vehicle.precioPorDia,
                 nombreSucursal: vehicle.nombreSucursal,
+                direccionSucursal: vehicle.direccionSucursal,
                 count: 1
             };
         } else {
@@ -74,6 +100,12 @@
 </script>
 
 <div class="container mx-auto p-8">
+    {#if mensajeSolapamiento}
+        <div class="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>{mensajeSolapamiento}</span>
+        </div>
+    {/if}
     <div class="bg-base-100 shadow-lg rounded-lg p-6 mb-8">
         <form on:submit|preventDefault={handleSearch} class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="form-control">
@@ -165,6 +197,10 @@
                                         <span class="badge badge-outline px-3 py-1 text-base">{unidad.nombreSucursal}</span>
                                     </p>
                                     <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Dirección:</span>
+                                        <span class="badge badge-outline px-3 py-1 text-base">{unidad.direccionSucursal}</span>
+                                    </p>
+                                    <p class="flex items-center gap-2">
                                         <span class="font-semibold text-gray-600 text-lg">Precio por día:</span>
                                         <span class="badge badge-primary px-3 py-1 text-base">${unidad.precioPorDia}</span>
                                     </p>
@@ -184,4 +220,4 @@
             {/each}
         </div>
     {/if}
-</div> 
+</div>
