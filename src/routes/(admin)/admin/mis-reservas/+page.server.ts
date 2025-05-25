@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { reservas, unidadesVehiculos, modelosVehiculos, usuarios, politicasCancelacion } from '$lib/server/db/schema';
+import { reservas, unidadesVehiculos, modelosVehiculos, usuarios, politicasCancelacion, sucursales } from '$lib/server/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 
 export const load = (async ({ locals }) => {
@@ -24,7 +24,8 @@ export const load = (async ({ locals }) => {
     const reservasUsuario = await db
         .select({
             id: reservas.id,
-            patente: reservas.patenteUnidadAsignada,
+            patenteReserva: reservas.patenteUnidadReservada,
+            patenteAsignada: reservas.patenteUnidadAsignada,
             fechaInicio: reservas.fechaInicio,
             fechaFin: reservas.fechaFin,
             estado: reservas.estado,
@@ -33,11 +34,14 @@ export const load = (async ({ locals }) => {
             modelo: modelosVehiculos.modelo, 
             tipoPolitica: politicasCancelacion.tipoPolitica,
             porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial,
+            nombreSucursal: sucursales.nombre,
+            direccionSucursal: sucursales.direccion
         })
         .from(reservas)
-        .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
+        .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadReservada, unidadesVehiculos.patente))
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
         .leftJoin(politicasCancelacion, eq(modelosVehiculos.idPoliticaCancelacion, politicasCancelacion.id))
+        .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
         .where(eq(reservas.idUsuario, session.userId))
         .orderBy(
             desc(sql`${reservas.estado} = 'Pendiente'`),

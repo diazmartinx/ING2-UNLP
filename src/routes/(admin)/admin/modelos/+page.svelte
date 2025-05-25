@@ -156,58 +156,64 @@
         </button>
     </div>
 
-    <div class="flex flex-col gap-6">
-        {#each data.modelos as modelo}
-            <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
-                <div class="flex flex-row">
-                    <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
-                        <img 
-                            src={modelo.imagenBlob ? getImageUrlFromBlob(modelo.imagenBlob) : '/no-image-icon.svg'} 
-                            alt={`${modelo.marca} ${modelo.modelo}`} 
-                            class="h-60 w-60 object-cover rounded-lg" 
-                            style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
-                            onerror={handleModelImageError}
-                        />
-                    </figure>
-                    <div class="card-body p-4 flex-1 flex flex-col justify-center">
-                        <div class="flex justify-between items-start mb-4">
-                            <h2 class="card-title text-2xl font-bold text-gray-800">
-                                {modelo.marca} {modelo.modelo}
-                            </h2>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-3">
-                                <p class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-600 text-lg">Categoría:</span>
-                                    <span class="badge badge-outline px-3 py-1 text-base">{modelo.categoria}</span>
-                                </p>
-                                <p class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-600 text-lg">Capacidad:</span>
-                                    <span class="badge badge-outline px-3 py-1 text-base">{modelo.capacidadPasajeros} pasajeros</span>
-                                </p>
+    {#if data.modelos.length === 0}
+        <div class="alert alert-info">
+            <span>No hay modelos.</span>    
+        </div>
+    {:else}
+        <div class="flex flex-col gap-6">
+            {#each data.modelos as modelo}
+                <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="flex flex-row">
+                        <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
+                            <img 
+                                src={modelo.imagenBlob ? getImageUrlFromBlob(modelo.imagenBlob) : '/no-image-icon.svg'} 
+                                alt={`${modelo.marca} ${modelo.modelo}`} 
+                                class="h-60 w-60 object-cover rounded-lg" 
+                                style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
+                                onerror={handleModelImageError}
+                            />
+                        </figure>
+                        <div class="card-body p-4 flex-1 flex flex-col justify-center">
+                            <div class="flex justify-between items-start mb-4">
+                                <h2 class="card-title text-2xl font-bold text-gray-800">
+                                    {modelo.marca} {modelo.modelo}
+                                </h2>
                             </div>
-                            <div class="space-y-3">
-                                <p class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-600 text-lg">Precio por día:</span>
-                                    <span class="badge badge-primary px-3 py-1 text-base">${modelo.precioPorDia}</span>
-                                </p>
-                                <p class="flex items-center gap-2">
-                                    <span class="font-semibold text-gray-600 text-lg">Política:</span>
-                                    <span class="badge badge-outline px-3 py-1 text-base">{modelo.politicaCancelacion}</span>
-                                </p>
-                                {#if modelo.politicaCancelacion === 'Reembolso Parcial'}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-3">
                                     <p class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-600 text-lg">Porcentaje de Reembolso Parcial:</span>
-                                        <span class="badge badge-outline px-3 py-1 text-base">{modelo.porcentajeReembolsoParcial}%</span>
+                                        <span class="font-semibold text-gray-600 text-lg">Categoría:</span>
+                                        <span class="badge badge-outline px-3 py-1 text-base">{modelo.categoria}</span>
                                     </p>
-                                {/if}
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Capacidad:</span>
+                                        <span class="badge badge-outline px-3 py-1 text-base">{modelo.capacidadPasajeros} pasajeros</span>
+                                    </p>
+                                </div>
+                                <div class="space-y-3">
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Precio por día:</span>
+                                        <span class="badge badge-primary px-3 py-1 text-base">${modelo.precioPorDia}</span>
+                                    </p>
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Política:</span>
+                                        <span class="badge badge-outline px-3 py-1 text-base">{modelo.politicaCancelacion}</span>
+                                    </p>
+                                    {#if modelo.politicaCancelacion === 'Reembolso Parcial'}
+                                        <p class="flex items-center gap-2">
+                                            <span class="font-semibold text-gray-600 text-lg">Porcentaje de Reembolso Parcial:</span>
+                                            <span class="badge badge-outline px-3 py-1 text-base">{modelo.porcentajeReembolsoParcial}%</span>
+                                        </p>
+                                    {/if}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        {/each}
-    </div>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 {#if showCreateModal}
