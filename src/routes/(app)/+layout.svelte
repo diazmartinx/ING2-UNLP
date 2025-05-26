@@ -27,12 +27,13 @@
 						{#if data.user?.rol === 'admin'}
 							<li><a href="/admin">Panel de Administrador</a></li>
 						{:else}
-							<li><a href="/perfil">Perfil</a></li>
+							<li><a href="/admin">Perfil</a></li>
 						{/if}
-						<li><a href="/admin/mis-reservas">Mis Reservas</a></li>
+						<li><a href="/admin">Mis Reservas</a></li>
 						<li class="text-error">
-							<button type="submit" form="logout-form" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
-							<form id="logout-form" method="POST" action="?/logout" use:enhance class="hidden"></form>
+							<form id="logout-form" method="POST" action="/?/logout">
+								<button type="submit" form="logout-form" class="w-full text-left hover:cursor-pointer">Cerrar Sesión</button>
+							</form>
 						</li>
 					</ul>
 				</div>
