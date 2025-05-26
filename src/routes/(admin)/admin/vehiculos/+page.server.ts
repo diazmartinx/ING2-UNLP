@@ -10,10 +10,16 @@ export const load = (async () => {
     const sucursalesDisponibles = await db.select().from(sucursales);
     const modelosDisponibles = await db.select().from(modelosVehiculos);
 
+    // Serializar los modelos para manejar el blob de imagen
+    const modelosSerializados = modelosDisponibles.map(modelo => ({
+        ...modelo,
+        imagenBlob: modelo.imagenBlob instanceof Buffer ? modelo.imagenBlob.toString('base64') : null
+    }));
+
     return {
         vehiculos,
         sucursales: sucursalesDisponibles,
-        modelos: modelosDisponibles
+        modelos: modelosSerializados
     };
 }) satisfies PageServerLoad;
 
@@ -24,6 +30,13 @@ export const actions: Actions = {
         const idSucursal = Number(data.get('idSucursal'));
         const idModelo = Number(data.get('idModelo'));
         const anio = Number(data.get('anio'));
+
+        if (!patente || !idSucursal || !idModelo || !anio || isNaN(anio) || !isFinite(anio)) {
+            return {
+                success: false,
+                error: 'Todos los campos son requeridos y deben ser válidos.'
+            };
+        }
 
         // Validar que la patente no exista
         const existePatente = await db
