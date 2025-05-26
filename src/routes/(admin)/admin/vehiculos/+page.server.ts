@@ -1,12 +1,12 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 import {unidadesVehiculos, sucursales, modelosVehiculos, reservas} from '$lib/server/db/schema';
-import { eq, ne, and } from 'drizzle-orm';
+import { eq, ne, and, not } from 'drizzle-orm';
 import { error, type Actions } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
-    const vehiculos = await db.select().from(unidadesVehiculos);
+    const vehiculos = await db.select().from(unidadesVehiculos).where(not(eq(unidadesVehiculos.estado, 'Dado de baja')));
     const sucursalesDisponibles = await db.select().from(sucursales);
     const modelosDisponibles = await db.select().from(modelosVehiculos);
 
@@ -47,7 +47,7 @@ export const actions: Actions = {
 
         if (existePatente.length > 0){
             if (existePatente[0].estado === 'Dado de baja'){
-                await db.update(unidadesVehiculos).set({estado: "Habilitado", idSucursal: String(idSucursal), idModelo: String(idModelo), anio: anio})
+                await db.update(unidadesVehiculos).set({estado: "Habilitado", idSucursal: String(idSucursal), idModelo: idModelo, anio: anio})
                                             .where(eq(unidadesVehiculos.patente, patente));
                 return{
                     success: true
@@ -66,7 +66,7 @@ export const actions: Actions = {
             const nuevoVehiculo = await db.insert(unidadesVehiculos).values({
                 patente,
                 idSucursal: String(idSucursal),
-                idModelo: String(idModelo),
+                idModelo: idModelo,
                 estado: 'Habilitado',
                 anio: anio
             }).returning();

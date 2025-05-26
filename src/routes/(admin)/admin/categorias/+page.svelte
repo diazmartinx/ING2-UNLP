@@ -31,10 +31,10 @@
 				<li class="flex items-center justify-between rounded-xl bg-white p-4 shadow">
 					<span class="text-lg text-gray-700">{categoria.nombre}</span>
 					<div class="flex gap-2">
-						<button onclick={() => editarCategoria(categoria)} class="btn btn-primary">
+						<button disabled onclick={() => editarCategoria(categoria)} class="btn btn-primary">
 							Editar
 						</button>
-						<button onclick={() => eliminarCategoria(categoria.id)} class="btn btn-error">
+						<button onclick={() => eliminarCategoria(categoria.id)} disabled class="btn btn-error">
 							Eliminar
 						</button>
 					</div>

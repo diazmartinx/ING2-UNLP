@@ -25,10 +25,6 @@
         {
             label: 'Clientes',
             href: '/admin/clientes'
-        },
-        {
-            label: 'Sucursales',
-            href: '/admin/sucursales'
         }
     ]
 
@@ -48,7 +44,7 @@
 </script>
 
 <div class="flex min-h-[100dvh]">
-    <nav class="flex flex-col w-96 items-end gap-6  p-4 md:px-8 sticky top-0 bg-base-200 border-r border-base-300">
+    <nav class="flex flex-col !w-96 items-end gap-6  p-4 md:px-8 sticky top-0 bg-base-200 border-r border-base-300">
 
         <ul class="flex flex-col gap-2  w-full flex-1 items-start">
             {#each finalMenu as item (item.href)}

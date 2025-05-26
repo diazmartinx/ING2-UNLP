@@ -54,6 +54,7 @@
                     </div>
                 </div>
             </div>
+            <a href="/admin/mis-reservas" class="btn btn-primary">Ver mis reservas</a>
         {/if}
 
         <!-- Mensaje de error -->
