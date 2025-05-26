@@ -153,7 +153,6 @@
 				<th scope="col" class="px-6 py-3"> Patente </th>
 				<th scope="col" class="px-6 py-3"> Año </th>
 				<th scope="col" class="px-6 py-3"> Estado </th>
-				<th scope="col" class="px-6 py-3"> Sucursal </th>
 				<th scope="col" class="px-6 py-3"> Acciones </th>
 			</tr>
 		</thead>
@@ -176,9 +175,6 @@
 					</th>
 					<td class="px-6 py-4">
 						{estado}
-					</td>
-					<td class="px-6 py-4">
-						{idSucursal}
 					</td>
 					<td class="px-6 py-4">
 						<div class="flex space-x-2">

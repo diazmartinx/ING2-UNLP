@@ -3,6 +3,13 @@
 
     let { data }: { data: PageData } = $props();
 </script>
+{#if data.clientes.length === 0}
+    <div class="alert alert-info shadow-lg">
+        <div>
+            <span>No hay clientes disponibles</span>
+        </div>
+    </div>
+{:else}
 <div class="overflow-x-auto">
   <table class="table table-zebra">
         <!-- head -->
@@ -30,3 +37,4 @@
         </tbody>
     </table>
 </div>
+{/if}
