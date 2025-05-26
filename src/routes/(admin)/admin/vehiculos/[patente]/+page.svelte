@@ -27,10 +27,7 @@
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Precio por día</dt>
         <dd class="text-lg font-semibold">{data.vehiculo.modelo.precioPorDia}</dd>
     </div>
-    <div class="flex flex-col py-3">
-        <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Política de cancelación</dt>
-        <dd class="text-lg font-semibold">{data.vehiculo.modelo.idPoliticaCancelacion}</dd>
-    </div>
+
     {:else}
     <div class="flex flex-col py-3">
         <dt class="mb-1 text-gray-500 md:text-lg dark:text-gray-400">Modelo</dt>
