@@ -54,7 +54,7 @@ export const load: PageServerLoad = async ({ params }) => {
         });
     }
 
-    const diasTotales = (new Date(fechaFin).getTime() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24);
+    const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
     const importeTotal = modeloVehiculo[0].precioPorDia * diasTotales;
 
     return {
@@ -99,7 +99,7 @@ export const actions: Actions = {
             });
         }
 
-        let diasTotales = (new Date(fechaFin).getTime() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24);
+        let diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
         let importeTotal = modeloVehiculo.precioPorDia * diasTotales;
 
         // Validaciones básicas
@@ -161,10 +161,10 @@ export const actions: Actions = {
         }
         //Crear reserva
         const reserva: NewReserva = {
-            fechaInicio: new Date(params.fechaInicio!),
-            fechaFin: new Date(params.fechaFin!),
+            fechaInicio: new Date(params.fechaInicio! + 'T00:00:00-03:00'),
+            fechaFin: new Date(params.fechaFin! + 'T00:00:00-03:00'),
             importeTotal: importeTotal,
-            fechaCreacion: new Date(),
+            fechaCreacion: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })),
             estado: 'Pendiente',
             idUsuario: locals.user!.id,
             idModeloReservado: modeloVehiculo.id

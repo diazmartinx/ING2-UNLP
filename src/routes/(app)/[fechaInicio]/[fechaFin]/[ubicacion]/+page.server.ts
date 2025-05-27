@@ -38,7 +38,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         direccionSucursal: sucursales.direccion,
         unidadesDisponibles: sql`count(${unidadesVehiculos.patente}) - (
             select count(*) from ${reservas}
+            inner join ${unidadesVehiculos} as uv on ${reservas.patenteUnidadAsignada} = uv.patente
+            inner join ${sucursales} as s on uv.idSucursal = s.id
             where ${reservas.idModeloReservado} = ${modelosVehiculos.id}
+            and s.nombre = ${ubicacionDecoded}
             and ${gte(reservas.fechaFin, fechaInicioDate)}
             and ${lte(reservas.fechaInicio, fechaFinDate)}
             and ${or(
