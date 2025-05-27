@@ -36,19 +36,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         imagenBlob: modelosVehiculos.imagenBlob,
         nombreSucursal: sucursales.nombre,
         direccionSucursal: sucursales.direccion,
-        unidadesDisponibles: sql`count(${unidadesVehiculos.patente}) - (
-            select count(*) from ${reservas}
-            inner join ${unidadesVehiculos} as uv on ${reservas.patenteUnidadAsignada} = uv.patente
-            inner join ${sucursales} as s on uv.idSucursal = s.id
-            where ${reservas.idModeloReservado} = ${modelosVehiculos.id}
-            and s.nombre = ${ubicacionDecoded}
-            and ${gte(reservas.fechaFin, fechaInicioDate)}
-            and ${lte(reservas.fechaInicio, fechaFinDate)}
-            and ${or(
-                eq(reservas.estado, 'Pendiente'),
-                eq(reservas.estado, 'Entregada')
-            )}
-        )`
+        patente: unidadesVehiculos.patente,
+        idModelo: modelosVehiculos.id
     })
         .from(unidadesVehiculos)
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
@@ -58,11 +47,95 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                 eq(unidadesVehiculos.estado, 'Habilitado'),
                 eq(sucursales.nombre, ubicacionDecoded)
             )
-        )
-        .groupBy(modelosVehiculos.id);
+        );
+
+    // Verificar reservas para cada unidad
+    const unidadesConReservas = await db.select({
+        idModelo: reservas.idModeloReservado,
+        patente: reservas.patenteUnidadAsignada,
+        sucursal: sucursales.nombre,
+        estado: reservas.estado,
+        fechaInicio: reservas.fechaInicio,
+        fechaFin: reservas.fechaFin
+    })
+        .from(reservas)
+        .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
+        .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
+        .where(
+            and(
+                or(
+                    eq(reservas.estado, 'Pendiente'),
+                    eq(reservas.estado, 'Entregada')
+                ),
+                and(
+                    lte(reservas.fechaInicio, fechaFinDate),
+                    gte(reservas.fechaFin, fechaInicioDate)
+                )
+            )
+        );
+
+    // Crear un Map con las patentes reservadas por modelo
+    const reservasPorModelo = new Map();
+    unidadesConReservas.forEach(reserva => {
+        const key = `${reserva.idModelo}`;
+        if (!reservasPorModelo.has(key)) {
+            reservasPorModelo.set(key, {
+                patentes: new Set(),
+                reservasSinPatente: 0
+            });
+        }
+        
+        // Si tiene patente y está en la sucursal correcta
+        if (reserva.patente && (!reserva.sucursal || reserva.sucursal === ubicacionDecoded)) {
+            reservasPorModelo.get(key).patentes.add(reserva.patente);
+        } 
+        // Si no tiene patente, contamos la reserva de todas formas
+        else if (!reserva.patente) {
+            reservasPorModelo.get(key).reservasSinPatente++;
+        }
+    });
+
+    // Agrupar unidades por modelo y contar las disponibles
+    const unidadesAgrupadas = unidadesDisponibles.reduce((acc, unidad) => {
+        const key = `${unidad.marca}-${unidad.modelo}`;
+        if (!acc[key]) {
+            acc[key] = {
+                marca: unidad.marca,
+                modelo: unidad.modelo,
+                anio: unidad.anio,
+                capacidadPasajeros: unidad.capacidadPasajeros,
+                precioPorDia: unidad.precioPorDia,
+                imagenBlob: unidad.imagenBlob,
+                nombreSucursal: unidad.nombreSucursal,
+                direccionSucursal: unidad.direccionSucursal,
+                totalUnidades: 1,
+                unidadesReservadas: 0,
+                idModelo: unidad.idModelo
+            };
+        } else {
+            acc[key].totalUnidades++;
+        }
+        return acc;
+    }, {} as Record<string, any>);
+
+    // Actualizar las unidades reservadas por modelo
+    Object.values(unidadesAgrupadas).forEach(unidad => {
+        const reservas = reservasPorModelo.get(`${unidad.idModelo}`);
+        if (reservas) {
+            unidad.unidadesReservadas = reservas.patentes.size + reservas.reservasSinPatente;
+        }
+    });
+
+    // Filtrar solo los modelos que tienen unidades disponibles
+    const unidadesFinales = Object.values(unidadesAgrupadas)
+        .filter(unidad => unidad.totalUnidades > unidad.unidadesReservadas)
+        .map(unidad => ({
+            ...unidad,
+            unidadesDisponibles: unidad.totalUnidades - unidad.unidadesReservadas
+        }));
 
     // Convertir los blobs a base64 para la serialización
-    const unidadesSerializadas = unidadesDisponibles.map(unidad => ({
+    const unidadesSerializadas = unidadesFinales.map(unidad => ({
         ...unidad,
         imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
     }));
