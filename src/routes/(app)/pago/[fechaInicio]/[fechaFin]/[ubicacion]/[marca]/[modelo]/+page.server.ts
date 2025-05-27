@@ -167,8 +167,7 @@ export const actions: Actions = {
             fechaCreacion: new Date(),
             estado: 'Pendiente',
             idUsuario: locals.user!.id,
-            patenteUnidadReservada: unidadesDeEseModelo[0].patente,
-            patenteUnidadAsignada: unidadesDeEseModelo[0].patente
+            idModeloReservado: modeloVehiculo.id
         }
 
         await db.insert(reservas).values(reserva);

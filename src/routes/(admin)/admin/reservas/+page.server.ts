@@ -26,11 +26,10 @@ export const load = (async ({ url }) => {
         fechaFin: reservas.fechaFin,
         estado: reservas.estado,
         dniCliente: usuarios.dni,
-        patenteUnidadReservada: reservas.patenteUnidadReservada,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         nombreCliente: usuarios.nombre,
         apellidoCliente: usuarios.apellido,
-        modeloVehiculo: sql<string>`(SELECT idModelo FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`
+        modeloReservado: sql<string>`(SELECT modelo FROM modelos_vehiculos WHERE id = ${reservas.idModeloReservado})`
     })
     .from(reservas)
     .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))

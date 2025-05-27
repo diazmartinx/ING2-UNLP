@@ -4,6 +4,18 @@
     import { goto } from '$app/navigation';
 
     let { data }: { data: PageData } = $props();
+    const reserva = (data.reserva as unknown as Reserva[])[0];
+    
+    interface Reserva {
+        id: number;
+        estado: "Pendiente" | "Entregada" | "Cancelada";
+        fechaInicio: Date;
+        fechaFin: Date;
+        patenteUnidadAsignada: string | null;
+        modeloReservado: string;
+        marcaReservada: string;
+        anioReservado: number;
+    }
     
     let error = $state('');
     let successMessage = $state('');
@@ -42,13 +54,13 @@
 
     async function cambiarEstado() {
         try {
-            if (estadoReserva === 'Cancelada' && data.reserva.estado === 'Entregada') {
+            if (estadoReserva === 'Cancelada' && reserva.estado === 'Entregada') {
                 error = 'No se puede cancelar una reserva que ya fue entregada';
                 return;
             }
 
             const formData = new FormData();
-            formData.append('reservaId', data.reserva.id.toString());
+            formData.append('reservaId', reserva.id.toString());
             formData.append('estado', estadoReserva);
             
             if (estadoReserva === 'Entregada') {
@@ -110,7 +122,7 @@
         <div class="card-body">
             <div class="flex justify-between items-center">
                 <h3 class="card-title">Datos de la Reserva</h3>
-                <a href="/admin/reservas/{data.reserva.id}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                <a href="/admin/reservas/{reserva.id}" class="text-blue-600 hover:text-blue-800 flex items-center">
                     Ver más detalles
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -119,26 +131,21 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <p><span class="font-semibold">Cliente:</span> {data.reserva.nombreCliente} {data.reserva.apellidoCliente}</p>
-                    <p><span class="font-semibold">DNI:</span> {data.reserva.dniCliente}</p>
+                    <p><span class="font-semibold">Marca:</span> {reserva.marcaReservada}</p>
+                    <p><span class="font-semibold">Modelo:</span> {reserva.modeloReservado}</p>
+                    <p><span class="font-semibold">Unidad Asignada:</span> {reserva.patenteUnidadAsignada || 'No hay unidad asignada'}</p>
                 </div>
                 <div>
-                    <p><span class="font-semibold">Fecha Inicio:</span> {new Date(data.reserva.fechaInicio).toLocaleDateString()}</p>
-                    <p><span class="font-semibold">Fecha Fin:</span> {new Date(data.reserva.fechaFin).toLocaleDateString()}</p>
+                    <p><span class="font-semibold">Fecha Inicio:</span> {new Date(reserva.fechaInicio).toLocaleDateString()}</p>
+                    <p><span class="font-semibold">Fecha Fin:</span> {new Date(reserva.fechaFin).toLocaleDateString()}</p>
                     <p class="mt-2">
                         <span class="font-semibold">Estado:</span>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium {data.reserva.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 
-                            data.reserva.estado === 'Entregada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            {data.reserva.estado}
+                        <span class="px-3 py-1 rounded-full text-sm font-medium {reserva.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 
+                            reserva.estado === 'Entregada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            {reserva.estado}
                         </span>
                     </p>
                 </div>
-            </div>
-            <div class="mt-4">
-                <h4 class="font-semibold mb-2">Unidad Reservada:</h4>
-                <p><span class="font-semibold">Marca:</span> {data.reserva.unidadReservada.marca}</p>
-                <p><span class="font-semibold">Modelo:</span> {data.reserva.unidadReservada.modelo}</p>
-                <p><span class="font-semibold">Patente:</span> {data.reserva.unidadReservada.patente}</p>
             </div>
         </div>
     </div>

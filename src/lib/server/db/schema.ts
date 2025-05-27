@@ -52,7 +52,7 @@ export const modelosVehiculos = sqliteTable('modelos_vehiculos', {
 export const reservas = sqliteTable('reservas', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	idUsuario: integer().notNull().references(() => usuarios.id),
-	patenteUnidadReservada: text().notNull().references(() => unidadesVehiculos.patente),
+	idModeloReservado: integer().notNull().references(() => modelosVehiculos.id),
 	patenteUnidadAsignada: text().references(() => unidadesVehiculos.patente),
 	fechaInicio: integer({ mode: 'timestamp' }).notNull(),
 	fechaFin: integer({ mode: 'timestamp' }).notNull(),

@@ -5,12 +5,11 @@
 
     interface Reserva {
         id: number;
-        fechaInicio: Date;
-        fechaFin: Date;
-        fechaCreacion: Date;
+        fechaInicio: number;
+        fechaFin: number;
+        fechaCreacion: number;
         estado: string;
         dniCliente: string;
-        patenteUnidadReservada: string;
         patenteUnidadAsignada: string;
         nombreCliente: string;
         apellidoCliente: string;
@@ -44,7 +43,7 @@
         }
     };
 
-    function formatDateOnly(date: string | Date): string {
+    function formatDateOnly(date: number | string | Date): string {
         const d = new Date(date);
         return d.toLocaleDateString('es-AR', {
             year: 'numeric',
@@ -53,7 +52,7 @@
         });
     }
 
-    function formatDateTime(date: string | Date): string {
+    function formatDateTime(date: number | string | Date): string {
         const d = new Date(date);
         return d.toLocaleString('es-AR', {
             year: 'numeric',
@@ -123,12 +122,9 @@
                         </div>
                         <div class="space-y-4">
                             <div class="border-b pb-3">
-                                <h3 class="font-medium text-gray-700 mb-2">Unidad Reservada</h3>
+                                <h3 class="font-medium text-gray-700 mb-2">Modelo Reservado</h3>
                                 <div class="space-y-2">
-                                    <p><span class="font-medium">Patente:</span> {reserva.patenteUnidadReservada}</p>
-                                    <p><span class="font-medium">Marca:</span> {reserva.marcaVehiculoReservado}</p>
-                                    <p><span class="font-medium">Modelo:</span> {reserva.nombreModeloReservado}</p>
-                                    <p><span class="font-medium">Año:</span> {reserva.anioVehiculoReservado}</p>
+                                    <p>{reserva.marcaVehiculoReservado} {reserva.nombreModeloReservado}</p>
                                 </div>
                             </div>
                             <div>

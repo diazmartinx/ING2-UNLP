@@ -133,7 +133,7 @@
                         <th>ID</th>
                         <th>Cliente</th>
                         <th>DNI</th>
-                        <th>Unidad Reservada</th>
+                        <th>Modelo Reservado</th>
                         <th>Unidad Asignada</th>
                         <th>
                             <button 
@@ -161,7 +161,7 @@
                             <td>{reserva.id}</td>
                             <td>{reserva.nombreCliente} {reserva.apellidoCliente}</td>
                             <td>{reserva.dniCliente}</td>
-                            <td>{reserva.patenteUnidadReservada}</td>
+                            <td>{reserva.modeloReservado}</td>
                             <td>{reserva.patenteUnidadAsignada || 'No asignada'}</td>
                             <td>{new Date(reserva.fechaInicio).toLocaleDateString()}</td>
                             <td>{new Date(reserva.fechaFin).toLocaleDateString()}</td>

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
@@ -13,25 +13,19 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(400, 'ID de reserva inválido');
     }
 
-    const [reserva] = await db.select({
+    const reserva = await db.select({
         id: reservas.id,
+        estado: reservas.estado,
         fechaInicio: reservas.fechaInicio,
         fechaFin: reservas.fechaFin,
-        estado: reservas.estado,
-        nombreCliente: usuarios.nombre,
-        apellidoCliente: usuarios.apellido,
-        dniCliente: usuarios.dni,
-        unidadReservada: {
-            patente: unidadesVehiculos.patente,
-            marca: modelosVehiculos.marca,
-            modelo: modelosVehiculos.modelo
-        }
+        patenteUnidadAsignada: reservas.patenteUnidadAsignada,
+        modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
+        marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
     })
     .from(reservas)
-    .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))
-    .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadReservada, unidadesVehiculos.patente))
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .where(eq(reservas.id, reservaId));
+    .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
+    .where(eq(reservas.id, reservaId))
+    .limit(1);
 
     if (!reserva) {
         throw error(404, 'Reserva no encontrada');
