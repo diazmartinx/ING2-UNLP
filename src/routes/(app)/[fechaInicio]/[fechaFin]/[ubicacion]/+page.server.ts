@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios } from '$lib/server/db/schema';
-import { eq, and, or, not, exists, gt, lt, lte, gte } from 'drizzle-orm';
+import { eq, and, or, not, exists, gt, lt, lte, gte, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { json } from '@sveltejs/kit';
 
@@ -28,8 +28,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
     // Get available vehicles
     const unidadesDisponibles = await db.select({
-        patente: unidadesVehiculos.patente,
-        estado: unidadesVehiculos.estado,
         marca: modelosVehiculos.marca,
         modelo: modelosVehiculos.modelo,
         anio: unidadesVehiculos.anio,
@@ -37,7 +35,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         precioPorDia: modelosVehiculos.precioPorDia,
         imagenBlob: modelosVehiculos.imagenBlob,
         nombreSucursal: sucursales.nombre,
-        direccionSucursal: sucursales.direccion
+        direccionSucursal: sucursales.direccion,
+        unidadesDisponibles: sql`count(${unidadesVehiculos.patente}) - (
+            select count(*) from ${reservas}
+            where ${reservas.idModeloReservado} = ${modelosVehiculos.id}
+            and ${gte(reservas.fechaFin, fechaInicioDate)}
+            and ${lte(reservas.fechaInicio, fechaFinDate)}
+            and ${or(
+                eq(reservas.estado, 'Pendiente'),
+                eq(reservas.estado, 'Entregada')
+            )}
+        )`
     })
         .from(unidadesVehiculos)
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
@@ -45,26 +53,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         .where(
             and(
                 eq(unidadesVehiculos.estado, 'Habilitado'),
-                eq(sucursales.nombre, ubicacionDecoded),
-                not(
-                    exists(
-                        db.select()
-                            .from(reservas)
-                            .where(
-                                and(
-                                    eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                                    gte(reservas.fechaFin, fechaInicioDate),
-                                    lte(reservas.fechaInicio, fechaFinDate),
-                                    or(
-                                        eq(reservas.estado, 'Pendiente'),
-                                        eq(reservas.estado, 'Entregada')
-                                    )
-                                )
-                            )
-                    )
-                )
+                eq(sucursales.nombre, ubicacionDecoded)
             )
-        );
+        )
+        .groupBy(modelosVehiculos.id);
 
     // Convertir los blobs a base64 para la serialización
     const unidadesSerializadas = unidadesDisponibles.map(unidad => ({
