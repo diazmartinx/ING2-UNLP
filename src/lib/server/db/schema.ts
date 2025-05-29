@@ -39,7 +39,7 @@ export const sucursales = sqliteTable('sucursales', {
 
 export const modelosVehiculos = sqliteTable('modelos_vehiculos', {
 	id: integer().primaryKey({ autoIncrement: true }),
-	idCategoria: integer().notNull().references(() => categoriasVehiculos.id),
+	idCategoria: integer().references(() => categoriasVehiculos.id, { onDelete: 'set null' }),
 	idPoliticaCancelacion: integer().notNull().references(() => politicasCancelacion.id),
 	marca: text().notNull(),
 	modelo: text().notNull(),

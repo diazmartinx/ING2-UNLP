@@ -26,7 +26,7 @@ export const load = (async () => {
 export const actions: Actions = {
     agregarVehiculo: async ({ request }) => {
         const data = await request.formData();
-        const patente = String(data.get('patente'));
+        let patente = String(data.get('patente'));
         const idSucursal = Number(data.get('idSucursal'));
         const idModelo = Number(data.get('idModelo'));
         const anio = Number(data.get('anio'));
@@ -35,6 +35,19 @@ export const actions: Actions = {
             return {
                 success: false,
                 error: 'Todos los campos son requeridos y deben ser válidos.'
+            };
+        }
+
+        // Normalizar patente
+        patente = patente.trim().toUpperCase();
+
+        // Validar formato de patente (vieja: ABC123 o nueva/mercosur: AB123CD)
+        const formatoValido = /^[A-Z]{3}[0-9]{3}$|^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
+        
+        if (!formatoValido.test(patente)) {
+            return {
+                success: false,
+                error: 'Formato de patente inválido. Use AAA999 o AA999AA'
             };
         }
 

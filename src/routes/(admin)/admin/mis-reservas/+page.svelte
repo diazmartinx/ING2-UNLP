@@ -5,15 +5,21 @@
 
     const { data } = $props<{ data: PageData }>();
 
-    let modalOpen = $state(false);
-    let reservaSeleccionada = $state<{
+    interface Reserva {
         id: number;
-        marca: string;
-        modelo: string;
-        tipoPolitica: string;
+        fechaInicio: number;
+        fechaFin: number;
+        estado: string;
         importeTotal: number;
-        porcentajeReembolsoParcial: number;
-    } | null>(null);
+        fechaCreacion: number;
+        modeloReservado: string;
+        marcaReservada: string;
+        tipoPolitica: string;
+        porcentajeReembolsoParcial: number | null;
+    }
+
+    let modalOpen = $state(false);
+    let reservaSeleccionada = $state<Reserva | null>(null);
 
     let showSuccessMessage = $state(false);
 
@@ -59,9 +65,9 @@
             <!-- Encabezados -->
             <div class="grid grid-cols-6 gap-4 px-4 py-2 bg-gray-50 rounded-lg text-center">
             <div class="font-semibold text-gray-600">Vehículo</div>
-            <div class="font-semibold text-gray-600">Sucursal</div>
             <div class="font-semibold text-gray-600">Retiro</div>
             <div class="font-semibold text-gray-600">Devolución</div>
+            <div class="font-semibold text-gray-600">Importe</div>
             <div class="font-semibold text-gray-600">Estado</div>
             <div></div>
         </div>
@@ -70,16 +76,16 @@
         {#each data.reservas as reserva}
             <div class="grid grid-cols-6 gap-4 px-4 py-2 rounded-lg items-center">
                 <div class="text-center">
-                    <span class="badge badge-outline px-3 py-1 truncate">{reserva.marca} {reserva.modelo}</span>
-                </div>
-                <div class="text-center">
-                    <span class="badge badge-outline px-3 py-1 truncate">{reserva.nombreSucursal} - {reserva.direccionSucursal}</span>
+                    <span class="badge badge-outline px-3 py-1 truncate">{reserva.marcaReservada} {reserva.modeloReservado}</span>
                 </div>
                 <div class="text-center">
                     <span class="badge badge-ghost px-3 py-1">{formatDate(reserva.fechaInicio)}</span>
                 </div>
                 <div class="text-center">
                     <span class="badge badge-ghost px-3 py-1">{formatDate(reserva.fechaFin)}</span>
+                </div>
+                <div class="text-center">
+                    <span class="badge badge-primary px-3 py-1">${reserva.importeTotal.toFixed(2)}</span>
                 </div>
                 <div class="text-center">
                     <span class="badge {getEstadoClass(reserva.estado)} px-3 py-1">{reserva.estado}</span>
@@ -106,13 +112,13 @@
                 <h3 class="font-bold text-lg">Confirmar Cancelación</h3>
                 {#if reservaSeleccionada}
                     <p class="py-4">
-                        ¿Está seguro de que desea cancelar su reserva de {reservaSeleccionada.marca} {reservaSeleccionada.modelo}?
-                        <!-- Aquí deberías mostrar el tipo de reembolso y el porcentaje -->
+                        ¿Está seguro de que desea cancelar su reserva de {reservaSeleccionada.marcaReservada} {reservaSeleccionada.modeloReservado}?
                         <br>
                         Tipo de Reembolso: {reservaSeleccionada.tipoPolitica}
-                        {#if (reservaSeleccionada.tipoPolitica === 'Reembolso Parcial')}
+                        {#if reservaSeleccionada.tipoPolitica === 'Reembolso Parcial' && reservaSeleccionada.porcentajeReembolsoParcial}
                             <br>
-                            Porcentaje de Reembolso: {reservaSeleccionada.porcentajeReembolsoParcial}%. Se le reembolsará ${(reservaSeleccionada.importeTotal * reservaSeleccionada.porcentajeReembolsoParcial) / 100} al cancelar la reserva.
+                            Porcentaje de Reembolso: {reservaSeleccionada.porcentajeReembolsoParcial}%. 
+                            Se le reembolsarán ${(reservaSeleccionada.importeTotal * reservaSeleccionada.porcentajeReembolsoParcial / 100).toFixed(2)} al cancelar la reserva.
                         {/if}
                     </p>
                 {/if}

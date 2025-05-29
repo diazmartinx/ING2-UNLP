@@ -17,7 +17,7 @@ export async function load ({ params }) {
     }
 
     const vehiculo = vehiculos[0];
-    const reservasVehiculo = await db.select().from(reservas).where(eq(reservas.patenteUnidadReservada, vehiculo.patente));
+    const reservasVehiculo = await db.select().from(reservas).where(eq(reservas.patenteUnidadAsignada, vehiculo.patente));
     const sucursal = await db.select().from(sucursales).where(eq(sucursales.id, Number(vehiculo.idSucursal)));
     const modelo = await db.select().from(modelosVehiculos).where(eq(modelosVehiculos.id, Number(vehiculo.idModelo)));
     const categoria = await db.select().from(categoriasVehiculos).where(eq(categoriasVehiculos.id, Number(modelo[0].idCategoria)));
