@@ -28,14 +28,15 @@ export const load = (async ({ locals }) => {
         estado: reservas.estado,
         importeTotal: reservas.importeTotal,
         fechaCreacion: reservas.fechaCreacion,
-        modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        anioReservado: sql<number>`(SELECT uv.anio FROM unidades_vehiculos uv WHERE uv.idModelo = ${reservas.idModeloReservado} LIMIT 1)`,
-        patenteAsignada: reservas.patenteUnidadAsignada
+        modeloReservado: modelosVehiculos.modelo,
+        marcaReservada: modelosVehiculos.marca,
+        tipoPolitica: politicasCancelacion.tipoPolitica,
+        porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial
     })
     .from(reservas)
     .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))
     .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
+    .leftJoin(politicasCancelacion, eq(modelosVehiculos.idPoliticaCancelacion, politicasCancelacion.id))
     .where(eq(reservas.idUsuario, session.userId))
     .orderBy(desc(reservas.fechaCreacion));
 
