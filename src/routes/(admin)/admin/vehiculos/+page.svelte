@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { invalidate } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -43,40 +44,14 @@
 			if (result.data[1] === true) {
 				error = '';
 				successMessage = 'Vehículo agregado exitosamente';
-
-				if (result.data[2]) {
-					let nuevVehiculo = {
-						patente: patente,
-						idSucursal: sucursalSeleccionada,
-						idModelo: modeloSeleccionado,
-						anio: Number(anio),
-						estado: 'Habilitado' as 'Habilitado'
-					};
-					vehiculos = [...vehiculos, nuevVehiculo];
-				} else {
-					vehiculos = vehiculos.map((v) =>
-						v.patente === patente
-							? {
-									...v,
-									estado: 'Habilitado',
-									idSucursal: sucursalSeleccionada,
-									idModelo: modeloSeleccionado,
-									anio: Number(anio)
-								}
-							: v
-					);
-				}
-				setTimeout(() => {
-					successMessage = '';
-				}, 3000);
 				mostrarModal = false;
-				await invalidate('/vehiculos');
 				patente = '';
 				sucursalSeleccionada = '';
 				modeloSeleccionado = '';
 				anio = '';
+				window.location.reload();
 			} else {
-				error = 'Error: la patente ya se encuentra en el sistema.';
+				error = result.data[2] || 'Error: la patente ya se encuentra en el sistema.';
 			}
 		} catch (err) {
 			error = 'Error al comunicarse con el servidor.';
@@ -100,8 +75,10 @@
 				await invalidate('app:vehiculos');
 				patenteSeleccionada = '';
 				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : nuevoEstado === 'Inhabilitado' ? 'inhabilitado' : 'habilitado'} exitosamente`;
+				window.location.reload();
 				setTimeout(() => {
 					successMessage = '';
+					
 				}, 3000);
 			} else {
 				error = result.data?.error || 'Error al actualizar el estado del vehículo';
@@ -157,7 +134,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each vehiculos as { patente, idSucursal, estado, anio }}
+			{#each data.vehiculos as { patente, idSucursal, estado, anio }}
 				<tr
 					class="border-b border-gray-200 odd:bg-white even:bg-gray-50 dark:border-gray-700 odd:dark:bg-gray-900 even:dark:bg-gray-800"
 				>
