@@ -72,7 +72,7 @@
 						<td>{cliente.nombre}</td>
 						<td>{cliente.email}</td>
 						<td>
-							<a href={`./clientes/${cliente.id}`} role="button" class="btn btn-soft btn-disabled">Detalles</a>
+							<a href={`./clientes/${cliente.id}`} role="button" class="btn btn-soft btn-info">Detalles</a>
 							<button
 								on:click={() => abrirModal(cliente)}
 								type="button"
