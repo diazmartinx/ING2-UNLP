@@ -254,8 +254,9 @@
 				<div class="mb-4 text-red-500">{error}</div>
 			{/if}
 			<div class="mb-4">
-				<label class="block text-sm font-medium text-gray-700">Patente</label>
+				<label for="patente" class="block text-sm font-medium text-gray-700">Patente</label>
 				<input
+					id="patente"
 					type="text"
 					bind:value={patente}
 					placeholder="Ingrese la patente"
@@ -278,8 +279,9 @@
 				/>
 			</div>
 			<div class="mb-4">
-				<label class="block text-sm font-medium text-gray-700">Sucursal</label>
+				<label for="sucursal" class="block text-sm font-medium text-gray-700">Sucursal</label>
 				<select
+					id="sucursal"
 					bind:value={sucursalSeleccionada}
 					class="w-full rounded-md border border-gray-300 p-2"
 				>
@@ -290,8 +292,9 @@
 				</select>
 			</div>
 			<div class="mb-4">
-				<label class="block text-sm font-medium text-gray-700">Modelo</label>
+				<label for="modelo" class="block text-sm font-medium text-gray-700">Modelo</label>
 				<select
+					id="modelo"
 					bind:value={modeloSeleccionado}
 					class="w-full rounded-md border border-gray-300 p-2"
 				>
