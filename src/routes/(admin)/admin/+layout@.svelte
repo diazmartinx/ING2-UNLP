@@ -59,6 +59,10 @@
             {/each}
         </ul>
 
+        {#if data.user.rol === 'admin' || data.user.rol === 'empleado'}
+            <a href="/admin/crear-cliente" class="btn w-full">Crear Cliente</a>
+        {/if}
+
         <a href="/" class="btn w-full">Volver a inicio</a>
 
         <form method="post" action="/?/logout" class="w-full -mt-2">
