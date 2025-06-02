@@ -6,6 +6,7 @@
 	export let data: PageData;
 	let isEditing = false;
 	let showSuccessToast = false;
+	let fechaError = '';
 
 	// Función para ajustar la fecha a UTC-3
 	function adjustToUTC3(date: string | Date | null): string {
@@ -25,6 +26,24 @@
 		return d.toLocaleDateString();
 	}
 
+	// Función para validar la edad
+	function validarEdad(fecha: string): boolean {
+		const fechaNacimiento = new Date(fecha);
+		const hoy = new Date();
+		const edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+		const mesActual = hoy.getMonth();
+		const mesNacimiento = fechaNacimiento.getMonth();
+		const diaActual = hoy.getDate();
+		const diaNacimiento = fechaNacimiento.getDate();
+
+		if (edad > 18) return true;
+		if (edad === 18) {
+			if (mesActual > mesNacimiento) return true;
+			if (mesActual === mesNacimiento && diaActual >= diaNacimiento) return true;
+		}
+		return false;
+	}
+
 	let formData = {
 		nombre: data.usuario.nombre ?? '',
 		apellido: data.usuario.apellido ?? '',
@@ -34,6 +53,7 @@
 
 	function toggleEdit() {
 		isEditing = !isEditing;
+		fechaError = '';
 		if (!isEditing) {
 			// Reset form data when canceling edit
 			formData = {
@@ -52,6 +72,18 @@
 		setTimeout(() => {
 			showSuccessToast = false;
 		}, 1500);
+	}
+
+	function validarFecha(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const fecha = input.value;
+		if (!validarEdad(fecha)) {
+			fechaError = 'Debes ser mayor de 18 años';
+			input.setCustomValidity('Debes ser mayor de 18 años');
+		} else {
+			fechaError = '';
+			input.setCustomValidity('');
+		}
 	}
 </script>
 
@@ -137,9 +169,13 @@
 							type="date"
 							name="fechaNacimiento"
 							bind:value={formData.fechaNacimiento}
-							class="input input-bordered w-full"
+							class="input input-bordered w-full {fechaError ? 'border-red-500' : ''}"
 							required
+							on:input={validarFecha}
 						/>
+						{#if fechaError}
+							<span class="text-error text-sm mt-1">{fechaError}</span>
+						{/if}
 					{:else}
 						<p id="fechaNacimiento" class="mt-1 text-gray-900">
 							{formatLocalDate(data.usuario.fechaNacimiento)}
@@ -181,6 +217,7 @@
 					<button
 						type="submit"
 						class="btn btn-primary"
+						disabled={!!fechaError}
 					>
 						Guardar Cambios
 					</button>
