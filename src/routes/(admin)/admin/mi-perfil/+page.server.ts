@@ -18,7 +18,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		usuario
+		usuario,
+		error: null,
+		success: null
 	};
 };
 
@@ -46,11 +48,16 @@ export const actions: Actions = {
 				.where(eq(usuarios.id, locals.user.id));
 
 			return {
-				success: 'Datos actualizados correctamente'
+				usuario: await db.query.usuarios.findFirst({
+					where: eq(usuarios.id, locals.user.id)
+				}),
+				success: 'Datos actualizados correctamente',
+				error: null
 			};
 		} catch (e) {
 			return fail(500, {
-				error: 'Error al actualizar los datos'
+				error: 'Error al actualizar los datos',
+				success: null
 			});
 		}
 	}

@@ -5,9 +5,9 @@
 	export let data: PageData;
 	let isEditing = false;
 	let formData = {
-		nombre: data.usuario.nombre,
-		apellido: data.usuario.apellido,
-		telefono: data.usuario.telefono,
+		nombre: data.usuario.nombre ?? '',
+		apellido: data.usuario.apellido ?? '',
+		telefono: data.usuario.telefono ?? '',
 		fechaNacimiento: data.usuario.fechaNacimiento ? new Date(data.usuario.fechaNacimiento).toISOString().split('T')[0] : ''
 	};
 
@@ -16,9 +16,9 @@
 		if (!isEditing) {
 			// Reset form data when canceling edit
 			formData = {
-				nombre: data.usuario.nombre,
-				apellido: data.usuario.apellido,
-				telefono: data.usuario.telefono,
+				nombre: data.usuario.nombre ?? '',
+				apellido: data.usuario.apellido ?? '',
+				telefono: data.usuario.telefono ?? '',
 				fechaNacimiento: data.usuario.fechaNacimiento ? new Date(data.usuario.fechaNacimiento).toISOString().split('T')[0] : ''
 			};
 		}
@@ -42,56 +42,59 @@
 		{/if}
 
 		<form method="POST" use:enhance>
-			<div class="space-y-4">
+			<div class="space-y-4 mb-16">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
-						<label class="block text-sm font-medium text-gray-700">Nombre</label>
+						<label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
 						{#if isEditing}
 							<input
+								id="nombre"
 								type="text"
 								name="nombre"
 								bind:value={formData.nombre}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+								class="input input-bordered w-full"
 								required
 							/>
 						{:else}
-							<p class="mt-1 text-gray-900">{data.usuario.nombre}</p>
+							<p class="mt-1 text-gray-900">{data.usuario.nombre ?? 'No especificado'}</p>
 						{/if}
 					</div>
 
 					<div>
-						<label class="block text-sm font-medium text-gray-700">Apellido</label>
+						<label for="apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
 						{#if isEditing}
 							<input
+								id="apellido"
 								type="text"
 								name="apellido"
 								bind:value={formData.apellido}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+								class="input input-bordered w-full"
 								required
 							/>
 						{:else}
-							<p class="mt-1 text-gray-900">{data.usuario.apellido}</p>
+							<p class="mt-1 text-gray-900">{data.usuario.apellido ?? 'No especificado'}</p>
 						{/if}
 					</div>
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700">DNI</label>
-					<p class="mt-1 text-gray-900">{data.usuario.dni}</p>
+					<label for="dni" class="block text-sm font-medium text-gray-700">DNI</label>
+					<p id="dni" class="mt-1 text-gray-900">{data.usuario.dni ?? 'No especificado'}</p>
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+					<label for="fechaNacimiento" class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
 					{#if isEditing}
 						<input
+							id="fechaNacimiento"
 							type="date"
 							name="fechaNacimiento"
 							bind:value={formData.fechaNacimiento}
-							class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+							class="input input-bordered w-full"
 							required
 						/>
 					{:else}
-						<p class="mt-1 text-gray-900">
+						<p id="fechaNacimiento" class="mt-1 text-gray-900">
 							{data.usuario.fechaNacimiento
 								? new Date(data.usuario.fechaNacimiento).toLocaleDateString()
 								: 'No especificada'}
@@ -100,38 +103,39 @@
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-					<p class="mt-1 text-gray-900">{data.usuario.email}</p>
+					<label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+					<p id="email" class="mt-1 text-gray-900">{data.usuario.email ?? 'No especificado'}</p>
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Teléfono</label>
+					<label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
 					{#if isEditing}
 						<input
+							id="telefono"
 							type="tel"
 							name="telefono"
 							bind:value={formData.telefono}
-							class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+							class="input input-bordered w-full"
 							required
 						/>
 					{:else}
-						<p class="mt-1 text-gray-900">{data.usuario.telefono}</p>
+						<p id="telefono" class="mt-1 text-gray-900">{data.usuario.telefono ?? 'No especificado'}</p>
 					{/if}
 				</div>
 			</div>
 
-			<div class="mt-6 flex justify-end space-x-4">
+			<div class="flex justify-end space-x-4">
 				{#if isEditing}
 					<button
 						type="button"
 						on:click={toggleEdit}
-						class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+						class="btn btn-ghost"
 					>
 						Cancelar
 					</button>
 					<button
 						type="submit"
-						class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+						class="btn btn-primary"
 					>
 						Guardar Cambios
 					</button>
@@ -139,7 +143,7 @@
 					<button
 						type="button"
 						on:click={toggleEdit}
-						class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+						class="btn btn-primary"
 					>
 						Modificar Datos
 					</button>
