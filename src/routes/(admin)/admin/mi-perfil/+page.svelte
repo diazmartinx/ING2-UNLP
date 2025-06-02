@@ -1,14 +1,35 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 	let isEditing = false;
+	let showSuccessToast = false;
+
+	// Función para ajustar la fecha a UTC-3
+	function adjustToUTC3(date: string | Date | null): string {
+		if (!date) return '';
+		const d = new Date(date);
+		// Ajustamos la fecha a UTC-3
+		d.setHours(d.getHours() + 3);
+		return d.toISOString().split('T')[0];
+	}
+
+	// Función para mostrar la fecha en formato local
+	function formatLocalDate(date: string | Date | null): string {
+		if (!date) return 'No especificada';
+		const d = new Date(date);
+		// Ajustamos la fecha a UTC-3
+		d.setHours(d.getHours() + 3);
+		return d.toLocaleDateString();
+	}
+
 	let formData = {
 		nombre: data.usuario.nombre ?? '',
 		apellido: data.usuario.apellido ?? '',
 		telefono: data.usuario.telefono ?? '',
-		fechaNacimiento: data.usuario.fechaNacimiento ? new Date(data.usuario.fechaNacimiento).toISOString().split('T')[0] : ''
+		fechaNacimiento: adjustToUTC3(data.usuario.fechaNacimiento)
 	};
 
 	function toggleEdit() {
@@ -19,11 +40,31 @@
 				nombre: data.usuario.nombre ?? '',
 				apellido: data.usuario.apellido ?? '',
 				telefono: data.usuario.telefono ?? '',
-				fechaNacimiento: data.usuario.fechaNacimiento ? new Date(data.usuario.fechaNacimiento).toISOString().split('T')[0] : ''
+				fechaNacimiento: adjustToUTC3(data.usuario.fechaNacimiento)
 			};
 		}
 	}
+
+	async function handleSubmit() {
+		showSuccessToast = true;
+		isEditing = false;
+		await invalidateAll();
+		setTimeout(() => {
+			showSuccessToast = false;
+		}, 1500);
+	}
 </script>
+
+<div class="toast toast-top toast-end z-50">
+	{#if showSuccessToast}
+		<div class="alert alert-success">
+			<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			<span>¡Cambios guardados exitosamente!</span>
+		</div>
+	{/if}
+</div>
 
 <div class="container mx-auto px-4 py-8">
 	<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -41,7 +82,13 @@
 			</div>
 		{/if}
 
-		<form method="POST" use:enhance>
+		<form method="POST" use:enhance={({ formData }) => {
+			return async ({ result }) => {
+				if (result.type === 'success') {
+					handleSubmit();
+				}
+			};
+		}}>
 			<div class="space-y-4 mb-16">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
@@ -95,9 +142,7 @@
 						/>
 					{:else}
 						<p id="fechaNacimiento" class="mt-1 text-gray-900">
-							{data.usuario.fechaNacimiento
-								? new Date(data.usuario.fechaNacimiento).toLocaleDateString()
-								: 'No especificada'}
+							{formatLocalDate(data.usuario.fechaNacimiento)}
 						</p>
 					{/if}
 				</div>
