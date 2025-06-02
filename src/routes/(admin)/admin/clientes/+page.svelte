@@ -30,6 +30,7 @@
 
 	// Función para manejar la búsqueda
 	function buscarClientes() {
+		
 		const params = new URLSearchParams($page.url.searchParams);
 		
 		if (terminoBusqueda.trim()) {
@@ -89,27 +90,13 @@
 						<path d="m21 21-4.3-4.3"></path>
 					</g>
 				</svg>
-				<input 
-					type="search" 
-					bind:value={terminoBusqueda}
-					on:keydown={manejarTeclaBusqueda}
-					placeholder="Buscar por DNI, apellido, nombre o email..." 
-					class="grow"
-				/>
+				<input type="search" bind:value={terminoBusqueda} on:keydown={manejarTeclaBusqueda} placeholder="Buscar por DNI, apellido, nombre o email..." class="grow" />
 			</label>
-			<button 
-				type="button" 
-				class="btn btn-primary" 
-				on:click={buscarClientes}
-			>
+			<button type="button" class="btn btn-primary" on:click={buscarClientes}>
 				Buscar
 			</button>
 			{#if data.busqueda}
-				<button 
-					type="button" 
-					class="btn btn-outline" 
-					on:click={limpiarBusqueda}
-				>
+				<button type="button" class="btn btn-outline" on:click={limpiarBusqueda}>
 					Limpiar
 				</button>
 			{/if}

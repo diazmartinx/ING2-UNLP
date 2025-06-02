@@ -10,20 +10,24 @@ export const load: PageServerLoad = async ({ url }) => {
 	let empleadoData;
 	
 	if (busqueda.trim()) {
-		// Realizar búsqueda en múltiples campos
 		const termino = `%${busqueda.trim()}%`;
-		empleadoData = await db.select().from(usuarios).where(and(eq(usuarios.rol, 'empleado'),
-					or(
-						like(usuarios.dni, termino),
-						like(usuarios.apellido, termino),
-						like(usuarios.nombre, termino),
-						like(usuarios.email, termino)
-					)
-				)
-			);
+		
+		const condicionesBusqueda = [
+			like(usuarios.dni, termino),
+			like(usuarios.apellido, termino),
+			like(usuarios.nombre, termino),
+			like(usuarios.email, termino),
+			like(usuarios.rol, termino)
+		];
+		
+		
+		empleadoData = await db.select().from(usuarios).where(
+			and(or(eq(usuarios.rol, 'empleado'),eq(usuarios.rol, 'admin')),or(...condicionesBusqueda))
+		);
 	} else {
-		// Obtener todos los empleado si no hay búsqueda
-		empleadoData = await db.select().from(usuarios).where(or(eq(usuarios.rol, 'empleado'), eq(usuarios.rol, 'admin')));
+		empleadoData = await db.select().from(usuarios).where(
+			or(eq(usuarios.rol, 'empleado'), eq(usuarios.rol, 'admin'))
+		);
 	}
 	
 	return {
@@ -41,23 +45,32 @@ export const actions: Actions = {
 			return fail(400, { error: 'ID de empleado inválido' });
 		}
 
+		const id = parseInt(empleadoId);
+		if (isNaN(id)) {
+			return fail(400, { error: 'ID de empleado inválido' });
+		}
+
 		try {
-			// Verificar si el empleado existe y es un empleado
-			const obtenerEmpleado = await db.select().from(usuarios).where(eq(usuarios.id, parseInt(empleadoId)));
+			const obtenerEmpleado = await db.select().from(usuarios).where(eq(usuarios.id, id));
 
 			if (obtenerEmpleado.length === 0) {
 				return fail(404, { error: 'Empleado no encontrado' });
 			}
 
-			const eliminarEmpleado = await db.delete(usuarios).where(eq(usuarios.id, obtenerEmpleado[0].id));
+			if (obtenerEmpleado[0].rol === 'admin') {
+				return fail(400, { error: 'No se puede eliminar un administrador' });
+			}
+
+			const eliminarEmpleado = await db.delete(usuarios).where(eq(usuarios.id, id));
+			
 			if (!eliminarEmpleado || eliminarEmpleado.rowsAffected === 0) {
 				return fail(404, { error: 'Empleado no encontrado' });
 			}
 
-			// Si se eliminó correctamente, retornar éxito
 			return { success: true, message: 'Empleado eliminado exitosamente' };
 
 		} catch (err) {
+			console.error('Error al eliminar empleado:', err);
 			return fail(500, { error: 'Error interno del servidor' });
 		}
 	}

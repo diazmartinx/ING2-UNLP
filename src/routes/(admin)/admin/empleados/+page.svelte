@@ -13,6 +13,7 @@
 	let mensajeError = '';
 	let terminoBusqueda = data.busqueda || '';
 
+
 	function abrirModal(empleado: typeof data.empleado[number]) {
 		empleadoSeleccionado = empleado;
 		modal_eliminar_empleado?.showModal();
@@ -129,6 +130,7 @@
 					<th>Apellido</th>
 					<th>Nombre</th>
 					<th>Email</th>
+					<th>Rol</th>
 					<th>Acciones</th>
 				</tr>
 			</thead>
@@ -139,9 +141,10 @@
 						<td>{empleado.apellido}</td>
 						<td>{empleado.nombre}</td>
 						<td>{empleado.email}</td>
+						<td>{empleado.rol}</td>
 						<td>
 							<a href={`./empleados/${empleado.id}`} role="button" class="btn btn-soft btn-info">Detalles</a>
-							<button on:click={() => abrirModal(empleado)} type="button" class="btn btn-soft btn-error">
+							<button on:click={() => abrirModal(empleado)} type="button" class="btn btn-soft btn-error" disabled={empleado.rol === 'admin'}>
 								Eliminar
 							</button>
 						</td>
