@@ -38,8 +38,8 @@
             href: '/admin/mis-reservas'
         },
         {
-            label: 'Cuenta',
-            href: '/admin/cuenta'
+            label: 'Mi Perfil',
+            href: '/admin/mi-perfil'
         }
     ]
 
