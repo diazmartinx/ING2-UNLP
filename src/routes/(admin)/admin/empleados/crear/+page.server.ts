@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { sendNewEmployeeEmail } from '$lib/server/resend';
+import { sendNewUserEmail } from '$lib/server/resend';
 import { usuarios } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -29,7 +29,7 @@ export const actions: Actions = {
 
 		// generar contraseña de 6 caracteres y enviar por correo
 		const password = Math.random().toString(36).substring(2, 8);
-		await sendNewEmployeeEmail(email, password);
+		await sendNewUserEmail(email, nombre, password);
 
 		// crear empleado
 		const crearEmpleado = await db.insert(usuarios).values({
