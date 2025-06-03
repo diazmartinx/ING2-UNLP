@@ -3,6 +3,7 @@ import { usuarios } from '$lib/server/db/schema';
 import { eq, and, or, like } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { sendNewEmployeeEmail } from '$lib/server/resend';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const busqueda = url.searchParams.get('buscar') || '';

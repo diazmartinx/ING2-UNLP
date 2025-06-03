@@ -24,3 +24,17 @@ export async function sendOtpEmail(email: string, otp: number) {
 		return null;
 	}
 }
+
+export async function sendNewEmployeeEmail(email: string, password: string) {
+	try {
+		const { data, error } = await resend.emails.send({
+			from,
+			to: email,
+			subject: 'Bienvenido a Alquilando',
+			text: `Su cuenta ha sido creada en Alquilando. Su contraseña es: ${password}`,
+		});
+	} catch (error) {
+		console.error('Unexpected error sending new employee email:', { error, email });
+		return null;
+	}
+}
