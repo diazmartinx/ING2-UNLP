@@ -5,7 +5,7 @@
     let { data, form }: { data: PageData, form: ActionData } = $props();
 </script>
 
-<main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center min-h-[100dvh]">
+<main class="container flex-1 mx-auto p-4 md:px-8 flex flex-col items-center justify-center">
     <section class="bg-base-200 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h1 class="text-3xl font-bold text-center mb-6">Crear Nuevo Cliente</h1>
         
