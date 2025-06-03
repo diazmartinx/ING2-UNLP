@@ -25,6 +25,10 @@
         {
             label: 'Clientes',
             href: '/admin/clientes'
+        },
+        {
+            label: 'Empleados',
+            href: '/admin/empleados'
         }
     ]
 
