@@ -56,6 +56,7 @@
             {/if}
 
             <button type="submit" class="btn btn-primary w-full">Crear Cliente</button>
+            <a href="/admin/clientes" class="btn btn-ghost w-full mt-2">Volver a Listado</a>
         </form>
     </section>
 </main> 

@@ -81,38 +81,39 @@
 		<h2 class="text-3xl font-bold text-gray-800">Clientes</h2>
 	</div>
 	<div class="grid grow place-items-end">
-		<div class="flex gap-2">
-			<label class="input input-bordered flex items-center gap-2">
-				<svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-					<g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-						<circle cx="11" cy="11" r="8"></circle>
-						<path d="m21 21-4.3-4.3"></path>
-					</g>
-				</svg>
-				<input 
-					type="search" 
-					bind:value={terminoBusqueda}
-					on:keydown={manejarTeclaBusqueda}
-					placeholder="Buscar por DNI, apellido, nombre o email..." 
-					class="grow"
-				/>
-			</label>
-			<button 
-				type="button" 
-				class="btn btn-primary" 
-				on:click={buscarClientes}
-			>
-				Buscar
-			</button>
-			{#if data.busqueda}
-				<button 
-					type="button" 
-					class="btn btn-outline" 
-					on:click={limpiarBusqueda}
-				>
-					Limpiar
-				</button>
-			{/if}
+		<div class="flex flex-col md:flex-row gap-4 mb-6 w-full">
+			<div class="flex-[2]">
+				<div class="join w-full">
+					<input
+						type="text"
+						name="search"
+						placeholder="Buscar por nombre, apellido o DNI..."
+						class="input input-bordered join-item w-full"
+						bind:value={terminoBusqueda}
+						on:keydown={manejarTeclaBusqueda}
+					/>
+					<button type="button" class="btn join-item" on:click={buscarClientes} aria-label="Buscar">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+						</svg>
+					</button>
+					{#if data.busqueda}
+						<button type="button" class="btn join-item" on:click={limpiarBusqueda} aria-label="Limpiar búsqueda">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					{/if}
+				</div>
+			</div>
+			<div class="flex gap-2">
+				<a href="/admin/clientes/crear" class="btn btn-primary">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					</svg>
+					Crear Cliente
+				</a>
+			</div>
 		</div>
 	</div>
 </div>
