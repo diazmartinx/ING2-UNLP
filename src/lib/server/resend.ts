@@ -25,7 +25,7 @@ export async function sendOtpEmail(email: string, otp: number) {
 	}
 }
 
-export async function sendPasswordEmail(email: string, nombre: string, password: string) {
+export async function sendNewUserEmail(email: string, nombre: string, password: string) {
 	try {
 		const { data, error } = await resend.emails.send({
 			from,

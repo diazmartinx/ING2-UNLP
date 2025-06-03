@@ -5,7 +5,7 @@ import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { hash } from '@node-rs/argon2';
-import { sendPasswordEmail } from '$lib/server/resend';
+import { sendNewUserEmail } from '$lib/server/resend';
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (!locals.user || (locals.user.rol !== 'admin' && locals.user.rol !== 'empleado')) {
@@ -66,7 +66,7 @@ export const actions: Actions = {
             }
 
             // Enviar email con la contraseña
-            await sendPasswordEmail(email, nombre, password);
+            await sendNewUserEmail(email, nombre, password);
 
             return {
                 success: true
