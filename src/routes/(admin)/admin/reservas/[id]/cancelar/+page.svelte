@@ -20,31 +20,18 @@
     let error = $state('');
     let successMessage = $state('');
     let loading = $state(false);
-    let patenteSeleccionada = $state('');
 
-    type Unidad = {
-        patente: string;
-        marca: string | null;
-        modelo: string | null;
-    };
-
-    async function asignarUnidad() {
+    async function cancelarReserva() {
         try {
-            if (!patenteSeleccionada) {
-                error = 'Se debe seleccionar una unidad';
-                return;
-            }
-
             loading = true;
             error = '';
             successMessage = '';
 
             const formData = new FormData();
             formData.append('reservaId', reserva.id.toString());
-            formData.append('estado', 'Entregada');
-            formData.append('patente', patenteSeleccionada);
+            formData.append('estado', 'Cancelada');
 
-            const response = await fetch('?/asignarUnidad', {
+            const response = await fetch('?/cancelarReserva', {
                 method: 'POST',
                 body: formData
             });
@@ -52,12 +39,12 @@
             const result = await response.json();
 
             if (result.type === 'success') {
-                successMessage = 'Unidad asignada exitosamente';
+                successMessage = 'Reserva cancelada exitosamente';
                 setTimeout(() => {
                     goto('/admin/reservas');
                 }, 1500);
             } else {
-                error = result.data?.error || 'Error al asignar la unidad';
+                error = result.data?.error || 'Error al cancelar la reserva';
             }
         } catch (err) {
             error = 'Error al comunicarse con el servidor';
@@ -145,57 +132,26 @@
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            <h3 class="card-title">Seleccionar Unidad Disponible</h3>
+            <h3 class="card-title">Confirmar Cancelación</h3>
+            <p class="text-lg mb-4">¿Estás seguro que deseas cancelar esta reserva?</p>
             
-            {#if data.unidades.length === 0}
-                <div class="alert alert-warning">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>No hay unidades disponibles para asignar en este momento</span>
-                </div>
-            {:else}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {#each data.unidades as unidad}
-                        <div class="card bg-base-200">
-                            <div class="card-body p-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-semibold">{unidad.marca} {unidad.modelo}</h4>
-                                        <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
-                                    </div>
-                                    <input 
-                                        type="radio" 
-                                        name="unidad" 
-                                        value={unidad.patente}
-                                        bind:group={patenteSeleccionada}
-                                        class="radio radio-primary"
-                                        disabled={loading}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            {/if}
-
-            <div class="card-actions justify-end mt-4">
+            <div class="card-actions justify-end gap-4">
+                <a href="/admin/reservas" class="btn" class:disabled={loading}>No, volver</a>
                 <button 
-                    class="btn btn-primary"
-                    onclick={asignarUnidad}
-                    disabled={!patenteSeleccionada || loading}
+                    class="btn btn-error"
+                    onclick={cancelarReserva}
+                    disabled={loading}
                 >
                     {#if loading}
                         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Asignando vehículo...
+                        Cancelando...
                     {:else}
-                        Asignar vehículo
+                        Sí, cancelar reserva
                     {/if}
                 </button>
-                <a href="/admin/reservas" class="btn" class:disabled={loading}>Cancelar</a>
             </div>
         </div>
     </div>

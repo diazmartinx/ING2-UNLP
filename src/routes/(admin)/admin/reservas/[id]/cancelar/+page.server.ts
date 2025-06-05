@@ -1,18 +1,12 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
-import { eq, sql, and, not, or, exists } from 'drizzle-orm';
+import { reservas, modelosVehiculos } from '$lib/server/db/schema';
+import { eq, sql } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
 export const load: PageServerLoad = async ({ params }) => {
-    const reservaId = parseInt(params.id);
-    
-    if (isNaN(reservaId)) {
-        throw error(400, 'ID de reserva inválido');
-    }
-
     const reserva = await db.select({
         id: reservas.id,
         estado: reservas.estado,
@@ -20,115 +14,49 @@ export const load: PageServerLoad = async ({ params }) => {
         fechaFin: reservas.fechaFin,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        idSucursal: reservas.idSucursal,
-        idModeloReservado: reservas.idModeloReservado
+        marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`
     })
     .from(reservas)
-    .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
-    .where(eq(reservas.id, reservaId))
+    .where(eq(reservas.id, parseInt(params.id)))
     .limit(1);
 
-    if (!reserva) {
+    if (!reserva || reserva.length === 0) {
         throw error(404, 'Reserva no encontrada');
     }
 
-    const unidadesDisponibles = await db.select({
-        patente: unidadesVehiculos.patente,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(unidadesVehiculos)
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .where(
-        and(
-            eq(unidadesVehiculos.estado, 'Habilitado'),
-            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal.toString()),
-            eq(modelosVehiculos.id, reserva[0].idModeloReservado),
-            not(
-                exists(
-                    db.select()
-                    .from(reservas)
-                    .where(
-                        and(
-                            eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                            eq(reservas.estado, 'Entregada'),
-                            or(
-                                and(
-                                    sql`datetime(${reservas.fechaInicio}, '-3 hours') <= datetime(${reserva[0].fechaFin}, '-3 hours')`,
-                                    sql`datetime(${reservas.fechaFin}, '-3 hours') >= datetime(${reserva[0].fechaInicio}, '-3 hours')`
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    );
-
     return {
-        reserva,
-        unidades: unidadesDisponibles
+        reserva
     };
 };
 
 export const actions: Actions = {
-    asignarUnidad: async ({ request }) => {
+    cancelarReserva: async ({ request }) => {
         const formData = await request.formData();
-        const reservaId = parseInt(formData.get('reservaId') as string);
-        const estado = formData.get('estado') as EstadoReserva;
-        const patente = formData.get('patente') as string;
+        const reservaId = formData.get('reservaId');
 
-        if (!reservaId || !estado) {
-            return {
+        if (!reservaId) {
+            return fail(400, {
                 type: 'error',
-                data: { error: 'Datos incompletos' }
-            };
-        }
-
-        // Get current reservation state
-        const [currentReserva] = await db.select({ estado: reservas.estado })
-            .from(reservas)
-            .where(eq(reservas.id, reservaId));
-
-        if (!currentReserva) {
-            return {
-                type: 'error',
-                data: { error: 'Reserva no encontrada' }
-            };
-        }
-
-        if (estado === 'Cancelada' && currentReserva.estado === 'Entregada') {
-            return {
-                type: 'error',
-                data: { error: 'No se puede cancelar una reserva que ya fue entregada' }
-            };
-        }
-
-        if (estado === 'Entregada' && !patente) {
-            return {
-                type: 'error',
-                data: { error: 'Debe seleccionar una unidad para asignar' }
-            };
+                data: { error: 'ID de reserva no proporcionado' }
+            });
         }
 
         try {
-            // Update the reservation with the new state and unit (if applicable)
             await db.update(reservas)
                 .set({
-                    patenteUnidadAsignada: estado === 'Entregada' ? patente : null,
-                    estado: estado
+                    estado: 'Cancelada'
                 })
-                .where(eq(reservas.id, reservaId));
+                .where(eq(reservas.id, parseInt(reservaId.toString())));
 
             return {
                 type: 'success'
             };
         } catch (err) {
-            return {
+            console.error('Error al cancelar la reserva:', err);
+            return fail(500, {
                 type: 'error',
-                data: { error: 'Error al cambiar el estado de la reserva' }
-            };
+                data: { error: 'Error al cancelar la reserva' }
+            });
         }
     }
 }; 
