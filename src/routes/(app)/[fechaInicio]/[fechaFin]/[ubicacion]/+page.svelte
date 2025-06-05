@@ -5,6 +5,17 @@
     
     export let data: PageData;
 
+    interface UnidadAgrupada {
+        marca: string;
+        modelo: string;
+        imagenBlob: string | null;
+        capacidadPasajeros: number;
+        precioPorDia: number;
+        nombreSucursal: string;
+        direccionSucursal: string;
+        unidadesDisponibles: number;
+    }
+
     let fechaInicio = data.fechaInicio;
     let fechaFin = data.fechaFin;
     let ubicacion = decodeURIComponent(data.ubicacion);
@@ -79,24 +90,27 @@
     }
 
     // Create a reactive statement for groupedVehicles that updates when data changes
-    $: groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
-        const key = `${vehicle.marca}-${vehicle.modelo}`;
-        if (!acc[key]) {
-            acc[key] = {
-                marca: vehicle.marca,
-                modelo: vehicle.modelo,
-                imagenBlob: vehicle.imagenBlob,
-                capacidadPasajeros: vehicle.capacidadPasajeros,
-                precioPorDia: vehicle.precioPorDia,
-                nombreSucursal: vehicle.nombreSucursal,
-                direccionSucursal: vehicle.direccionSucursal,
-                count: 1
-            };
-        } else {
-            acc[key].count++;
-        }
-        return acc;
-    }, {} as Record<string, any>);
+    let groupedVehicles: Record<string, UnidadAgrupada> = {};
+    $: {
+        console.log('Datos recibidos del servidor:', data.unidadesDisponibles);
+        groupedVehicles = data.unidadesDisponibles?.reduce((acc, vehicle) => {
+            const key = `${vehicle.marca}-${vehicle.modelo}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    marca: vehicle.marca,
+                    modelo: vehicle.modelo,
+                    imagenBlob: vehicle.imagenBlob,
+                    capacidadPasajeros: vehicle.capacidadPasajeros,
+                    precioPorDia: vehicle.precioPorDia,
+                    nombreSucursal: vehicle.nombreSucursal,
+                    direccionSucursal: vehicle.direccionSucursal,
+                    unidadesDisponibles: vehicle.unidadesDisponibles
+                };
+            }
+            return acc;
+        }, {} as Record<string, UnidadAgrupada>);
+        console.log('Vehículos agrupados:', groupedVehicles);
+    }
 </script>
 
 <div class="container mx-auto p-8">
@@ -167,7 +181,7 @@
         </div>
     {:else}
         <div class="flex flex-col gap-6">
-            {#each Object.values(groupedVehicles) as unidad}
+            {#each Object.values(groupedVehicles) as unidad: UnidadAgrupada (unidad.marca + unidad.modelo)}
                 <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
                     <div class="flex flex-row">
                         <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
@@ -184,7 +198,7 @@
                                 <h2 class="card-title text-2xl font-bold text-gray-800">
                                     {unidad.marca} {unidad.modelo}
                                 </h2>
-                                <div class="badge badge-primary badge-lg">Unidades disponibles: {unidad.count}</div>
+                                <div class="badge badge-primary badge-lg">Unidades disponibles: {unidad.unidadesDisponibles}</div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="space-y-4">
