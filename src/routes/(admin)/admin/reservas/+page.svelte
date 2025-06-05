@@ -13,6 +13,19 @@
     let reservas = $state(data.reservas);
     let sortOrder = $state<'asc' | 'desc'>('desc');
 
+    type Reserva = {
+        id: number;
+        fechaInicio: Date;
+        fechaFin: Date;
+        estado: "Pendiente" | "Entregada" | "Cancelada" | "Devuelto";
+        dniCliente: string | null;
+        patenteUnidadAsignada: string | null;
+        nombreCliente: string | null;
+        apellidoCliente: string | null;
+        modeloReservado: string;
+        marcaReservada: string;
+    };
+
     // Initialize filters from URL parameters and update data when URL changes
     $effect(() => {
         const params = $page.url.searchParams;
@@ -133,7 +146,7 @@
                             <td>{reserva.id}</td>
                             <td>{reserva.nombreCliente} {reserva.apellidoCliente}</td>
                             <td>{reserva.dniCliente}</td>
-                            <td>{reserva.modeloReservado}</td>
+                            <td>{reserva.marcaReservada} {reserva.modeloReservado}</td>
                             <td>{reserva.patenteUnidadAsignada || 'No asignada'}</td>
                             <td>{new Date(reserva.fechaInicio).toLocaleDateString()}</td>
                             <td>{new Date(reserva.fechaFin).toLocaleDateString()}</td>
