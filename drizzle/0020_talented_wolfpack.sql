@@ -1,0 +1,1 @@
+ALTER TABLE `reservas` ADD `idSucursal` integer REFERENCES sucursales(id);

@@ -141,6 +141,20 @@
       "when": 1748484642542,
       "tag": "0019_sad_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1749118148474,
+      "tag": "0020_talented_wolfpack",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1749118180828,
+      "tag": "0021_volatile_starbolt",
+      "breakpoints": true
     }
   ]
 }

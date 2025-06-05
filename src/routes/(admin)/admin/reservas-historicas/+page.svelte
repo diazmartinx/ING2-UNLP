@@ -9,7 +9,7 @@
     let error = $state('');
     let successMessage = $state('');
     let dniBusqueda = $state('');
-    let estadoFiltro = $state('Pendiente');
+    let estadoFiltro = $state('Cancelada');
     let reservas = $state(data.reservas);
     let sortOrder = $state<'asc' | 'desc'>('desc');
 
@@ -30,7 +30,7 @@
     $effect(() => {
         const params = $page.url.searchParams;
         dniBusqueda = params.get('dni') || '';
-        estadoFiltro = params.get('estado') || 'Pendiente';
+        estadoFiltro = params.get('estado') || 'Cancelada';
         reservas = data.reservas;
     });
 
@@ -56,12 +56,12 @@
 <div class="flex flex-col gap-6">
     <div class="flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <h2 class="text-3xl font-bold text-gray-800">Reservas Activas</h2>
+            <h2 class="text-3xl font-bold text-gray-800">Historial de Reservas</h2>
             <a 
-                href="/admin/reservas-historicas" 
+                href="/admin/reservas" 
                 class="btn btn-outline btn-primary"
             >
-                Ver Historial de Reservas
+                Ver Reservas Activas
             </a>
         </div>
         {#if successMessage}
@@ -91,8 +91,8 @@
                 bind:value={estadoFiltro}
                 class="select select-bordered w-full"
             >
-                <option value="Pendiente">Pendiente</option>
-                <option value="Entregada">Entregada</option>
+                <option value="Cancelada">Cancelada</option>
+                <option value="Devuelto">Devuelto</option>
             </select>
         </div>
 
@@ -113,7 +113,7 @@
     {#if reservas.length === 0}
         <div class="flex justify-center items-center h-64">
             <div class="text-center">
-                <h1 class="text-2xl font-bold mb-4">No hay reservas disponibles</h1>
+                <h1 class="text-2xl font-bold mb-4">No hay reservas históricas disponibles</h1>
             </div>
         </div> 
     {:else}
@@ -157,40 +157,18 @@
                             <td>{new Date(reserva.fechaInicio).toLocaleDateString()}</td>
                             <td>{new Date(reserva.fechaFin).toLocaleDateString()}</td>
                             <td>
-                                <span class="badge badge-lg {reserva.estado === 'Pendiente' ? 'badge-warning' : 
-                                    reserva.estado === 'Entregada' ? 'badge-success' : 'badge-error'}">
+                                <span class="badge badge-lg {reserva.estado === 'Cancelada' ? 'badge-error' : 'badge-info'}">
                                     {reserva.estado}
                                 </span>
                             </td>
                             <td>
                                 <div class="flex space-x-2">
                                     <a 
-                                        href="/admin/reservas/{reserva.id}" 
+                                        href="/admin/reservas-historicas/{reserva.id}" 
                                         class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                                     >
                                         Detalles
                                     </a>
-                                    {#if reserva.estado === 'Pendiente'}
-                                        <a
-                                            href="/admin/reservas/{reserva.id}/asignar-unidad"
-                                            class="font-medium text-green-600 dark:text-green-500 hover:underline cursor-pointer"
-                                        >
-                                            Asignar Vehículo
-                                        </a>
-                                        <a
-                                            href="/admin/reservas/{reserva.id}/cancelar"
-                                            class="font-medium text-red-600 dark:text-red-500 hover:underline cursor-pointer"
-                                        >
-                                            Cancelar
-                                        </a>
-                                    {:else if reserva.estado === 'Entregada'}
-                                        <a
-                                            href="/admin/reservas/{reserva.id}/devolucion"
-                                            class="font-medium text-yellow-600 dark:text-yellow-500 hover:underline cursor-pointer"
-                                        >
-                                            Devolución Vehículo
-                                        </a>
-                                    {/if}
                                 </div>
                             </td>
                         </tr>

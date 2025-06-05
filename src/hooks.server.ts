@@ -1,6 +1,7 @@
 import type { Handle } from '@sveltejs/kit';
 import * as auth from '$lib/server/auth.js';
 import { redirect } from '@sveltejs/kit';
+
 const handleAuth: Handle = async ({ event, resolve }) => {
     const sessionToken = event.cookies.get(auth.sessionCookieName);
 
@@ -28,6 +29,35 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
     event.locals.user = user;
     event.locals.session = session;
+
+    // Restricciones de acceso basadas en roles
+    if (user) {
+        const path = event.url.pathname;
+        const restrictedPaths = [
+            '/admin/categorias',
+            '/admin/clientes',
+            '/admin/empleados',
+            '/admin/modelos',
+            '/admin/vehiculos'
+        ];
+        
+        const clientRestrictedPaths = [
+            ...restrictedPaths,
+            '/admin/reservas',
+            '/admin/reservas-historicas'
+        ];
+
+        // Si es cliente, no puede acceder a las rutas restringidas para clientes
+        if (user.rol === 'cliente' && clientRestrictedPaths.some(p => path.startsWith(p))) {
+            redirect(302, '/admin/mis-reservas');
+        }
+
+        // Si es empleado, no puede acceder a las rutas restringidas generales
+        if (user.rol === 'empleado' && restrictedPaths.some(p => path.startsWith(p))) {
+            redirect(302, '/admin');
+        }
+    }
+
     return resolve(event);
 };
 

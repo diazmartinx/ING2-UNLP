@@ -1,7 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { reservas, modelosVehiculos, unidadesVehiculos } from '$lib/server/db/schema';
+import { reservas, modelosVehiculos, unidadesVehiculos, sucursales } from '$lib/server/db/schema';
 import type { NewReserva } from '$lib/server/db/schema';
 import { db } from '$lib/server/db';
 import { and, eq } from 'drizzle-orm';
@@ -94,8 +94,18 @@ export const actions: Actions = {
         if(!modeloVehiculo){
             return fail(400, {
                 error: 'El modelo de vehiculo no existe',
-                marca,
+                marca,  
                 modelo
+            });
+        }
+
+        // Get the sucursal ID from the location name
+        let [sucursal] = await db.select().from(sucursales).where(eq(sucursales.nombre, ubicacion));
+        
+        if(!sucursal){
+            return fail(400, {
+                error: 'La sucursal no existe',
+                ubicacion
             });
         }
 
@@ -167,7 +177,8 @@ export const actions: Actions = {
             fechaCreacion: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })),
             estado: 'Pendiente',
             idUsuario: locals.user!.id,
-            idModeloReservado: modeloVehiculo.id
+            idModeloReservado: modeloVehiculo.id,
+            idSucursal: sucursal.id
         }
 
         await db.insert(reservas).values(reserva);
