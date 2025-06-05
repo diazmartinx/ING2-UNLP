@@ -37,35 +37,7 @@
             return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
         });
     }
-
-    async function actualizarEstado(id: number, nuevoEstado: 'Pendiente' | 'Entregada' | 'Cancelada') {
-        try {
-            const formData = new FormData();
-            formData.append('id', id.toString());
-            formData.append('nuevoEstado', nuevoEstado);
-
-            const response = await fetch('?/actualizarEstado', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.type === 'success') {
-                reservas = reservas.map((r) => 
-                    r.id === id ? { ...r, estado: nuevoEstado } : r
-                );
-                successMessage = 'Estado actualizado exitosamente';
-                setTimeout(() => {
-                    successMessage = '';
-                }, 3000);
-            } else {
-                error = result.data?.error || 'Error al actualizar el estado';
-            }
-        } catch (err) {
-            error = 'Error al comunicarse con el servidor';
-        }
-    }
+    
 </script>
 
 <div class="flex flex-col gap-6">
@@ -179,12 +151,27 @@
                                     >
                                         Detalles
                                     </a>
-                                    <a
-                                        href="/admin/reservas/{reserva.id}/cambiar-estado"
-                                        class="font-medium text-green-600 dark:text-green-500 hover:underline cursor-pointer"
-                                    >
-                                        Cambiar estado
-                                    </a>
+                                    {#if reserva.estado === 'Pendiente'}
+                                        <a
+                                            href="/admin/reservas/{reserva.id}/asignar-unidad"
+                                            class="font-medium text-green-600 dark:text-green-500 hover:underline cursor-pointer"
+                                        >
+                                            Asignar Vehículo
+                                        </a>
+                                        <a
+                                            href="/admin/reservas/{reserva.id}/cancelar"
+                                            class="font-medium text-red-600 dark:text-red-500 hover:underline cursor-pointer"
+                                        >
+                                            Cancelar
+                                        </a>
+                                    {:else if reserva.estado === 'Entregada'}
+                                        <a
+                                            href="/admin/reservas/{reserva.id}/devolucion"
+                                            class="font-medium text-yellow-600 dark:text-yellow-500 hover:underline cursor-pointer"
+                                        >
+                                            Devolución Vehículo
+                                        </a>
+                                    {/if}
                                 </div>
                             </td>
                         </tr>

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and, not, or, exists } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
@@ -21,6 +21,8 @@ export const load: PageServerLoad = async ({ params }) => {
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
         marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
+        idSucursal: reservas.idSucursal,
+        idModeloReservado: reservas.idModeloReservado
     })
     .from(reservas)
     .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
@@ -31,7 +33,6 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(404, 'Reserva no encontrada');
     }
 
-    // Get all available units with their model information
     const unidadesDisponibles = await db.select({
         patente: unidadesVehiculos.patente,
         marca: modelosVehiculos.marca,
@@ -39,7 +40,31 @@ export const load: PageServerLoad = async ({ params }) => {
     })
     .from(unidadesVehiculos)
     .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .where(eq(unidadesVehiculos.estado, 'Habilitado'));
+    .where(
+        and(
+            eq(unidadesVehiculos.estado, 'Habilitado'),
+            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal.toString()),
+            eq(modelosVehiculos.id, reserva[0].idModeloReservado),
+            not(
+                exists(
+                    db.select()
+                    .from(reservas)
+                    .where(
+                        and(
+                            eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
+                            eq(reservas.estado, 'Entregada'),
+                            or(
+                                and(
+                                    sql`datetime(${reservas.fechaInicio}, '-3 hours') <= datetime(${reserva[0].fechaFin}, '-3 hours')`,
+                                    sql`datetime(${reservas.fechaFin}, '-3 hours') >= datetime(${reserva[0].fechaInicio}, '-3 hours')`
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    );
 
     return {
         reserva,
