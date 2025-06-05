@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
-import { eq, sql, and, not, or, exists } from 'drizzle-orm';
+import { eq, sql, and, not, or, exists, lte, gte } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
@@ -33,6 +33,31 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(404, 'Reserva no encontrada');
     }
 
+    console.log('Reserva actual:', {
+        id: reserva[0].id,
+        fechaInicio: reserva[0].fechaInicio,
+        fechaFin: reserva[0].fechaFin,
+        estado: reserva[0].estado
+    });
+
+    // Debug query to check existing reservations for the unit
+    const existingReservations = await db.select({
+        id: reservas.id,
+        patente: reservas.patenteUnidadAsignada,
+        estado: reservas.estado,
+        fechaInicio: reservas.fechaInicio,
+        fechaFin: reservas.fechaFin
+    })
+    .from(reservas)
+    .where(
+        and(
+            eq(reservas.patenteUnidadAsignada, 'AB123CD'),
+            eq(reservas.estado, 'Entregada')
+        )
+    );
+
+    console.log('Reservas existentes para la unidad AB123CD:', existingReservations);
+
     const unidadesDisponibles = await db.select({
         patente: unidadesVehiculos.patente,
         marca: modelosVehiculos.marca,
@@ -53,11 +78,9 @@ export const load: PageServerLoad = async ({ params }) => {
                         and(
                             eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
                             eq(reservas.estado, 'Entregada'),
-                            or(
-                                and(
-                                    sql`datetime(${reservas.fechaInicio}, '-3 hours') <= datetime(${reserva[0].fechaFin}, '-3 hours')`,
-                                    sql`datetime(${reservas.fechaFin}, '-3 hours') >= datetime(${reserva[0].fechaInicio}, '-3 hours')`
-                                )
+                            and(
+                                lte(reservas.fechaInicio, reserva[0].fechaFin),
+                                gte(reservas.fechaFin, reserva[0].fechaInicio)
                             )
                         )
                     )
@@ -65,6 +88,29 @@ export const load: PageServerLoad = async ({ params }) => {
             )
         )
     );
+
+    // Debug query to check overlapping reservations
+    const overlappingReservations = await db.select({
+        id: reservas.id,
+        patente: reservas.patenteUnidadAsignada,
+        estado: reservas.estado,
+        fechaInicio: reservas.fechaInicio,
+        fechaFin: reservas.fechaFin
+    })
+    .from(reservas)
+    .where(
+        and(
+            eq(reservas.patenteUnidadAsignada, 'AB123CD'),
+            eq(reservas.estado, 'Entregada'),
+            and(
+                lte(reservas.fechaInicio, reserva[0].fechaFin),
+                gte(reservas.fechaFin, reserva[0].fechaInicio)
+            )
+        )
+    );
+
+    console.log('Reservas superpuestas para AB123CD:', overlappingReservations);
+    console.log('Unidades disponibles:', unidadesDisponibles);
 
     return {
         reserva,
