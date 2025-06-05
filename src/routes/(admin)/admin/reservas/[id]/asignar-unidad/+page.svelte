@@ -21,7 +21,6 @@
     let successMessage = $state('');
     let showSuccessToast = $state(false);
     let patenteSeleccionada = $state('');
-    let estadoReserva = $state('');
 
     type Unidad = {
         patente: string;
@@ -29,29 +28,17 @@
         modelo: string | null;
     };
 
-    const estadosReserva = [
-        { value: 'Entregada', label: 'Entregada' },
-        { value: 'Cancelada', label: 'Cancelada' }
-    ];
-
-    async function cambiarEstado() {
+    async function asignarUnidad() {
         try {
-            if (estadoReserva === 'Cancelada' && reserva.estado === 'Entregada') {
-                error = 'No se puede cancelar una reserva que ya fue entregada';
+            if (!patenteSeleccionada) {
+                error = 'Se debe seleccionar una unidad';
                 return;
             }
 
             const formData = new FormData();
             formData.append('reservaId', reserva.id.toString());
-            formData.append('estado', estadoReserva);
-            
-            if (estadoReserva === 'Entregada') {
-                if (!patenteSeleccionada) {
-                    error = 'Se debe asignar una unidad';
-                    return;
-                }
-                formData.append('patente', patenteSeleccionada);
-            }
+            formData.append('estado', 'Entregada');
+            formData.append('patente', patenteSeleccionada);
 
             const response = await fetch('?/asignarUnidad', {
                 method: 'POST',
@@ -66,7 +53,7 @@
                     goto('/admin/reservas');
                 }, 1500);
             } else {
-                error = result.data?.error || 'Error al cambiar el estado de la reserva';
+                error = result.data?.error || 'Error al asignar la unidad';
             }
         } catch (err) {
             error = 'Error al comunicarse con el servidor';
@@ -80,7 +67,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{estadoReserva === 'Entregada' ? '¡Unidad asignada exitosamente!' : '¡Reserva cancelada exitosamente!'}</span>
+            <span>¡Unidad asignada exitosamente!</span>
         </div>
     {/if}
 </div>
@@ -134,57 +121,37 @@
 
     <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
-            <h3 class="card-title">Cambiar Estado de la Reserva</h3>
+            <h3 class="card-title">Seleccionar Unidad Disponible</h3>
             
-            <div class="form-control w-full mb-4">
-                <label class="label" for="estado">
-                    <span class="label-text">Estado de la Reserva</span>
-                </label>
-                <select 
-                    id="estado"
-                    bind:value={estadoReserva}
-                    class="select select-bordered w-full"
-                >
-                    <option value="">Seleccione un estado</option>
-                    {#each estadosReserva as estado}
-                        <option value={estado.value}>{estado.label}</option>
-                    {/each}
-                </select>
-            </div>
-
-            {#if estadoReserva === 'Entregada'}
-                <h3 class="card-title mt-4">Seleccionar Unidad Disponible</h3>
-                
-                {#if data.unidades.length === 0}
-                    <div class="alert alert-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span>No hay unidades disponibles para asignar en este momento</span>
-                    </div>
-                {:else}
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {#each data.unidades as unidad}
-                            <div class="card bg-base-200">
-                                <div class="card-body p-4">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <h4 class="font-semibold">{unidad.marca} {unidad.modelo}</h4>
-                                            <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
-                                        </div>
-                                        <input 
-                                            type="radio" 
-                                            name="unidad" 
-                                            value={unidad.patente}
-                                            bind:group={patenteSeleccionada}
-                                            class="radio radio-primary"
-                                        />
+            {#if data.unidades.length === 0}
+                <div class="alert alert-warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>No hay unidades disponibles para asignar en este momento</span>
+                </div>
+            {:else}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {#each data.unidades as unidad}
+                        <div class="card bg-base-200">
+                            <div class="card-body p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold">{unidad.marca} {unidad.modelo}</h4>
+                                        <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
                                     </div>
+                                    <input 
+                                        type="radio" 
+                                        name="unidad" 
+                                        value={unidad.patente}
+                                        bind:group={patenteSeleccionada}
+                                        class="radio radio-primary"
+                                    />
                                 </div>
                             </div>
-                        {/each}
-                    </div>
-                {/if}
+                        </div>
+                    {/each}
+                </div>
             {/if}
 
             <div class="card-actions justify-end mt-4">
@@ -195,10 +162,10 @@
                 {/if}
                 <button 
                     class="btn btn-primary"
-                    onclick={cambiarEstado}
-                    disabled={!estadoReserva || (estadoReserva === 'Entregada' && !patenteSeleccionada)}
+                    onclick={asignarUnidad}
+                    disabled={!patenteSeleccionada}
                 >
-                    Cambiar Estado
+                    Asignar vehículo
                 </button>
                 <a href="/admin/reservas" class="btn">Cancelar</a>
             </div>
