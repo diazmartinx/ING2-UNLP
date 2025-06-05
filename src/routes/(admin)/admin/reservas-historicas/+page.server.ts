@@ -8,7 +8,7 @@ import { fail } from '@sveltejs/kit';
 export const load = (async ({ url }) => {
     const searchParams = url.searchParams;
     const dniCliente = searchParams.get('dni') || '';
-    const estado = searchParams.get('estado') || 'Pendiente';
+    const estado = searchParams.get('estado') || 'Cancelada';
 
     const conditions = [];
 
@@ -16,11 +16,11 @@ export const load = (async ({ url }) => {
         conditions.push(like(usuarios.dni, `%${dniCliente}%`));
     }
 
-    // Por defecto, mostrar solo reservas pendientes y entregadas
+    // Por defecto, mostrar solo reservas canceladas y devueltas
     if (estado) {
-        conditions.push(eq(reservas.estado, estado as 'Pendiente' | 'Entregada'));
+        conditions.push(eq(reservas.estado, estado as 'Cancelada' | 'Devuelto'));
     } else {
-        conditions.push(inArray(reservas.estado, ['Pendiente', 'Entregada']));
+        conditions.push(inArray(reservas.estado, ['Cancelada', 'Devuelto']));
     }
 
     const baseQuery = db.select({
