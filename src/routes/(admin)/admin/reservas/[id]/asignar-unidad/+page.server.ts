@@ -21,7 +21,8 @@ export const load: PageServerLoad = async ({ params }) => {
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
         marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        idSucursal: reservas.idSucursal
+        idSucursal: reservas.idSucursal,
+        idModeloReservado: reservas.idModeloReservado
     })
     .from(reservas)
     .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
@@ -32,10 +33,6 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(404, 'Reserva no encontrada');
     }
 
-    // Get all available units that:
-    // 1. Are in the same branch as the reservation
-    // 2. Are not assigned to any other reservation in the date range
-    // 3. Match the requested model
     const unidadesDisponibles = await db.select({
         patente: unidadesVehiculos.patente,
         marca: modelosVehiculos.marca,
@@ -46,8 +43,8 @@ export const load: PageServerLoad = async ({ params }) => {
     .where(
         and(
             eq(unidadesVehiculos.estado, 'Habilitado'),
-            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal),
-            eq(modelosVehiculos.id, sql`(SELECT idModeloReservado FROM reservas WHERE id = ${reservaId})`),
+            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal.toString()),
+            eq(modelosVehiculos.id, reserva[0].idModeloReservado),
             not(
                 exists(
                     db.select()
@@ -58,8 +55,8 @@ export const load: PageServerLoad = async ({ params }) => {
                             eq(reservas.estado, 'Entregada'),
                             or(
                                 and(
-                                    sql`${reservas.fechaInicio} <= ${reserva[0].fechaFin}`,
-                                    sql`${reservas.fechaFin} >= ${reserva[0].fechaInicio}`
+                                    sql`datetime(${reservas.fechaInicio}, '-3 hours') <= datetime(${reserva[0].fechaFin}, '-3 hours')`,
+                                    sql`datetime(${reservas.fechaFin}, '-3 hours') >= datetime(${reserva[0].fechaInicio}, '-3 hours')`
                                 )
                             )
                         )
