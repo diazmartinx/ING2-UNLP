@@ -25,14 +25,15 @@ export const load = (async ({ params }) => {
         apellidoCliente: usuarios.apellido,
         emailCliente: usuarios.email,
         telefonoCliente: usuarios.telefono,
-        modeloVehiculoReservado: sql<string>`(SELECT idModelo FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
-        modeloVehiculoAsignado: sql<string>`(SELECT idModelo FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
-        anioVehiculoReservado: sql<number>`(SELECT anio FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
-        anioVehiculoAsignado: sql<number>`(SELECT anio FROM unidades_vehiculos WHERE patente = ${reservas.patenteUnidadAsignada})`,
-        marcaVehiculoReservado: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        marcaVehiculoAsignado: sql<string>`(SELECT m.marca FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadAsignada})`,
-        nombreModeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        nombreModeloAsignado: sql<string>`(SELECT m.modelo FROM unidades_vehiculos uv JOIN modelos_vehiculos m ON uv.idModelo = m.id WHERE uv.patente = ${reservas.patenteUnidadAsignada})`,
+        // Información del vehículo asignado
+        modeloVehiculoAsignado: unidadesVehiculos.idModelo,
+        anioVehiculoAsignado: unidadesVehiculos.anio,
+        marcaVehiculoAsignado: modelosVehiculos.marca,
+        nombreModeloAsignado: modelosVehiculos.modelo,
+        // Información del vehículo reservado
+        modeloVehiculoReservado: reservas.idModeloReservado,
+        marcaVehiculoReservado: sql<string>`(SELECT marca FROM modelos_vehiculos WHERE id = ${reservas.idModeloReservado})`,
+        nombreModeloReservado: sql<string>`(SELECT modelo FROM modelos_vehiculos WHERE id = ${reservas.idModeloReservado})`,
         precioPorDia: modelosVehiculos.precioPorDia,
         importeTotal: reservas.importeTotal
     })

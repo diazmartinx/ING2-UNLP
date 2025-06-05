@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
-import { reservas, unidadesVehiculos, usuarios } from '$lib/server/db/schema';
+import { reservas, unidadesVehiculos, usuarios, modelosVehiculos } from '$lib/server/db/schema';
 import { eq, desc, like, sql, and } from 'drizzle-orm';
 import { error, type Actions } from '@sveltejs/kit';
 import { fail } from '@sveltejs/kit';
@@ -29,11 +29,12 @@ export const load = (async ({ url }) => {
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         nombreCliente: usuarios.nombre,
         apellidoCliente: usuarios.apellido,
-        modeloReservado: sql<string>`(SELECT modelo FROM modelos_vehiculos WHERE id = ${reservas.idModeloReservado})`,
-        marcaReservada: sql<string>`(SELECT marca FROM modelos_vehiculos WHERE id = ${reservas.idModeloReservado})`
+        modeloReservado: modelosVehiculos.modelo,
+        marcaReservada: modelosVehiculos.marca
     })
     .from(reservas)
     .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))
+    .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
     .orderBy(desc(reservas.fechaInicio));
 
     const finalQuery = conditions.length > 0 
