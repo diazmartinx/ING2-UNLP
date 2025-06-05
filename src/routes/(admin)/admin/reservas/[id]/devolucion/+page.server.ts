@@ -1,10 +1,10 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, usuarios } from '$lib/server/db/schema';
 import { eq, sql, and, not, or, exists } from 'drizzle-orm';
 
-type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
+type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada' | 'Devuelto';
 
 export const load: PageServerLoad = async ({ params }) => {
     const reservaId = parseInt(params.id);
@@ -129,6 +129,55 @@ export const actions: Actions = {
                 type: 'error',
                 data: { error: 'Error al cambiar el estado de la reserva' }
             };
+        }
+    },
+    confirmarDevolucion: async ({ request }) => {
+        const formData = await request.formData();
+        const reservaId = formData.get('reservaId');
+
+        if (!reservaId) {
+            return fail(400, {
+                type: 'error',
+                data: { error: 'ID de reserva no proporcionado' }
+            });
+        }
+
+        try {
+            // Get current reservation state
+            const [currentReserva] = await db.select({ estado: reservas.estado })
+                .from(reservas)
+                .where(eq(reservas.id, parseInt(reservaId.toString())));
+
+            if (!currentReserva) {
+                return fail(404, {
+                    type: 'error',
+                    data: { error: 'Reserva no encontrada' }
+                });
+            }
+
+            if (currentReserva.estado !== 'Entregada') {
+                return fail(400, {
+                    type: 'error',
+                    data: { error: 'Solo se pueden devolver reservas que estén en estado Entregada' }
+                });
+            }
+
+            // Update the reservation state to Devuelto
+            await db.update(reservas)
+                .set({
+                    estado: 'Devuelto'
+                })
+                .where(eq(reservas.id, parseInt(reservaId.toString())));
+
+            return {
+                type: 'success'
+            };
+        } catch (err) {
+            console.error('Error al confirmar la devolución:', err);
+            return fail(500, {
+                type: 'error',
+                data: { error: 'Error al confirmar la devolución' }
+            });
         }
     }
 }; 
