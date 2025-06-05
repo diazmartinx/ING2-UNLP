@@ -57,7 +57,7 @@ export const reservas = sqliteTable('reservas', {
 	patenteUnidadAsignada: text().references(() => unidadesVehiculos.patente),
 	fechaInicio: integer({ mode: 'timestamp' }).notNull(),
 	fechaFin: integer({ mode: 'timestamp' }).notNull(),
-	estado: text({ enum: ["Pendiente", "Entregada", "Cancelada"] }).default('Pendiente').notNull(),
+	estado: text({ enum: ["Pendiente", "Entregada", "Cancelada", "Devuelto"] }).default('Pendiente').notNull(),
 	importeTotal: real().notNull(),
 	fechaCreacion: integer({ mode: 'timestamp' }).notNull()
 })
