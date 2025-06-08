@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios } from '$lib/server/db/schema';
-import { eq, and, or, not, exists, lte, gte, sql } from 'drizzle-orm';
+import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios, categoriasVehiculos } from '$lib/server/db/schema';
+import { eq, and, or, not, exists, gt, lt, lte, gte, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { json, error } from '@sveltejs/kit';
 
@@ -78,11 +78,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         nombreSucursal: sucursales.nombre,
         direccionSucursal: sucursales.direccion,
         patente: unidadesVehiculos.patente,
-        idModelo: modelosVehiculos.id
+        idModelo: modelosVehiculos.id,
+        categoria: categoriasVehiculos.nombre
     })
         .from(unidadesVehiculos)
         .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
         .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
+        .leftJoin(categoriasVehiculos, eq(modelosVehiculos.idCategoria, categoriasVehiculos.id))
         .where(
             and(
                 eq(unidadesVehiculos.estado, 'Habilitado'),
@@ -198,9 +200,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                 imagenBlob: unidad.imagenBlob,
                 nombreSucursal: unidad.nombreSucursal,
                 direccionSucursal: unidad.direccionSucursal,
-                totalUnidades: totalUnidadesMap.get(unidad.idModelo) || 0,
-                unidadesDisponibles: 1,
-                idModelo: unidad.idModelo
+                totalUnidades: 1,
+                unidadesReservadas: 0,
+                idModelo: unidad.idModelo,
+                categoria: unidad.categoria,
             };
         } else {
             acc[key].unidadesDisponibles++;

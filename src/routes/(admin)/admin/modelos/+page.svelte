@@ -4,6 +4,7 @@
     import { goto } from '$app/navigation';
     import { invalidateAll } from '$app/navigation';
     import { onDestroy } from 'svelte';
+    import ModelVehicleSearch from '$lib/components/ModelVehicleSearch.svelte';
 
     interface Modelo {
         id: number;
@@ -161,8 +162,12 @@
             <span>No hay modelos.</span>    
         </div>
     {:else}
-        <div class="flex flex-col gap-6">
-            {#each data.modelos as modelo}
+        <ModelVehicleSearch 
+            modelos={data.modelos} 
+            categorias={data.categorias}
+            let:filteredModelos
+        >
+            {#each filteredModelos as modelo}
                 <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
                     <div class="flex flex-row">
                         <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
@@ -212,7 +217,7 @@
                     </div>
                 </div>
             {/each}
-        </div>
+        </ModelVehicleSearch>
     {/if}
 </div>
 
