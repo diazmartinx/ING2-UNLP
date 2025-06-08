@@ -5,6 +5,17 @@
     
     export let data: PageData;
 
+    interface UnidadAgrupada {
+        marca: string;
+        modelo: string;
+        imagenBlob: string | null;
+        capacidadPasajeros: number;
+        precioPorDia: number;
+        nombreSucursal: string;
+        direccionSucursal: string;
+        unidadesDisponibles: number;
+    }
+
     let fechaInicio = data.fechaInicio;
     let fechaFin = data.fechaFin;
     let ubicacion = decodeURIComponent(data.ubicacion);

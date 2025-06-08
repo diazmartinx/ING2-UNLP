@@ -7,10 +7,6 @@
     
     let adminMenu = [
         {
-            label: 'Reservas',
-            href: '/admin/reservas'
-        },
-        {
             label: 'Categorías',
             href: '/admin/categorias'
         },
@@ -29,12 +25,27 @@
         {
             label: 'Empleados',
             href: '/admin/empleados'
+        },
+        {
+            label: 'Mi Perfil',
+            href: '/admin/mi-perfil'
+        }
+    ]
+
+    let empleadoMenu = [
+        {
+            label: 'Reservas',
+            href: '/admin/reservas'
+        },
+        {
+            label: 'Mi Perfil',
+            href: '/admin/mi-perfil'
         }
     ]
 
     let clienteMenu = [
         {
-            label: 'Reservas',
+            label: 'Mis Reservas',
             href: '/admin/mis-reservas'
         },
         {
@@ -43,7 +54,7 @@
         }
     ]
 
-    let finalMenu = data.user.rol === 'admin' ? adminMenu : clienteMenu;
+    let finalMenu = data.user.rol === 'admin' ? adminMenu : data.user.rol === 'empleado' ? empleadoMenu : clienteMenu;
 
 </script>
 
