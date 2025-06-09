@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { modelosVehiculos, categoriasVehiculos, politicasCancelacion, unidadesVehiculos, reservas } from '$lib/server/db/schema';
+import { eq, and, count } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -20,8 +20,33 @@ export const load = (async () => {
     .leftJoin(categoriasVehiculos, eq(modelosVehiculos.idCategoria, categoriasVehiculos.id))
     .leftJoin(politicasCancelacion, eq(modelosVehiculos.idPoliticaCancelacion, politicasCancelacion.id));
 
+    // Obtener conteos para cada modelo
+    const modelosConConteos = await Promise.all(
+        modelos.map(async (modelo) => {
+            
+            // Contar todas las reservas (cualquier estado)
+            const reservasActivasResult = await db.select({ count: count() })
+                .from(reservas)
+                .where(eq(reservas.idModeloReservado, modelo.id));
+
+            // Contar unidades asignadas
+            const unidadesAsignadasResult = await db.select({ count: count() })
+                .from(unidadesVehiculos)
+                .where(eq(unidadesVehiculos.idModelo, modelo.id));
+
+            const reservasActivas = reservasActivasResult[0]?.count || 0;
+            const unidadesAsignadas = unidadesAsignadasResult[0]?.count || 0;
+
+            return {
+                ...modelo,
+                reservasActivas,
+                unidadesAsignadas
+            };
+        })
+    );
+
     // Convertir los blobs a base64 para la serialización
-    const modelosSerializados = modelos.map(modelo => ({
+    const modelosSerializados = modelosConConteos.map(modelo => ({
         ...modelo,
         imagenBlob: modelo.imagenBlob instanceof Buffer ? modelo.imagenBlob.toString('base64') : null
     }));
@@ -125,5 +150,61 @@ export const actions = {
             }
             return fail(500, { message: 'Error al procesar la solicitud' });
         }
+    },
+
+    
+    eliminarModelo: async ({ request }) => {
+    const formData = await request.formData();
+    
+    try {
+        const id = parseInt(formData.get('id') as string);
+        
+        if (!id || isNaN(id)) {
+            return fail(400, { message: 'ID del modelo no válido' });
+        }
+
+        // Verificar si el modelo existe
+        const modeloExistente = await db.select()
+            .from(modelosVehiculos)
+            .where(eq(modelosVehiculos.id, id));
+
+        if (modeloExistente.length === 0) {
+            return fail(404, { message: 'El modelo no existe' });
+        }
+
+        //verificar si el modelo tiene reservas de cualquier tipo
+        const reservasActivas = await db.select()
+            .from(reservas)
+            .where(eq(reservas.idModeloReservado, id));
+
+        if (reservasActivas.length > 0) {
+            return fail(400, { message: 'No se puede eliminar el modelo porque tiene reservas activas' });
+        }
+
+        // verificar vehículos asignados al modelo
+        const vehiculosAsignados = await db.select()
+            .from(unidadesVehiculos)
+            .where(eq(unidadesVehiculos.idModelo, id));
+
+        // eliminar vehiculos asignados al modelo
+        if (vehiculosAsignados.length > 0) {
+            await db.delete(unidadesVehiculos)
+                .where(eq(unidadesVehiculos.idModelo, id));
+        }
+
+        // Eliminar el modelo
+        await db.delete(modelosVehiculos)
+            .where(eq(modelosVehiculos.id, id));
+
+        return { success: true, message: 'Modelo eliminado exitosamente' };
+        
+    } catch (error) {
+        console.error('Error al eliminar modelo:', error);
+        if (error instanceof Error) {
+            return fail(500, { message: `Error al eliminar el modelo: ${error.message}` });
+        }
+        return fail(500, { message: 'Error interno del servidor' });
     }
+}
+
 } satisfies Actions;
