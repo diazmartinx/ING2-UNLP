@@ -96,7 +96,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                         .where(
                             and(
                                 eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                                eq(reservas.estado, 'Entregada'),
+                                or(
+                                    eq(reservas.estado, 'Entregada'),
+                                    eq(reservas.estado, 'Pendiente')
+                                ),
                                 or(
                                     // La reserva empieza dentro del rango buscado
                                     and(
@@ -138,7 +141,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     .where(
         and(
             eq(sucursales.nombre, ubicacionDecoded),
-            eq(reservas.estado, 'Entregada'),
+            or(
+                eq(reservas.estado, 'Entregada'),
+                eq(reservas.estado, 'Pendiente')
+            ),
             or(
                 // La reserva empieza dentro del rango buscado
                 and(
@@ -200,8 +206,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                 imagenBlob: unidad.imagenBlob,
                 nombreSucursal: unidad.nombreSucursal,
                 direccionSucursal: unidad.direccionSucursal,
-                totalUnidades: 1,
-                unidadesReservadas: 0,
+                totalUnidades: totalUnidadesMap.get(unidad.idModelo) || 0,
+                unidadesDisponibles: 1,
                 idModelo: unidad.idModelo,
                 categoria: unidad.categoria,
             };
