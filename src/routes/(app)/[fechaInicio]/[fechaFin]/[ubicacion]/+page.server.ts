@@ -13,12 +13,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         throw error(400, 'Fechas inválidas');
     }
 
-    console.log('Parámetros recibidos:', {
-        fechaInicio,
-        fechaFin,
-        ubicacion: ubicacionDecoded
-    });
-
     // Verificar si el usuario tiene una sesión iniciada
     const session = locals.session;
     let isLoggedIn = false;
@@ -29,11 +23,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     // Crear fechas en GMT-3 para comparar correctamente con la base
     const fechaInicioDate = new Date(`${fechaInicio}T00:00:00-03:00`);
     const fechaFinDate = new Date(`${fechaFin}T23:59:59-03:00`);
-
-    console.log('Fechas procesadas:', {
-        fechaInicio: fechaInicioDate.toISOString(),
-        fechaFin: fechaFinDate.toISOString()
-    });
 
     // Get all branches
     const sucursalesList = await db.select({
@@ -59,8 +48,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             )
         )
         .groupBy(modelosVehiculos.id, modelosVehiculos.marca, modelosVehiculos.modelo);
-
-    console.log('Total unidades por modelo:', totalUnidadesPorModelo);
 
     // Convert to Map for easy lookup
     const totalUnidadesMap = new Map(
@@ -112,96 +99,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             )
         );
 
-    // Debug: Get all reservations for the date range
-    const reservasEnRango = await db.select({
-        id: reservas.id,
-        patente: reservas.patenteUnidadAsignada,
-        estado: reservas.estado,
-        fechaInicio: reservas.fechaInicio,
-        fechaFin: reservas.fechaFin,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(reservas)
-    .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
-    .where(
-        and(
-            eq(sucursales.nombre, ubicacionDecoded),
-            or(
-                eq(reservas.estado, 'Entregada'),
-                eq(reservas.estado, 'Pendiente')
-            ),
-            // Hay solapamiento si: fechaInicio de reserva <= fechaFin buscada Y fechaFin de reserva >= fechaInicio buscada
-            and(
-                lte(reservas.fechaInicio, fechaFinDate),
-                gte(reservas.fechaFin, fechaInicioDate)
-            )
-        )
-    );
-
-    console.log('Reservas en el rango de fechas:', reservasEnRango);
-
-    // Debug: Get ALL reservations to see what's in the database
-    const todasLasReservas = await db.select({
-        id: reservas.id,
-        patente: reservas.patenteUnidadAsignada,
-        estado: reservas.estado,
-        fechaInicio: reservas.fechaInicio,
-        fechaFin: reservas.fechaFin,
-        idUsuario: reservas.idUsuario,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(reservas)
-    .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
-    .where(eq(sucursales.nombre, ubicacionDecoded));
-
-    console.log('TODAS las reservas en la sucursal:', todasLasReservas);
-
-    // Debug: Check reservations with status Pendiente only
-    const reservasPendientes = await db.select({
-        id: reservas.id,
-        patente: reservas.patenteUnidadAsignada,
-        estado: reservas.estado,
-        fechaInicio: reservas.fechaInicio,
-        fechaFin: reservas.fechaFin,
-        idUsuario: reservas.idUsuario
-    })
-    .from(reservas)
-    .where(eq(reservas.estado, 'Pendiente'));
-
-    console.log('TODAS las reservas Pendientes:', reservasPendientes);
-
-    // Debug: Get all units in the branch
-    const todasLasUnidades = await db.select({
-        patente: unidadesVehiculos.patente,
-        estado: unidadesVehiculos.estado,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(unidadesVehiculos)
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
-    .where(
-        and(
-            eq(sucursales.nombre, ubicacionDecoded),
-            eq(unidadesVehiculos.estado, 'Habilitado')
-        )
-    );
-
-    console.log('Todas las unidades en la sucursal:', todasLasUnidades);
-
-    console.log('Unidades disponibles (sin agrupar):', unidadesDisponibles.map(u => ({
-        patente: u.patente,
-        marca: u.marca,
-        modelo: u.modelo,
-        idModelo: u.idModelo
-    })));
-
     // Get reservations that overlap with the search date range
     const sucursalId = await db.select({ id: sucursales.id })
         .from(sucursales)
@@ -237,8 +134,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         )
     );
 
-    console.log('Reservas solapantes:', reservasSolapantes);
-
     // Count pending reservations by model and delivered reservations by patente
     const reservasPorModelo = new Map<number, number>();
     const patentesReservadas = new Set<string>();
@@ -253,9 +148,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             patentesReservadas.add(reserva.patente);
         }
     });
-
-    console.log('Reservas por modelo:', Object.fromEntries(reservasPorModelo));
-    console.log('Patentes reservadas:', Array.from(patentesReservadas));
 
     // Agrupar unidades por modelo y calcular disponibilidad real
     const unidadesAgrupadas = unidadesDisponibles
@@ -297,13 +189,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         ...unidad,
         imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
     }));
-
-    console.log('Datos enviados al cliente:', unidadesSerializadas.map(u => ({
-        marca: u.marca,
-        modelo: u.modelo,
-        totalUnidades: u.totalUnidades,
-        unidadesDisponibles: u.unidadesDisponibles
-    })));
 
     return {
         fechaInicio,
