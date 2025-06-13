@@ -104,25 +104,8 @@
         return cumplePrecio && cumpleCapacidad && cumpleCategoria;
     });
 
-    // Create a reactive statement for groupedVehicles that updates when data changes
-    $: groupedVehicles = vehiculosFiltrados?.reduce((acc, vehicle) => {
-        const key = `${vehicle.marca}-${vehicle.modelo}`;
-        if (!acc[key]) {
-            acc[key] = {
-                marca: vehicle.marca,
-                modelo: vehicle.modelo,
-                imagenBlob: vehicle.imagenBlob,
-                capacidadPasajeros: vehicle.capacidadPasajeros,
-                precioPorDia: vehicle.precioPorDia,
-                nombreSucursal: vehicle.nombreSucursal,
-                direccionSucursal: vehicle.direccionSucursal,
-                count: 1
-            };
-        } else {
-            acc[key].count++;
-        }
-        return acc;
-    }, {} as Record<string, any>);
+    // Use the server data directly since it's already grouped
+    $: groupedVehiclesArray = vehiculosFiltrados || [];
 
     // Variables para los filtros
     let filtros = {
@@ -337,7 +320,7 @@
                     </svg>
                     <span>No se encontraron vehículos disponibles para las fechas seleccionadas.</span>
                 </div>
-            {:else if Object.keys(groupedVehicles).length === 0}
+            {:else if groupedVehiclesArray.length === 0}
                 <div class="alert alert-warning">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -345,7 +328,7 @@
                 </div>
             {:else}
                 <div class="flex flex-col gap-6">
-                    {#each Object.values(groupedVehicles) as unidad}
+                    {#each groupedVehiclesArray as unidad (unidad.marca + unidad.modelo)}
                         <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
                             <div class="flex flex-row">
                                 <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
@@ -362,7 +345,7 @@
                                         <h2 class="card-title text-2xl font-bold text-gray-800">
                                             {unidad.marca} {unidad.modelo}
                                         </h2>
-                                        <div class="badge badge-primary badge-lg">Unidades disponibles: {unidad.count}</div>
+                                        <div class="badge badge-primary badge-lg">Unidades disponibles: {unidad.unidadesDisponibles}</div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="space-y-4">
