@@ -29,14 +29,27 @@ export const load: PageServerLoad = async ({ params }) => {
     .where(eq(reservas.id, reservaId))
     .limit(1);
 
-    if (!reserva) {
+    if (!reserva || reserva.length === 0) {
         throw error(404, 'Reserva no encontrada');
     }
 
-    const unidadesDisponibles = await db.select({
+    // Obtener el precio del modelo reservado
+    const [modeloReservado] = await db.select({
+        precioPorDia: modelosVehiculos.precioPorDia
+    })
+    .from(modelosVehiculos)
+    .where(eq(modelosVehiculos.id, reserva[0].idModeloReservado));
+
+    if (!modeloReservado) {
+        throw error(404, 'Modelo reservado no encontrado');
+    }
+
+    // Unidades disponibles del modelo reservado
+    const unidadesModeloReservado = await db.select({
         patente: unidadesVehiculos.patente,
         marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
+        modelo: modelosVehiculos.modelo,
+        precioPorDia: modelosVehiculos.precioPorDia
     })
     .from(unidadesVehiculos)
     .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
@@ -64,9 +77,44 @@ export const load: PageServerLoad = async ({ params }) => {
         )
     );
 
+    // Unidades disponibles de otros modelos de igual o mayor valor
+    const unidadesOtrosModelos = await db.select({
+        patente: unidadesVehiculos.patente,
+        marca: modelosVehiculos.marca,
+        modelo: modelosVehiculos.modelo,
+        precioPorDia: modelosVehiculos.precioPorDia
+    })
+    .from(unidadesVehiculos)
+    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
+    .where(
+        and(
+            eq(unidadesVehiculos.estado, 'Habilitado'),
+            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal.toString()),
+            gte(modelosVehiculos.precioPorDia, modeloReservado.precioPorDia),
+            not(eq(modelosVehiculos.id, reserva[0].idModeloReservado)),
+            not(
+                exists(
+                    db.select()
+                    .from(reservas)
+                    .where(
+                        and(
+                            eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
+                            eq(reservas.estado, 'Entregada'),
+                            and(
+                                lte(reservas.fechaInicio, reserva[0].fechaFin),
+                                gte(reservas.fechaFin, reserva[0].fechaInicio)
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    );
+
     return {
         reserva,
-        unidades: unidadesDisponibles
+        unidadesModeloReservado,
+        unidadesOtrosModelos
     };
 };
 

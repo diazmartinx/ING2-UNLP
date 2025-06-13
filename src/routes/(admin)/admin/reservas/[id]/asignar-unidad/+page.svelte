@@ -26,6 +26,7 @@
         patente: string;
         marca: string | null;
         modelo: string | null;
+        precioPorDia: number;
     };
 
     async function asignarUnidad() {
@@ -147,35 +148,93 @@
         <div class="card-body">
             <h3 class="card-title">Seleccionar Unidad Disponible</h3>
             
-            {#if data.unidades.length === 0}
+            <!-- Unidades del modelo reservado -->
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold mb-3 text-primary">
+                    Unidades del modelo reservado ({reserva.marcaReservada} {reserva.modeloReservado})
+                </h4>
+                
+                {#if data.unidadesModeloReservado.length === 0}
+                    <div class="alert alert-info mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>No hay unidades disponibles del modelo reservado</span>
+                    </div>
+                {:else}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        {#each data.unidadesModeloReservado as unidad}
+                            <div class="card bg-base-200 border-2 border-primary/20">
+                                <div class="card-body p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h5 class="font-semibold">{unidad.marca} {unidad.modelo}</h5>
+                                            <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
+                                            <p class="text-sm font-medium text-primary">${unidad.precioPorDia}/día</p>
+                                        </div>
+                                        <input 
+                                            type="radio" 
+                                            name="unidad" 
+                                            value={unidad.patente}
+                                            bind:group={patenteSeleccionada}
+                                            class="radio radio-primary"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Unidades de otros modelos de igual o mayor valor -->
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold mb-3 text-secondary">
+                    Unidades de otros modelos (igual o mayor valor)
+                </h4>
+                
+                {#if data.unidadesOtrosModelos.length === 0}
+                    <div class="alert alert-info mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>No hay unidades disponibles de otros modelos</span>
+                    </div>
+                {:else}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {#each data.unidadesOtrosModelos as unidad}
+                            <div class="card bg-base-200 border-2 border-secondary/20">
+                                <div class="card-body p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h5 class="font-semibold">{unidad.marca} {unidad.modelo}</h5>
+                                            <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
+                                            <p class="text-sm font-medium text-secondary">${unidad.precioPorDia}/día</p>
+                                        </div>
+                                        <input 
+                                            type="radio" 
+                                            name="unidad" 
+                                            value={unidad.patente}
+                                            bind:group={patenteSeleccionada}
+                                            class="radio radio-secondary"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Mensaje cuando no hay unidades disponibles en ningún grupo -->
+            {#if data.unidadesModeloReservado.length === 0 && data.unidadesOtrosModelos.length === 0}
                 <div class="alert alert-warning">
                     <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>No hay unidades disponibles para asignar en este momento</span>
-                </div>
-            {:else}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {#each data.unidades as unidad}
-                        <div class="card bg-base-200">
-                            <div class="card-body p-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-semibold">{unidad.marca} {unidad.modelo}</h4>
-                                        <p class="text-sm opacity-70">Patente: {unidad.patente}</p>
-                                    </div>
-                                    <input 
-                                        type="radio" 
-                                        name="unidad" 
-                                        value={unidad.patente}
-                                        bind:group={patenteSeleccionada}
-                                        class="radio radio-primary"
-                                        disabled={loading}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    {/each}
                 </div>
             {/if}
 
