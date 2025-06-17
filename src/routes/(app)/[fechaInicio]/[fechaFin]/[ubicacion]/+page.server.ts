@@ -13,12 +13,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         throw error(400, 'Fechas inválidas');
     }
 
-    console.log('Parámetros recibidos:', {
-        fechaInicio,
-        fechaFin,
-        ubicacion: ubicacionDecoded
-    });
-
     // Verificar si el usuario tiene una sesión iniciada
     const session = locals.session;
     let isLoggedIn = false;
@@ -29,11 +23,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     // Crear fechas en GMT-3 para comparar correctamente con la base
     const fechaInicioDate = new Date(`${fechaInicio}T00:00:00-03:00`);
     const fechaFinDate = new Date(`${fechaFin}T23:59:59-03:00`);
-
-    console.log('Fechas procesadas:', {
-        fechaInicio: fechaInicioDate.toISOString(),
-        fechaFin: fechaFinDate.toISOString()
-    });
 
     // Get all branches
     const sucursalesList = await db.select({
@@ -59,8 +48,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             )
         )
         .groupBy(modelosVehiculos.id, modelosVehiculos.marca, modelosVehiculos.modelo);
-
-    console.log('Total unidades por modelo:', totalUnidadesPorModelo);
 
     // Convert to Map for easy lookup
     const totalUnidadesMap = new Map(
@@ -96,23 +83,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                         .where(
                             and(
                                 eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                                eq(reservas.estado, 'Entregada'),
                                 or(
-                                    // La reserva empieza dentro del rango buscado
-                                    and(
-                                        gte(reservas.fechaInicio, fechaInicioDate),
-                                        lte(reservas.fechaInicio, fechaFinDate)
-                                    ),
-                                    // La reserva termina dentro del rango buscado
-                                    and(
-                                        gte(reservas.fechaFin, fechaInicioDate),
-                                        lte(reservas.fechaFin, fechaFinDate)
-                                    ),
-                                    // La reserva contiene completamente el rango buscado
-                                    and(
-                                        lte(reservas.fechaInicio, fechaInicioDate),
-                                        gte(reservas.fechaFin, fechaFinDate)
-                                    )
+                                    eq(reservas.estado, 'Entregada'),
+                                    eq(reservas.estado, 'Pendiente')
+                                ),
+                                // Hay solapamiento si: fechaInicio de reserva <= fechaFin buscada Y fechaFin de reserva >= fechaInicio buscada
+                                and(
+                                    lte(reservas.fechaInicio, fechaFinDate),
+                                    gte(reservas.fechaFin, fechaInicioDate)
                                 )
                             )
                         )
@@ -121,116 +99,96 @@ export const load: PageServerLoad = async ({ params, locals }) => {
             )
         );
 
-    // Debug: Get all reservations for the date range
-    const reservasEnRango = await db.select({
+    // Get reservations that overlap with the search date range
+    const sucursalId = await db.select({ id: sucursales.id })
+        .from(sucursales)
+        .where(eq(sucursales.nombre, ubicacionDecoded))
+        .limit(1);
+
+    if (sucursalId.length === 0) {
+        throw error(404, 'Sucursal no encontrada');
+    }
+
+    const reservasSolapantes = await db.select({
         id: reservas.id,
         patente: reservas.patenteUnidadAsignada,
         estado: reservas.estado,
         fechaInicio: reservas.fechaInicio,
         fechaFin: reservas.fechaFin,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
+        idModeloReservado: reservas.idModeloReservado,
+        idSucursal: reservas.idSucursal
     })
     .from(reservas)
-    .leftJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
     .where(
         and(
-            eq(sucursales.nombre, ubicacionDecoded),
-            eq(reservas.estado, 'Entregada'),
+            eq(reservas.idSucursal, sucursalId[0].id),
             or(
-                // La reserva empieza dentro del rango buscado
-                and(
-                    gte(reservas.fechaInicio, fechaInicioDate),
-                    lte(reservas.fechaInicio, fechaFinDate)
-                ),
-                // La reserva termina dentro del rango buscado
-                and(
-                    gte(reservas.fechaFin, fechaInicioDate),
-                    lte(reservas.fechaFin, fechaFinDate)
-                ),
-                // La reserva contiene completamente el rango buscado
-                and(
-                    lte(reservas.fechaInicio, fechaInicioDate),
-                    gte(reservas.fechaFin, fechaFinDate)
-                )
+                eq(reservas.estado, 'Entregada'),
+                eq(reservas.estado, 'Pendiente')
+            ),
+            // Hay solapamiento si: fechaInicio de reserva <= fechaFin buscada Y fechaFin de reserva >= fechaInicio buscada
+            and(
+                lte(reservas.fechaInicio, fechaFinDate),
+                gte(reservas.fechaFin, fechaInicioDate)
             )
         )
     );
 
-    console.log('Reservas en el rango de fechas:', reservasEnRango);
+    // Count pending reservations by model and delivered reservations by patente
+    const reservasPorModelo = new Map<number, number>();
+    const patentesReservadas = new Set<string>();
 
-    // Debug: Get all units in the branch
-    const todasLasUnidades = await db.select({
-        patente: unidadesVehiculos.patente,
-        estado: unidadesVehiculos.estado,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(unidadesVehiculos)
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .leftJoin(sucursales, eq(unidadesVehiculos.idSucursal, sucursales.id))
-    .where(
-        and(
-            eq(sucursales.nombre, ubicacionDecoded),
-            eq(unidadesVehiculos.estado, 'Habilitado')
-        )
-    );
-
-    console.log('Todas las unidades en la sucursal:', todasLasUnidades);
-
-    console.log('Unidades disponibles (sin agrupar):', unidadesDisponibles.map(u => ({
-        patente: u.patente,
-        marca: u.marca,
-        modelo: u.modelo,
-        idModelo: u.idModelo
-    })));
-
-    // Agrupar unidades por modelo
-    const unidadesAgrupadas = unidadesDisponibles.reduce((acc, unidad) => {
-        const key = `${unidad.marca}-${unidad.modelo}`;
-        if (!acc[key]) {
-            acc[key] = {
-                marca: unidad.marca,
-                modelo: unidad.modelo,
-                anio: unidad.anio,
-                capacidadPasajeros: unidad.capacidadPasajeros,
-                precioPorDia: unidad.precioPorDia,
-                imagenBlob: unidad.imagenBlob,
-                nombreSucursal: unidad.nombreSucursal,
-                direccionSucursal: unidad.direccionSucursal,
-                totalUnidades: 1,
-                unidadesReservadas: 0,
-                idModelo: unidad.idModelo,
-                categoria: unidad.categoria,
-            };
-        } else {
-            acc[key].unidadesDisponibles++;
+    reservasSolapantes.forEach(reserva => {
+        if (reserva.estado === 'Pendiente' && reserva.idModeloReservado) {
+            // For pending reservations, count by model
+            const count = reservasPorModelo.get(reserva.idModeloReservado) || 0;
+            reservasPorModelo.set(reserva.idModeloReservado, count + 1);
+        } else if (reserva.estado === 'Entregada' && reserva.patente) {
+            // For delivered reservations, exclude specific patente
+            patentesReservadas.add(reserva.patente);
         }
-        return acc;
-    }, {} as Record<string, any>);
+    });
 
-    console.log('Unidades agrupadas:', Object.values(unidadesAgrupadas).map(u => ({
-        marca: u.marca,
-        modelo: u.modelo,
-        totalUnidades: u.totalUnidades,
-        unidadesDisponibles: u.unidadesDisponibles,
-        idModelo: u.idModelo
-    })));
+    // Agrupar unidades por modelo y calcular disponibilidad real
+    const unidadesAgrupadas = unidadesDisponibles
+        .filter(unidad => !patentesReservadas.has(unidad.patente) && unidad.idModelo !== null) // Exclude units with delivered reservations and null idModelo
+        .reduce((acc, unidad) => {
+            const key = `${unidad.marca}-${unidad.modelo}`;
+            if (!acc[key]) {
+                const totalUnidades = totalUnidadesMap.get(unidad.idModelo!) || 0;
+                const reservasPendientes = reservasPorModelo.get(unidad.idModelo!) || 0;
+                acc[key] = {
+                    marca: unidad.marca,
+                    modelo: unidad.modelo,
+                    anio: unidad.anio,
+                    capacidadPasajeros: unidad.capacidadPasajeros,
+                    precioPorDia: unidad.precioPorDia,
+                    imagenBlob: unidad.imagenBlob,
+                    nombreSucursal: unidad.nombreSucursal,
+                    direccionSucursal: unidad.direccionSucursal,
+                    totalUnidades: totalUnidades,
+                    unidadesDisponibles: Math.max(0, totalUnidades - reservasPendientes - patentesReservadas.size),
+                    idModelo: unidad.idModelo!,
+                    categoria: unidad.categoria,
+                    unidadesLibres: 1 // Count of units not reserved by patente
+                };
+            } else {
+                acc[key].unidadesLibres++;
+            }
+            return acc;
+        }, {} as Record<string, any>);
+
+    // Recalculate unidadesDisponibles based on free units minus pending reservations per model
+    Object.values(unidadesAgrupadas).forEach((grupo: any) => {
+        const reservasPendientes = reservasPorModelo.get(grupo.idModelo) || 0;
+        grupo.unidadesDisponibles = Math.max(0, grupo.unidadesLibres - reservasPendientes);
+    });
 
     // Convertir los blobs a base64 para la serialización
     const unidadesSerializadas = Object.values(unidadesAgrupadas).map(unidad => ({
         ...unidad,
         imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
     }));
-
-    console.log('Datos enviados al cliente:', unidadesSerializadas.map(u => ({
-        marca: u.marca,
-        modelo: u.modelo,
-        totalUnidades: u.totalUnidades,
-        unidadesDisponibles: u.unidadesDisponibles
-    })));
 
     return {
         fechaInicio,

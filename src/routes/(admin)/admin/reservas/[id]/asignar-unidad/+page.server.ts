@@ -6,6 +6,26 @@ import { eq, sql, and, not, exists, lte, gte } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
+// Helper function para verificar disponibilidad de unidades
+const getDisponibilidadCondition = (fechaInicio: Date, fechaFin: Date) => {
+    return not(
+        exists(
+            db.select()
+            .from(reservas)
+            .where(
+                and(
+                    eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
+                    eq(reservas.estado, 'Entregada'),
+                    and(
+                        lte(reservas.fechaInicio, fechaFin),
+                        gte(reservas.fechaFin, fechaInicio)
+                    )
+                )
+            )
+        )
+    );
+};
+
 export const load: PageServerLoad = async ({ params }) => {
     const reservaId = parseInt(params.id);
     
@@ -13,60 +33,75 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(400, 'ID de reserva inválido');
     }
 
+    // Obtener reserva con datos del modelo en una sola query
     const reserva = await db.select({
         id: reservas.id,
         estado: reservas.estado,
         fechaInicio: reservas.fechaInicio,
         fechaFin: reservas.fechaFin,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
-        modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
-        marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
+        modeloReservado: modelosVehiculos.modelo,
+        marcaReservada: modelosVehiculos.marca,
+        precioPorDiaReservado: modelosVehiculos.precioPorDia,
         idSucursal: reservas.idSucursal,
         idModeloReservado: reservas.idModeloReservado
     })
     .from(reservas)
-    .leftJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
+    .innerJoin(modelosVehiculos, eq(reservas.idModeloReservado, modelosVehiculos.id))
     .where(eq(reservas.id, reservaId))
     .limit(1);
 
-    if (!reserva) {
+    if (!reserva || reserva.length === 0) {
         throw error(404, 'Reserva no encontrada');
     }
 
-    const unidadesDisponibles = await db.select({
-        patente: unidadesVehiculos.patente,
-        marca: modelosVehiculos.marca,
-        modelo: modelosVehiculos.modelo
-    })
-    .from(unidadesVehiculos)
-    .leftJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
-    .where(
-        and(
-            eq(unidadesVehiculos.estado, 'Habilitado'),
-            eq(unidadesVehiculos.idSucursal, reserva[0].idSucursal.toString()),
-            eq(modelosVehiculos.id, reserva[0].idModeloReservado),
-            not(
-                exists(
-                    db.select()
-                    .from(reservas)
-                    .where(
-                        and(
-                            eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente),
-                            eq(reservas.estado, 'Entregada'),
-                            and(
-                                lte(reservas.fechaInicio, reserva[0].fechaFin),
-                                gte(reservas.fechaFin, reserva[0].fechaInicio)
-                            )
-                        )
-                    )
-                )
+    const reservaData = reserva[0];
+    const disponibilidadCondition = getDisponibilidadCondition(reservaData.fechaInicio, reservaData.fechaFin);
+
+    // Ejecutar ambas queries en paralelo
+    const [unidadesModeloReservado, unidadesOtrosModelos] = await Promise.all([
+        // Unidades del modelo reservado
+        db.select({
+            patente: unidadesVehiculos.patente,
+            marca: modelosVehiculos.marca,
+            modelo: modelosVehiculos.modelo,
+            precioPorDia: modelosVehiculos.precioPorDia
+        })
+        .from(unidadesVehiculos)
+        .innerJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
+        .where(
+            and(
+                eq(unidadesVehiculos.estado, 'Habilitado'),
+                eq(unidadesVehiculos.idSucursal, reservaData.idSucursal.toString()),
+                eq(modelosVehiculos.id, reservaData.idModeloReservado),
+                disponibilidadCondition
+            )
+        ),
+
+        // Unidades de otros modelos de igual o mayor valor
+        db.select({
+            patente: unidadesVehiculos.patente,
+            marca: modelosVehiculos.marca,
+            modelo: modelosVehiculos.modelo,
+            precioPorDia: modelosVehiculos.precioPorDia
+        })
+        .from(unidadesVehiculos)
+        .innerJoin(modelosVehiculos, eq(unidadesVehiculos.idModelo, modelosVehiculos.id))
+        .where(
+            and(
+                eq(unidadesVehiculos.estado, 'Habilitado'),
+                eq(unidadesVehiculos.idSucursal, reservaData.idSucursal.toString()),
+                gte(modelosVehiculos.precioPorDia, reservaData.precioPorDiaReservado),
+                not(eq(modelosVehiculos.id, reservaData.idModeloReservado)),
+                disponibilidadCondition
             )
         )
-    );
+    ]);
 
     return {
         reserva,
-        unidades: unidadesDisponibles
+        unidadesModeloReservado,
+        unidadesOtrosModelos
     };
 };
 
@@ -84,7 +119,7 @@ export const actions: Actions = {
             };
         }
 
-        // Get current reservation state
+        // Verificar estado actual de la reserva
         const [currentReserva] = await db.select({ estado: reservas.estado })
             .from(reservas)
             .where(eq(reservas.id, reservaId));
@@ -96,6 +131,7 @@ export const actions: Actions = {
             };
         }
 
+        // Validaciones de estado
         if (estado === 'Cancelada' && currentReserva.estado === 'Entregada') {
             return {
                 type: 'error',
@@ -111,7 +147,6 @@ export const actions: Actions = {
         }
 
         try {
-            // Update the reservation with the new state and unit (if applicable)
             await db.update(reservas)
                 .set({
                     patenteUnidadAsignada: estado === 'Entregada' ? patente : null,
@@ -123,6 +158,7 @@ export const actions: Actions = {
                 type: 'success'
             };
         } catch (err) {
+            console.error('Error al actualizar reserva:', err);
             return {
                 type: 'error',
                 data: { error: 'Error al cambiar el estado de la reserva' }
