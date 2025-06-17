@@ -57,6 +57,7 @@
 		"@types/bcrypt": "^5.0.2",
 		"@types/uuid": "^10.0.0",
 		"bcrypt": "^5.1.1",
+		"chart.js": "^4.4.9",
 		"drizzle-orm": "^0.40.0",
 		"resend": "^4.5.1",
 		"uuid": "^11.1.0"

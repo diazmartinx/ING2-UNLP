@@ -27,6 +27,10 @@
             href: '/admin/empleados'
         },
         {
+            label: 'Reportes',
+            href: '/admin/reservas/reportes'
+        },
+        {
             label: 'Mi Perfil',
             href: '/admin/mi-perfil'
         }
