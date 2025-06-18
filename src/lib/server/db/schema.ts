@@ -62,6 +62,19 @@ export const reservas = sqliteTable('reservas', {
 	fechaCreacion: integer({ mode: 'timestamp' }).notNull()
 })
 
+export const adicionales = sqliteTable('adicionales', {
+	id: integer().primaryKey({ autoIncrement: true }),
+	nombre: text().notNull(),
+	cantidadMaxima: integer().notNull(),
+	precioPorDia: real().notNull()
+})
+
+export const reservasAdicionales = sqliteTable('reservas_adicionales', {
+	idReserva: integer().notNull().references(() => reservas.id),
+	idAdicional: integer().notNull().references(() => adicionales.id),
+	cantidad: integer().notNull()
+})
+
 export type Reserva = typeof reservas.$inferSelect;
 export type NewReserva = typeof reservas.$inferInsert;
 
