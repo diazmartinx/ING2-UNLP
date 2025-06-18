@@ -7,6 +7,10 @@
     
     let adminMenu = [
         {
+            label: 'Adicionales',
+            href: '/admin/adicionales'
+        },
+        {
             label: 'Categorías',
             href: '/admin/categorias'
         },
