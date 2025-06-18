@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { adicionales } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
@@ -30,7 +30,10 @@ export const actions = {
 			return fail(400, { error: 'El precio por día debe ser mayor a 0' });
 		}
 
-		const existeNombre = await db.select().from(adicionales).where(eq(adicionales.nombre, nombre));
+		// Validar que el nombre no exista en la base de datos (case-insensitive)
+		const existeNombre = await db.select().from(adicionales).where(
+			sql`lower(${adicionales.nombre}) = lower(${nombre})`
+		);
 
 		// Validar que el nombre no exista en la base de datos
 		if (existeNombre.length > 0) {

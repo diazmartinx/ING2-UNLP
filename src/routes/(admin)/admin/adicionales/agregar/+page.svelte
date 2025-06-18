@@ -136,7 +136,7 @@
             </div>
         {/if}
 
-        <form method="POST" action="?/create" on:submit={handleSubmit} use:enhance={submitAdicional} class="space-y-6">
+        <form method="POST" action="?/create" onsubmit={handleSubmit} use:enhance={submitAdicional} class="space-y-6">
             <!-- Nombre -->
             <div>
                 <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
