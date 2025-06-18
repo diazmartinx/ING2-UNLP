@@ -35,7 +35,7 @@
     });
 </script>
 
-<main class="container mx-auto p-4 max-w-2xl">
+<main class="container mx-auto p-4 max-w-5xl">
     <div class="bg-white rounded-lg shadow-lg p-6">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Información de Pago</h1>
         
@@ -79,12 +79,29 @@
         <!-- Resumen de la reserva -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-3">Resumen de la Reserva</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                 <div><span class="font-medium">Ubicación:</span> {data.ubicacion}</div>
                 <div><span class="font-medium">Vehículo:</span> {data.marca} {data.modelo}</div>
                 <div><span class="font-medium">Fecha inicio:</span> {data.fechaInicio}</div>
                 <div><span class="font-medium">Fecha fin:</span> {data.fechaFin}</div>
-                <div><span class="font-medium">Importe total:</span> ARS <strong>{data.importeTotal}</strong></div>
+                <div><span class="font-medium">Importe de Reserva:</span> ARS <strong>{data.importeReserva}</strong></div>
+                {#if data.adicionalesSeleccionados && data.adicionalesSeleccionados.length > 0}
+                    <div class="col-span-2">
+                        <span class="font-medium">Adicionales:</span>
+                        <ul class="list-disc ml-6">
+                            {#each data.adicionalesSeleccionados as adicional}
+                                <li>{adicional.nombre} (${adicional.precioPorDia}/día)</li>
+                            {/each}
+                        </ul>
+                    </div>
+                    <div><span class="font-medium">Importe total con adicionales:</span> ARS <strong>{data.importeTotal}</strong></div>
+                {:else}
+                    <div class="col-span-2">
+                        <span class="font-medium">Adicionales:</span>
+                        <span class="text-gray-500 ml-2">No se seleccionaron adicionales.</span>
+                    </div>
+                    <div><span class="font-medium">Importe total:</span> ARS <strong>{data.importeTotal}</strong></div>
+                {/if}
             </div>
         </div>
 

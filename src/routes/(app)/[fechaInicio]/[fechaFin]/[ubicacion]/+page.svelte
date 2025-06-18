@@ -21,6 +21,25 @@
     let ubicacion = decodeURIComponent(data.ubicacion);
     let mensajeSolapamiento = '';
 
+    // Lógica de adicionales
+    let adicionalesVisiblesPara: string | null = null;
+    let adicionalesSeleccionados: Record<string, { [id: number]: boolean }> = {}; // key: marca+modelo, value: {idAdicional: checked}
+
+    function toggleAdicionales(key: string) {
+        if (adicionalesVisiblesPara === key) {
+            adicionalesVisiblesPara = null;
+        } else {
+            adicionalesVisiblesPara = key;
+        }
+    }
+
+    function toggleAdicional(marcaModelo: string, idAdicional: number) {
+        if (!adicionalesSeleccionados[marcaModelo]) {
+            adicionalesSeleccionados[marcaModelo] = {};
+        }
+        adicionalesSeleccionados[marcaModelo][idAdicional] = !adicionalesSeleccionados[marcaModelo][idAdicional];
+    }
+
     afterNavigate(() => {
         fechaInicio = data.fechaInicio;
         fechaFin = data.fechaFin;
@@ -38,7 +57,13 @@
 
     async function handleReservar(marca: string, modelo: string) {
         console.log('is logged: ', data.isLoggedIn);
-        const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}`;
+        const key = marca + modelo;
+        const adicionalesIds = Object.entries(adicionalesSeleccionados[key] || {})
+            .filter(([_, checked]) => checked)
+            .map(([id]) => id)
+            .join(',');
+
+        const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}${adicionalesIds ? `?adicionales=${adicionalesIds}` : ''}`;
         const paginaActual = window.location.pathname;
         
         if (data.isLoggedIn === false) {
@@ -368,15 +393,44 @@
                                         </div>
                                     </div>
                                     <div class="card-actions justify-end mt-4">
+                                        <button class="btn btn-primary"
+                                            on:click={() => toggleAdicionales(unidad.marca + unidad.modelo)}>
+                                            Agregar adicional
+                                        </button>
                                         <button 
                                             class="btn btn-primary"
                                             on:click={() => handleReservar(unidad.marca, unidad.modelo)}
                                         >
                                             Reservar
                                         </button>
+
                                     </div>
                                 </div>
                             </div>
+                            {#if adicionalesVisiblesPara === (unidad.marca + unidad.modelo)}
+                                <div class="p-6 border-t border-gray-200 bg-base-200/50">
+                                    <h3 class="text-lg font-semibold mb-4">Adicionales Disponibles</h3>
+                                    <div class="space-y-3">
+                                        {#each data.adicionalesDisponibles as adicional}
+                                            <div class="flex justify-between items-center p-3 rounded-lg bg-base-100 shadow-sm">
+                                                <div>
+                                                    <span class="font-medium">{adicional.nombre}</span>
+                                                    <span class="text-sm text-gray-500 ml-2">(Max: {adicional.cantidadMaxima})</span>
+                                                </div>
+                                                <div class="flex items-center gap-3">
+                                                    <span class="font-semibold text-primary">${adicional.precioPorDia}/día</span>
+                                                    <input
+                                                        type="checkbox"
+                                                        class="checkbox checkbox-primary"
+                                                        checked={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] || false}
+                                                        on:change={() => toggleAdicional(unidad.marca + unidad.modelo, adicional.id)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                </div>
+                            {/if}
                         </div>
                     {/each}
                 </div>

@@ -1,10 +1,10 @@
 import type { Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { reservas, modelosVehiculos, unidadesVehiculos, sucursales } from '$lib/server/db/schema';
+import { reservas, modelosVehiculos, unidadesVehiculos, sucursales, adicionales as adicionalesTable } from '$lib/server/db/schema';
 import type { NewReserva } from '$lib/server/db/schema';
 import { db } from '$lib/server/db';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 let tarjetas = [
     {
@@ -41,8 +41,10 @@ let tarjetas = [
     }
 ];
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
     const { fechaInicio, fechaFin, ubicacion, marca, modelo } = params;
+    const adicionalesParam = url.searchParams.get('adicionales') || '';
+    const adicionalesIds = adicionalesParam.split(',').filter(Boolean).map(Number);
 
     let modeloVehiculo = await db.select().from(modelosVehiculos).where(and(eq(modelosVehiculos.marca, marca), eq(modelosVehiculos.modelo, modelo)));
 
@@ -55,7 +57,22 @@ export const load: PageServerLoad = async ({ params }) => {
     }
 
     const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
-    const importeTotal = modeloVehiculo[0].precioPorDia * diasTotales;
+    console.log('Dias totales:', diasTotales);
+
+    const importeReserva = modeloVehiculo[0].precioPorDia * diasTotales;
+    let importeTotal = importeReserva;
+
+    // Obtener adicionales seleccionados
+    let adicionalesSeleccionados: (typeof adicionalesTable.$inferSelect)[] = [];
+    if (adicionalesIds.length > 0) {
+        adicionalesSeleccionados = await db
+            .select()
+            .from(adicionalesTable)
+            .where(inArray(adicionalesTable.id, adicionalesIds));
+        for (const adicional of adicionalesSeleccionados) {
+            importeTotal += adicional.precioPorDia * diasTotales;
+        }
+    }
 
     return {
         fechaInicio: fechaInicio || '',
@@ -63,7 +80,9 @@ export const load: PageServerLoad = async ({ params }) => {
         ubicacion: ubicacion || '',
         marca: marca || '',
         modelo: modelo || '',
-        importeTotal: importeTotal
+        importeReserva,
+        importeTotal,
+        adicionalesSeleccionados
     };
 };
 

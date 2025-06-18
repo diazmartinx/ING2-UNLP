@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios, categoriasVehiculos } from '$lib/server/db/schema';
+import { unidadesVehiculos, modelosVehiculos, reservas, sucursales, usuarios, categoriasVehiculos, adicionales } from '$lib/server/db/schema';
 import { eq, and, or, not, exists, gt, lt, lte, gte, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { json, error } from '@sveltejs/kit';
@@ -190,12 +190,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
     }));
 
+    // Lógica de los adicionales
+    const adicionalesDisponibles = await db.select().from(adicionales);
+
     return {
         fechaInicio,
         fechaFin,
         ubicacion: ubicacionDecoded,
         sucursales: sucursalesList.map(s => s.nombre),
         unidadesDisponibles: unidadesSerializadas,
+        adicionalesDisponibles,
         isLoggedIn
     };
 };
