@@ -1,7 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { reservas, modelosVehiculos, unidadesVehiculos, sucursales, adicionales as adicionalesTable } from '$lib/server/db/schema';
+import { reservas, modelosVehiculos, unidadesVehiculos, sucursales, adicionales as adicionalesTable, reservasAdicionales } from '$lib/server/db/schema';
 import type { NewReserva } from '$lib/server/db/schema';
 import { db } from '$lib/server/db';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -128,8 +128,22 @@ export const actions: Actions = {
             });
         }
 
-        let diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
-        let importeTotal = modeloVehiculo.precioPorDia * diasTotales;
+        const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
+        const importeReserva = modeloVehiculo.precioPorDia * diasTotales;
+        let importeTotal = importeReserva;
+
+        const adicionalesParam = new URL(request.url).searchParams.get('adicionales') || '';
+        const adicionalesIds = adicionalesParam.split(',').filter(Boolean).map(Number);
+
+        if (adicionalesIds.length > 0) {
+            const adicionalesSeleccionados = await db
+                .select()
+                .from(adicionalesTable)
+                .where(inArray(adicionalesTable.id, adicionalesIds));
+            for (const adicional of adicionalesSeleccionados) {
+                importeTotal += adicional.precioPorDia * diasTotales;
+            }
+        }
 
         // Validaciones básicas
         if (!tarjeta || !nombre || !fechaVencimiento || !cvv) {
@@ -141,10 +155,6 @@ export const actions: Actions = {
                 cvv
             });
         }
-
-      
-
-        
 
         // Verificar si la tarjeta existe en nuestra base de datos simulada
         const tarjetaEncontrada = tarjetas.find(t => 
@@ -200,7 +210,16 @@ export const actions: Actions = {
             idSucursal: sucursal.id
         }
 
-        await db.insert(reservas).values(reserva);
+        const [nuevaReserva] = await db.insert(reservas).values(reserva).returning();
+
+        if (adicionalesIds.length > 0) {
+            const inserts = adicionalesIds.map(id => ({
+                idReserva: nuevaReserva.id,
+                idAdicional: id,
+                cantidad: 1 // Asumimos cantidad 1 por ahora
+            }));
+            await db.insert(reservasAdicionales).values(inserts);
+        }
 
         // Retornar éxito
         return {
