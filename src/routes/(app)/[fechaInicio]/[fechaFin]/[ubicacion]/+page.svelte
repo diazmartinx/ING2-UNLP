@@ -23,7 +23,7 @@
 
     // Lógica de adicionales
     let adicionalesVisiblesPara: string | null = null;
-    let adicionalesSeleccionados: Record<string, { [id: number]: boolean }> = {}; // key: marca+modelo, value: {idAdicional: checked}
+    let adicionalesSeleccionados: Record<string, { [id: number]: number }> = {}; // key: marca+modelo, value: {idAdicional: cantidad}
 
     function toggleAdicionales(key: string) {
         if (adicionalesVisiblesPara === key) {
@@ -33,11 +33,15 @@
         }
     }
 
-    function toggleAdicional(marcaModelo: string, idAdicional: number) {
+    function toggleAdicional(marcaModelo: string, idAdicional: number, cantidadMaxima: number, nuevaCantidad?: number) {
         if (!adicionalesSeleccionados[marcaModelo]) {
             adicionalesSeleccionados[marcaModelo] = {};
         }
-        adicionalesSeleccionados[marcaModelo][idAdicional] = !adicionalesSeleccionados[marcaModelo][idAdicional];
+        if (cantidadMaxima === 1) {
+            adicionalesSeleccionados[marcaModelo][idAdicional] = adicionalesSeleccionados[marcaModelo][idAdicional] === 1 ? 0 : 1;
+        } else if (typeof nuevaCantidad === 'number') {
+            adicionalesSeleccionados[marcaModelo][idAdicional] = Math.max(0, Math.min(nuevaCantidad, cantidadMaxima));
+        }
     }
 
     afterNavigate(() => {
@@ -58,9 +62,11 @@
     async function handleReservar(marca: string, modelo: string) {
         console.log('is logged: ', data.isLoggedIn);
         const key = marca + modelo;
-        const adicionalesIds = Object.entries(adicionalesSeleccionados[key] || {})
-            .filter(([_, checked]) => checked)
-            .map(([id]) => id)
+        const adicionalesObj = adicionalesSeleccionados[key] || {};
+        // Solo enviar adicionales con cantidad > 0
+        const adicionalesIds = Object.entries(adicionalesObj)
+            .filter(([_, cantidad]) => cantidad > 0)
+            .map(([id, cantidad]) => cantidad > 1 ? `${id}:${cantidad}` : id)
             .join(',');
 
         const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}${adicionalesIds ? `?adicionales=${adicionalesIds}` : ''}`;
@@ -251,7 +257,9 @@
     <div class="flex flex-col md:flex-row gap-8">
         {#if data.unidadesDisponibles && data.unidadesDisponibles.length > 0}
             <p class="text-sm text-gray-600 mb-4">
-       
+        <!-- Aquí podrías mostrar un resumen si lo deseas -->
+            </p>
+
         <!-- Columna de filtros (izquierda) -->
         <div class="md:w-1/4">
             <div class="bg-base-100 shadow-lg rounded-lg p-6 sticky top-4">
@@ -419,12 +427,28 @@
                                                 </div>
                                                 <div class="flex items-center gap-3">
                                                     <span class="font-semibold text-primary">${adicional.precioPorDia}/día</span>
-                                                    <input
-                                                        type="checkbox"
-                                                        class="checkbox checkbox-primary"
-                                                        checked={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] || false}
-                                                        on:change={() => toggleAdicional(unidad.marca + unidad.modelo, adicional.id)}
-                                                    />
+                                                    {#if adicional.cantidadMaxima > 1}
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            max={adicional.cantidadMaxima}
+                                                            class="input input-bordered w-20"
+                                                            value={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] || 0}
+                                                            on:input={e => toggleAdicional(
+                                                                unidad.marca + unidad.modelo,
+                                                                adicional.id,
+                                                                adicional.cantidadMaxima,
+                                                                +(e.target as HTMLInputElement).value
+                                                            )}
+                                                        />
+                                                    {:else}
+                                                        <input
+                                                            type="checkbox"
+                                                            class="checkbox checkbox-primary"
+                                                            checked={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] === 1}
+                                                            on:change={() => toggleAdicional(unidad.marca + unidad.modelo, adicional.id, 1)}
+                                                        />
+                                                    {/if}
                                                 </div>
                                             </div>
                                         {/each}
