@@ -81,26 +81,32 @@
 	<div class="grid grow place-items-start">
 		<h2 class="text-3xl font-bold text-gray-800">Empleado</h2>
 	</div>
-	<div class="grid grow place-items-end">
-		<div class="flex gap-2">
-			<label class="input input-bordered flex items-center gap-2">
-				<svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-					<g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-						<circle cx="11" cy="11" r="8"></circle>
-						<path d="m21 21-4.3-4.3"></path>
-					</g>
-				</svg>
-				<input type="search" bind:value={terminoBusqueda} on:keydown={manejarTeclaBusqueda} placeholder="Buscar por DNI, apellido, nombre o email..." class="grow" />
-			</label>
-			<button type="button" class="btn btn-primary" on:click={buscarEmpleados}>
-				Buscar
+	<div class="flex gap-2">
+		<label class="input input-bordered flex items-center gap-2">
+			<svg class="h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+				<g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+					<circle cx="11" cy="11" r="8"></circle>
+					<path d="m21 21-4.3-4.3"></path>
+				</g>
+			</svg>
+			<input type="search" bind:value={terminoBusqueda} on:keydown={manejarTeclaBusqueda} placeholder="Buscar por DNI, apellido, nombre o email..." class="grow" />
+		</label>
+		<button type="button" class="btn btn-primary" on:click={buscarEmpleados}>
+			Buscar
+		</button>
+		{#if data.busqueda}
+			<button type="button" class="btn btn-outline" on:click={limpiarBusqueda}>
+				Limpiar
 			</button>
-			{#if data.busqueda}
-				<button type="button" class="btn btn-outline" on:click={limpiarBusqueda}>
-					Limpiar
-				</button>
-			{/if}
-		</div>
+		{/if}
+	</div>
+	<div class="ml-4">
+		<a href="./empleados/crear" role="button" class="btn btn-primary">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+			</svg>
+			Crear empleado
+		</a>
 	</div>
 </div>
 

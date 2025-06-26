@@ -2,6 +2,7 @@
     import type { ActionData, PageData } from './$types';
     import { enhance } from '$app/forms';
     import { invalidateAll, goto } from '$app/navigation';
+    import { onDestroy } from 'svelte';
 
     let { data, form }: { data: PageData, form: ActionData } = $props();
 
@@ -15,16 +16,26 @@
     let marca = $state(form?.marca ?? '');
     let modeloNombre = $state(form?.modeloNombre ?? '');
     let capacidadPasajeros = $state(form?.capacidadPasajeros ?? 0);
-    let precioPorDia = $state(form?.precioPorDia ?? 0);    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
+    let precioPorDia = $state(form?.precioPorDia ?? 0);
+    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
     let selectedTipoPolitica = $state(form?.tipoPolitica ?? 'Sin Reembolso');
+    let selectedCategoriaId = $state(form?.categoriaId?.toString() ?? data.modelo.idCategoria?.toString() ?? '');
     
-    // State for success toast
-    let showSuccessToast = $state(false);
+    // State for loading and success message
+    let loading = $state(false);
+    let successMessage = $state('');
+
+    // State for image handling
+    let selectedFile = $state<File | null>(null);
+    let displayImageUrl = $state('');
+    let createImageError = $state(false);
 
     // Effect to reset form fields to latest data when `data` prop changes (e.g., after successful update)
     // and to repopulate from `form` if there are errors.
     $effect(() => {
-        if (form && Object.keys(form).length > 0 && form.errors) {
+        const hasFormErrors = form && Object.keys(form).length > 0 && form.errors;
+        
+        if (hasFormErrors) {
             // If there are form errors, keep the user's input
             marca = form.marca ?? marca;
             modeloNombre = form.modeloNombre ?? modeloNombre;
@@ -32,6 +43,7 @@
             precioPorDia = form.precioPorDia ?? precioPorDia;
             porcentajeReembolsoParcial = form.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : porcentajeReembolsoParcial;
             selectedTipoPolitica = form.tipoPolitica ?? selectedTipoPolitica;
+            selectedCategoriaId = form?.categoriaId?.toString() ?? data.modelo.idCategoria?.toString() ?? '';
         } else {
             // If no form errors (e.g. initial load or successful submission), use data from props
             marca = data.modelo.marca;
@@ -40,43 +52,84 @@
             precioPorDia = data.modelo.precioPorDia;
             porcentajeReembolsoParcial = data.modelo.porcentajeReembolsoParcial ?? null;
             selectedTipoPolitica = data.politica?.tipoPolitica ?? 'Sin Reembolso';
+            selectedCategoriaId = data.modelo.idCategoria?.toString() ?? '';
         }
     });
 
-    async function showSuccessAndRedirect() {
-        showSuccessToast = true;
-        await invalidateAll();
-        setTimeout(() => {
-            showSuccessToast = false;
-        }, 3000);
+    function handleImageInput(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            // Clean up previous object URL to prevent memory leaks
+            if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(displayImageUrl);
+            }
+            
+            selectedFile = input.files[0];
+            displayImageUrl = URL.createObjectURL(selectedFile);
+            createImageError = false;
+        }
     }
 
+    function handleImageError() {
+        displayImageUrl = '/no-image-icon.svg';
+        createImageError = true;
+    }
+
+    function handleImageLoad() {
+        createImageError = false;
+    }
+
+    async function showSuccessAndRedirect() {
+        successMessage = '¡Modelo actualizado exitosamente!';
+        await invalidateAll();
+        setTimeout(() => {
+            successMessage = '';
+            goto('/admin/modelos');
+        }, 2000);
+    }
+
+    // Cleanup function to revoke object URLs when component is destroyed
+    onDestroy(() => {
+        if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(displayImageUrl);
+        }
+    });
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo actualizado exitosamente!</span>
+<!-- Success Message -->
+{#if successMessage}
+    <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6 max-w-2xl mx-auto mt-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
         </div>
-    {/if}
-</div>
+    </div>
+{/if}
 
 <div class="container mx-auto p-4">
     {#if modelo} 
         <h1 class="text-3xl font-bold mb-6 text-center">{modelo.marca} {modelo.modelo}</h1>        
-            <form method="POST" use:enhance={() => {
-            return async ({ result, update }) => {
-                if (result.type === 'success' && result.data?.success) {
-                    await update({ reset: false, invalidateAll: true });
-                    showSuccessAndRedirect();
-                } else {
-                    await update({ reset: false, invalidateAll: true });
-                }
-            };
-        }} class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <form method="POST" enctype="multipart/form-data" use:enhance={() => {
+                loading = true;
+                successMessage = '';
+                
+                return async ({ result, update }) => {
+                    loading = false;
+                    
+                    if (result.type === 'success' && result.data?.success) {
+                        await update({ reset: false, invalidateAll: true });
+                        showSuccessAndRedirect();
+                    } else {
+                        await update({ reset: false, invalidateAll: true });
+                    }
+                };
+            }} class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <!-- General Form Messages -->
 
             <div>
@@ -87,16 +140,34 @@
                         <span class="text-gray-500">Imagen no disponible</span>
                     </div>
                 {/if}
-                <!-- TODO: Add file input for image upload. This will require backend changes. -->
+                
                 <div class="mb-4">
-                    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Cambiar Imagen (funcionalidad no implementada):</label>
-                    <input type="file" id="imagen" name="imagen" class="mt-1 block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100" disabled />
+                    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Cambiar Imagen:</label>
+                    <input 
+                        type="file" 
+                        id="imagen" 
+                        name="imagen" 
+                        class="file-input file-input-bordered w-full" 
+                        accept="image/*"
+                        onchange={handleImageInput}
+                    />
+                    {#if form?.errors?.imagen}
+                        <p class="text-red-500 text-sm mt-1">{form.errors.imagen}</p>
+                    {/if}
                 </div>
+
+                {#if displayImageUrl}
+                    <div class="flex justify-center mt-2 mb-4">
+                        <img
+                            src={displayImageUrl}
+                            alt="Preview imagen"
+                            class="h-40 w-40 object-cover rounded border"
+                            style="max-width: 160px; max-height: 160px;"
+                            onerror={handleImageError}
+                            onload={handleImageLoad}
+                        />
+                    </div>
+                {/if}
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-2xl font-semibold mb-4">Detalles del Modelo</h2>
@@ -135,10 +206,17 @@
                     {/if}
                 </div>
                 
-                {#if categoria}
-                    <p class="mb-2"><strong>Categoría:</strong> {categoria.nombre}</p>
-                    <!-- TODO: Add select for category change. This will require fetching categories and backend update logic. -->
-                {/if}
+                <div class="mb-4">
+                    <label for="categoriaId" class="block text-sm font-medium text-gray-700 mb-1">Categoría:</label>
+                    <select id="categoriaId" name="categoriaId" bind:value={selectedCategoriaId} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        {#each data.categorias as categoria}
+                            <option value={categoria.id.toString()}>{categoria.nombre}</option>
+                        {/each}
+                    </select>
+                    {#if form?.errors?.categoriaId}
+                        <p class="text-red-500 text-sm mt-1">{form.errors.categoriaId}</p>
+                    {/if}
+                </div>
 
                 {#if politica || form?.tipoPolitica} <!-- Show policy section if initial policy exists or if form has a type (e.g. on error) -->
                     <h3 class="text-xl font-semibold mt-4 mb-2">Política de Cancelación</h3>
@@ -168,11 +246,23 @@
                 {/if}
 
                 <div class="mt-6 flex justify-end space-x-3">
-                    <a href={`/admin/modelos/${modelo.id}`} class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                    <a href={`/admin/modelos`} class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
                         Cancelar
                     </a>
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                        Guardar Cambios
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {#if loading}
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Guardando cambios...
+                        {:else}
+                            Guardar Cambios
+                        {/if}
                     </button>
                 </div>
             </div>
