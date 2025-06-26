@@ -23,6 +23,12 @@
     let loading = $state(false);
     let successMessage = $state('');
 
+    // State for image handling
+    let selectedFile = $state<File | null>(null);
+    let displayImageUrl = $state('');
+    let createImageError = $state(false);
+    let imageLoadAttempted = $state(false);
+
     // Effect to reset form fields to latest data when `data` prop changes (e.g., after successful update)
     // and to repopulate from `form` if there are errors.
     $effect(() => {
@@ -46,6 +52,25 @@
             selectedCategoriaId = data.modelo.idCategoria?.toString() ?? '';
         }
     });
+
+    function handleImageInput(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            displayImageUrl = URL.createObjectURL(selectedFile);
+            createImageError = false;
+            imageLoadAttempted = false;
+        }
+    }
+
+    function handleImageError() {
+        displayImageUrl = '/no-image-icon.svg';
+        createImageError = true;
+    }
+
+    function handleImageLoad() {
+        createImageError = false;
+    }
 
     async function showSuccessAndRedirect() {
         successMessage = '¡Modelo actualizado exitosamente!';
@@ -76,7 +101,7 @@
 <div class="container mx-auto p-4">
     {#if modelo} 
         <h1 class="text-3xl font-bold mb-6 text-center">{modelo.marca} {modelo.modelo}</h1>        
-            <form method="POST" use:enhance={() => {
+            <form method="POST" enctype="multipart/form-data" use:enhance={() => {
                 loading = true;
                 successMessage = '';
                 
@@ -101,16 +126,34 @@
                         <span class="text-gray-500">Imagen no disponible</span>
                     </div>
                 {/if}
-                <!-- TODO: Add file input for image upload. This will require backend changes. -->
+                
                 <div class="mb-4">
-                    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Cambiar Imagen (funcionalidad no implementada):</label>
-                    <input type="file" id="imagen" name="imagen" class="mt-1 block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100" disabled />
+                    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Cambiar Imagen:</label>
+                    <input 
+                        type="file" 
+                        id="imagen" 
+                        name="imagen" 
+                        class="file-input file-input-bordered w-full" 
+                        accept="image/*"
+                        onchange={handleImageInput}
+                    />
+                    {#if form?.errors?.imagen}
+                        <p class="text-red-500 text-sm mt-1">{form.errors.imagen}</p>
+                    {/if}
                 </div>
+
+                {#if displayImageUrl}
+                    <div class="flex justify-center mt-2 mb-4">
+                        <img
+                            src={displayImageUrl}
+                            alt="Preview imagen"
+                            class="h-40 w-40 object-cover rounded border"
+                            style="max-width: 160px; max-height: 160px;"
+                            onerror={handleImageError}
+                            onload={handleImageLoad}
+                        />
+                    </div>
+                {/if}
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-2xl font-semibold mb-4">Detalles del Modelo</h2>

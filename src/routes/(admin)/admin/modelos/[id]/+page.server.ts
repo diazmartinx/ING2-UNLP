@@ -77,6 +77,7 @@ export const actions = {
         const tipoPolitica = formData.get('tipoPolitica');
         const porcentajeReembolsoParcialStr = formData.get('porcentajeReembolsoParcial');
         const categoriaIdStr = formData.get('categoriaId');
+        const imagen = formData.get('imagen') as File;
 
         const errors: Record<string, string> = {};
         
@@ -145,6 +146,25 @@ export const actions = {
             }
         }
 
+        // Manejar la imagen como binario
+        let imagenBlob: Buffer | null = null;
+        if (imagen && imagen.size > 0) {
+            // Validar que el archivo sea una imagen
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+            if (!allowedTypes.includes(imagen.type)) {
+                errors.imagen = 'El archivo debe ser una imagen (JPEG, PNG, GIF, WEBP o AVIF)';
+            } else {
+                try {
+                    // Convertir la imagen a ArrayBuffer y luego a Buffer
+                    const bytes = await imagen.arrayBuffer();
+                    imagenBlob = Buffer.from(bytes);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    errors.imagen = 'Error al procesar la imagen';
+                }
+            }
+        }
+
         if (Object.keys(errors).length > 0) {
             return fail(400, {
                 errors,
@@ -177,16 +197,24 @@ export const actions = {
                 idPoliticaCancelacion = politicaRecord.id;
             }
 
+            // Preparar los datos de actualización
+            const updateData: any = {
+                marca: marca!.toString().trim(),
+                modelo: modeloNombre!.toString().trim(),
+                capacidadPasajeros: capacidadPasajerosNum!,
+                precioPorDia: precioPorDiaNum!,
+                idCategoria: categoriaId,
+                idPoliticaCancelacion: idPoliticaCancelacion,
+                porcentajeReembolsoParcial: tipoPolitica === 'Reembolso Parcial' ? porcentajeReembolsoParcialNum : null,
+            };
+
+            // Solo actualizar la imagen si se proporcionó una nueva
+            if (imagenBlob) {
+                updateData.imagenBlob = imagenBlob;
+            }
+
             await db.update(modelosVehiculos)
-                .set({
-                    marca: marca!.toString().trim(),
-                    modelo: modeloNombre!.toString().trim(),
-                    capacidadPasajeros: capacidadPasajerosNum!,
-                    precioPorDia: precioPorDiaNum!,
-                    idCategoria: categoriaId,
-                    idPoliticaCancelacion: idPoliticaCancelacion,
-                    porcentajeReembolsoParcial: tipoPolitica === 'Reembolso Parcial' ? porcentajeReembolsoParcialNum : null,
-                })
+                .set(updateData)
                 .where(eq(modelosVehiculos.id, modeloId))
                 .run();
 
