@@ -18,8 +18,9 @@
     let precioPorDia = $state(form?.precioPorDia ?? 0);    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
     let selectedTipoPolitica = $state(form?.tipoPolitica ?? 'Sin Reembolso');
     
-    // State for success toast
-    let showSuccessToast = $state(false);
+    // State for loading and success message
+    let loading = $state(false);
+    let successMessage = $state('');
 
     // Effect to reset form fields to latest data when `data` prop changes (e.g., after successful update)
     // and to repopulate from `form` if there are errors.
@@ -44,39 +45,49 @@
     });
 
     async function showSuccessAndRedirect() {
-        showSuccessToast = true;
+        successMessage = '¡Modelo actualizado exitosamente!';
         await invalidateAll();
         setTimeout(() => {
-            showSuccessToast = false;
+            successMessage = '';
         }, 3000);
     }
 
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo actualizado exitosamente!</span>
+<!-- Success Message -->
+{#if successMessage}
+    <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6 max-w-2xl mx-auto mt-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
         </div>
-    {/if}
-</div>
+    </div>
+{/if}
 
 <div class="container mx-auto p-4">
     {#if modelo} 
         <h1 class="text-3xl font-bold mb-6 text-center">{modelo.marca} {modelo.modelo}</h1>        
             <form method="POST" use:enhance={() => {
-            return async ({ result, update }) => {
-                if (result.type === 'success' && result.data?.success) {
-                    await update({ reset: false, invalidateAll: true });
-                    showSuccessAndRedirect();
-                } else {
-                    await update({ reset: false, invalidateAll: true });
-                }
-            };
-        }} class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                loading = true;
+                successMessage = '';
+                
+                return async ({ result, update }) => {
+                    loading = false;
+                    
+                    if (result.type === 'success' && result.data?.success) {
+                        await update({ reset: false, invalidateAll: true });
+                        showSuccessAndRedirect();
+                    } else {
+                        await update({ reset: false, invalidateAll: true });
+                    }
+                };
+            }} class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <!-- General Form Messages -->
 
             <div>
@@ -168,11 +179,23 @@
                 {/if}
 
                 <div class="mt-6 flex justify-end space-x-3">
-                    <a href={`/admin/modelos/${modelo.id}`} class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                    <a href={`/admin/modelos`} class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
                         Cancelar
                     </a>
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
-                        Guardar Cambios
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {#if loading}
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Guardando cambios...
+                        {:else}
+                            Guardar Cambios
+                        {/if}
                     </button>
                 </div>
             </div>
