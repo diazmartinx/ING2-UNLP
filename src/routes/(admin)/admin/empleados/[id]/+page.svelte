@@ -39,6 +39,13 @@
 </script>
 
 <div>
+	<!-- Botón de volver -->
+	<div class="mb-4">
+		<a href="/admin/empleados" class="link">
+			Volver
+		</a>
+	</div>
+
 	{#if mensajeExito}
 		<div class="alert alert-success mt-2">{mensajeExito}</div>
 	{/if}
@@ -48,30 +55,35 @@
     <div>
         <form method="POST" action="?/guardar" use:enhance={() => {
 			return async ({ result, update }) => {
+				// Limpiar mensajes anteriores
+				mensajeExito = '';
+				mensajeError = '';
+				
 				// Invalidar datos si la operación fue exitosa
 				if (result.type === 'success') {
 					await invalidateAll();
 					// Desactivar modo edición después de guardar exitosamente
 					isEditing = false;
-					mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Cliente eliminado exitosamente';
+					mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Empleado actualizado exitosamente';
 					setTimeout(() => {
 						mensajeExito = '';
 					}, 3000);
+					// Actualizar el formulario con los nuevos datos solo en caso de éxito
+					await update();
+					nombre = data.cliente?.nombre ?? '';
+					apellido = data.cliente?.apellido ?? '';
+					dni = data.cliente?.dni;
+					email = data.cliente?.email ?? '';
+					telefono = data.cliente?.telefono ?? '';
+					fechaNacimiento = data.cliente?.fechaNacimiento ?? '';
 				}
 				if (result.type === 'failure') {
-					mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al eliminar el cliente';
+					mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al actualizar el empleado';
 					setTimeout(() => {
 						mensajeError = '';
 					}, 3000);
+					// No actualizar el formulario en caso de error para mantener los datos ingresados
 				}
-				// Actualizar el formulario con los nuevos datos
-				await update();
-				nombre = data.cliente?.nombre ?? '';
-				apellido = data.cliente?.apellido ?? '';
-				dni = data.cliente?.dni;
-				email = data.cliente?.email ?? '';
-				telefono = data.cliente?.telefono ?? '';
-				fechaNacimiento = data.cliente?.fechaNacimiento ?? '';
 			};
 		}}
 	>

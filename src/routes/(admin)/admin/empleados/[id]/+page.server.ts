@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne, like, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 
 // Función helper para formatear fecha a YYYY-MM-DD
@@ -96,6 +96,26 @@ export const actions: Actions = {
 		}
 
 		const id = Number(params.id);
+
+		// Verificar si el email ya existe (case-insensitive) excluyendo el usuario actual
+		try {
+			const existingUser = await db
+				.select()
+				.from(usuarios)
+				.where(
+					and(
+						like(sql`lower(${usuarios.email})`, email.toLowerCase()),
+						ne(usuarios.id, id)
+					)
+				);
+
+			if (existingUser.length > 0) {
+				return fail(400, { error: 'El email ya está registrado por otro usuario' });
+			}
+		} catch (err) {
+			console.error('Error al verificar email duplicado:', err);
+			return fail(500, { error: 'Error interno al verificar el email' });
+		}
 
 		try {
 			const updated = await db.update(usuarios).set({ nombre, apellido, dni, email, telefono, fechaNacimiento: fechaNacimientoDate }).where(eq(usuarios.id, id));
