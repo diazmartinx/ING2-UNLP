@@ -27,6 +27,12 @@ export async function load({ params }) {
         throw error(404, `Modelo con ID ${modeloId} no encontrado.`);
     }
 
+    // Obtener todas las categorías disponibles
+    const todasLasCategorias = await db
+        .select()
+        .from(categoriasVehiculos)
+        .all();
+
     let imagenBase64 = null;
     if (result.modelos_vehiculos.imagenBlob) {
         let bufferToConvert: Buffer;
@@ -54,7 +60,8 @@ export async function load({ params }) {
     return {
         modelo: modeloData,
         categoria: result.categorias_vehiculos, // This can be null
-        politica: result.politicas_cancelacion // This should ideally not be null based on schema, but leftJoin handles it
+        politica: result.politicas_cancelacion, // This should ideally not be null based on schema, but leftJoin handles it
+        categorias: todasLasCategorias
     };
 }
 
@@ -69,6 +76,7 @@ export const actions = {
         const precioPorDiaStr = formData.get('precioPorDia');
         const tipoPolitica = formData.get('tipoPolitica');
         const porcentajeReembolsoParcialStr = formData.get('porcentajeReembolsoParcial');
+        const categoriaIdStr = formData.get('categoriaId');
 
         const errors: Record<string, string> = {};
         
@@ -128,6 +136,15 @@ export const actions = {
             }
         }
 
+        // Validar categoría
+        let categoriaId: number | null = null;
+        if (categoriaIdStr && categoriaIdStr.toString().trim() !== '') {
+            categoriaId = parseInt(categoriaIdStr.toString(), 10);
+            if (isNaN(categoriaId) || categoriaId <= 0) {
+                errors.categoriaId = 'La categoría seleccionada es inválida.';
+            }
+        }
+
         if (Object.keys(errors).length > 0) {
             return fail(400, {
                 errors,
@@ -136,7 +153,8 @@ export const actions = {
                 capacidadPasajeros: capacidadPasajerosStr?.toString(),
                 precioPorDia: precioPorDiaStr?.toString(),
                 tipoPolitica: tipoPolitica?.toString(),
-                porcentajeReembolsoParcial: porcentajeReembolsoParcialStr?.toString()
+                porcentajeReembolsoParcial: porcentajeReembolsoParcialStr?.toString(),
+                categoriaId: categoriaIdStr?.toString()
             });
         }
 
@@ -165,6 +183,7 @@ export const actions = {
                     modelo: modeloNombre!.toString().trim(),
                     capacidadPasajeros: capacidadPasajerosNum!,
                     precioPorDia: precioPorDiaNum!,
+                    idCategoria: categoriaId,
                     idPoliticaCancelacion: idPoliticaCancelacion,
                     porcentajeReembolsoParcial: tipoPolitica === 'Reembolso Parcial' ? porcentajeReembolsoParcialNum : null,
                 })

@@ -17,6 +17,7 @@
     let capacidadPasajeros = $state(form?.capacidadPasajeros ?? 0);
     let precioPorDia = $state(form?.precioPorDia ?? 0);    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
     let selectedTipoPolitica = $state(form?.tipoPolitica ?? 'Sin Reembolso');
+    let selectedCategoriaId = $state(form?.categoriaId?.toString() ?? data.modelo.idCategoria?.toString() ?? '');
     
     // State for loading and success message
     let loading = $state(false);
@@ -33,6 +34,7 @@
             precioPorDia = form.precioPorDia ?? precioPorDia;
             porcentajeReembolsoParcial = form.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : porcentajeReembolsoParcial;
             selectedTipoPolitica = form.tipoPolitica ?? selectedTipoPolitica;
+            selectedCategoriaId = form?.categoriaId?.toString() ?? data.modelo.idCategoria?.toString() ?? '';
         } else {
             // If no form errors (e.g. initial load or successful submission), use data from props
             marca = data.modelo.marca;
@@ -41,6 +43,7 @@
             precioPorDia = data.modelo.precioPorDia;
             porcentajeReembolsoParcial = data.modelo.porcentajeReembolsoParcial ?? null;
             selectedTipoPolitica = data.politica?.tipoPolitica ?? 'Sin Reembolso';
+            selectedCategoriaId = data.modelo.idCategoria?.toString() ?? '';
         }
     });
 
@@ -49,9 +52,9 @@
         await invalidateAll();
         setTimeout(() => {
             successMessage = '';
-        }, 3000);
+            goto('/admin/modelos');
+        }, 2000);
     }
-
 </script>
 
 <!-- Success Message -->
@@ -146,10 +149,17 @@
                     {/if}
                 </div>
                 
-                {#if categoria}
-                    <p class="mb-2"><strong>Categoría:</strong> {categoria.nombre}</p>
-                    <!-- TODO: Add select for category change. This will require fetching categories and backend update logic. -->
-                {/if}
+                <div class="mb-4">
+                    <label for="categoriaId" class="block text-sm font-medium text-gray-700 mb-1">Categoría:</label>
+                    <select id="categoriaId" name="categoriaId" bind:value={selectedCategoriaId} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        {#each data.categorias as categoria}
+                            <option value={categoria.id.toString()}>{categoria.nombre}</option>
+                        {/each}
+                    </select>
+                    {#if form?.errors?.categoriaId}
+                        <p class="text-red-500 text-sm mt-1">{form.errors.categoriaId}</p>
+                    {/if}
+                </div>
 
                 {#if politica || form?.tipoPolitica} <!-- Show policy section if initial policy exists or if form has a type (e.g. on error) -->
                     <h3 class="text-xl font-semibold mt-4 mb-2">Política de Cancelación</h3>
