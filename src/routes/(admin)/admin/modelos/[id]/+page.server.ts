@@ -69,68 +69,75 @@ export const actions = {
     default: async ({ request }) => {
         const formData = await request.formData();
 
-        const idStr = formData.get('id');
-        const marca = formData.get('marca');
-        const modeloNombre = formData.get('modeloNombre');
-        const capacidadPasajerosStr = formData.get('capacidadPasajeros');
-        const precioPorDiaStr = formData.get('precioPorDia');
-        const tipoPolitica = formData.get('tipoPolitica');
-        const porcentajeReembolsoParcialStr = formData.get('porcentajeReembolsoParcial');
-        const categoriaIdStr = formData.get('categoriaId');
-        const imagen = formData.get('imagen') as File;
+        // Extraer todos los campos del formulario
+        const fields = {
+            id: formData.get('id'),
+            marca: formData.get('marca'),
+            modeloNombre: formData.get('modeloNombre'),
+            capacidadPasajeros: formData.get('capacidadPasajeros'),
+            precioPorDia: formData.get('precioPorDia'),
+            tipoPolitica: formData.get('tipoPolitica'),
+            porcentajeReembolsoParcial: formData.get('porcentajeReembolsoParcial'),
+            categoriaId: formData.get('categoriaId'),
+            imagen: formData.get('imagen') as File
+        };
 
         const errors: Record<string, string> = {};
         
+        // Validar ID del modelo
         let modeloId: number;
-        if (!idStr || typeof idStr.toString() !== 'string') {
-             // This case should ideally not be reached if form is correctly structured
+        if (!fields.id || typeof fields.id.toString() !== 'string') {
             return fail(500, { message: 'ID del modelo es inválido o no proporcionado.'});
         }
-        modeloId = parseInt(idStr.toString(), 10);
+        modeloId = parseInt(fields.id.toString(), 10);
         if (isNaN(modeloId)) {
             return fail(400, { message: 'ID del modelo debe ser un número.' });
         }
 
-        if (!marca || typeof marca !== 'string' || marca.trim() === '') {
+        // Validar campos requeridos
+        if (!fields.marca || typeof fields.marca !== 'string' || fields.marca.trim() === '') {
             errors.marca = 'La marca es obligatoria.';
         }
-        if (!modeloNombre || typeof modeloNombre !== 'string' || modeloNombre.trim() === '') {
+        if (!fields.modeloNombre || typeof fields.modeloNombre !== 'string' || fields.modeloNombre.trim() === '') {
             errors.modeloNombre = 'El nombre del modelo es obligatorio.';
         }
-        if (!capacidadPasajerosStr || capacidadPasajerosStr.toString().trim() === '') {
+        if (!fields.capacidadPasajeros || fields.capacidadPasajeros.toString().trim() === '') {
             errors.capacidadPasajeros = 'La capacidad de pasajeros es obligatoria.';
         }
-        if (!precioPorDiaStr || precioPorDiaStr.toString().trim() === '') {
+        if (!fields.precioPorDia || fields.precioPorDia.toString().trim() === '') {
             errors.precioPorDia = 'El precio por día es obligatorio.';
         }
         
-        const validPoliticas = ["Reembolso Total", "Reembolso Parcial", "Sin Reembolso"];
-        if (!tipoPolitica || typeof tipoPolitica !== 'string' || !validPoliticas.includes(tipoPolitica)) {
+        // Validar política de cancelación
+        const validPoliticas = ["Reembolso Total", "Reembolso Parcial", "Sin Reembolso"] as const;
+        if (!fields.tipoPolitica || typeof fields.tipoPolitica !== 'string' || !validPoliticas.includes(fields.tipoPolitica as any)) {
             errors.tipoPolitica = 'El tipo de política de cancelación es inválido o está vacío.';
         }
 
+        // Validar y convertir valores numéricos
         let capacidadPasajerosNum: number | undefined;
-        if (capacidadPasajerosStr && capacidadPasajerosStr.toString().trim() !== '') {
-            capacidadPasajerosNum = parseInt(capacidadPasajerosStr.toString(), 10);
+        if (fields.capacidadPasajeros && fields.capacidadPasajeros.toString().trim() !== '') {
+            capacidadPasajerosNum = parseInt(fields.capacidadPasajeros.toString(), 10);
             if (isNaN(capacidadPasajerosNum) || capacidadPasajerosNum <= 0) {
                 errors.capacidadPasajeros = 'La capacidad de pasajeros debe ser un número entero positivo.';
             }
         }
 
         let precioPorDiaNum: number | undefined;
-        if (precioPorDiaStr && precioPorDiaStr.toString().trim() !== '') {
-            precioPorDiaNum = parseFloat(precioPorDiaStr.toString());
+        if (fields.precioPorDia && fields.precioPorDia.toString().trim() !== '') {
+            precioPorDiaNum = parseFloat(fields.precioPorDia.toString());
             if (isNaN(precioPorDiaNum) || precioPorDiaNum <= 0) {
                 errors.precioPorDia = 'El precio por día debe ser un número positivo.';
             }
         }
         
+        // Validar porcentaje de reembolso parcial
         let porcentajeReembolsoParcialNum: number | null = null;
-        if (tipoPolitica === 'Reembolso Parcial') {
-            if (!porcentajeReembolsoParcialStr || porcentajeReembolsoParcialStr.toString().trim() === '') {
+        if (fields.tipoPolitica === 'Reembolso Parcial') {
+            if (!fields.porcentajeReembolsoParcial || fields.porcentajeReembolsoParcial.toString().trim() === '') {
                 errors.porcentajeReembolsoParcial = 'El porcentaje de reembolso es obligatorio para reembolso parcial.';
             } else {
-                porcentajeReembolsoParcialNum = parseFloat(porcentajeReembolsoParcialStr.toString());
+                porcentajeReembolsoParcialNum = parseFloat(fields.porcentajeReembolsoParcial.toString());
                 if (isNaN(porcentajeReembolsoParcialNum) || porcentajeReembolsoParcialNum < 0 || porcentajeReembolsoParcialNum > 100) {
                     errors.porcentajeReembolsoParcial = 'El porcentaje de reembolso debe ser un número entre 0 y 100.';
                 }
@@ -139,8 +146,8 @@ export const actions = {
 
         // Validar categoría
         let categoriaId: number | null = null;
-        if (categoriaIdStr && categoriaIdStr.toString().trim() !== '') {
-            categoriaId = parseInt(categoriaIdStr.toString(), 10);
+        if (fields.categoriaId && fields.categoriaId.toString().trim() !== '') {
+            categoriaId = parseInt(fields.categoriaId.toString(), 10);
             if (isNaN(categoriaId) || categoriaId <= 0) {
                 errors.categoriaId = 'La categoría seleccionada es inválida.';
             }
@@ -148,15 +155,15 @@ export const actions = {
 
         // Manejar la imagen como binario
         let imagenBlob: Buffer | null = null;
-        if (imagen && imagen.size > 0) {
+        if (fields.imagen && fields.imagen.size > 0) {
             // Validar que el archivo sea una imagen
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
-            if (!allowedTypes.includes(imagen.type)) {
+            if (!allowedTypes.includes(fields.imagen.type)) {
                 errors.imagen = 'El archivo debe ser una imagen (JPEG, PNG, GIF, WEBP o AVIF)';
             } else {
                 try {
                     // Convertir la imagen a ArrayBuffer y luego a Buffer
-                    const bytes = await imagen.arrayBuffer();
+                    const bytes = await fields.imagen.arrayBuffer();
                     imagenBlob = Buffer.from(bytes);
                 } catch (error) {
                     console.error('Error processing image:', error);
@@ -165,29 +172,32 @@ export const actions = {
             }
         }
 
+        // Si hay errores, retornar con los datos del formulario
         if (Object.keys(errors).length > 0) {
             return fail(400, {
                 errors,
-                marca: marca?.toString(),
-                modeloNombre: modeloNombre?.toString(),
-                capacidadPasajeros: capacidadPasajerosStr?.toString(),
-                precioPorDia: precioPorDiaStr?.toString(),
-                tipoPolitica: tipoPolitica?.toString(),
-                porcentajeReembolsoParcial: porcentajeReembolsoParcialStr?.toString(),
-                categoriaId: categoriaIdStr?.toString()
+                marca: fields.marca?.toString(),
+                modeloNombre: fields.modeloNombre?.toString(),
+                capacidadPasajeros: fields.capacidadPasajeros?.toString(),
+                precioPorDia: fields.precioPorDia?.toString(),
+                tipoPolitica: fields.tipoPolitica?.toString(),
+                porcentajeReembolsoParcial: fields.porcentajeReembolsoParcial?.toString(),
+                categoriaId: fields.categoriaId?.toString()
             });
         }
 
         try {
+            // Buscar o crear la política de cancelación
+            const tipoPolitica = fields.tipoPolitica as "Reembolso Total" | "Reembolso Parcial" | "Sin Reembolso";
             let politicaRecord = await db.select({ id: politicasCancelacion.id })
                 .from(politicasCancelacion)
-                .where(eq(politicasCancelacion.tipoPolitica, tipoPolitica as "Reembolso Total" | "Reembolso Parcial" | "Sin Reembolso"))
+                .where(eq(politicasCancelacion.tipoPolitica, tipoPolitica))
                 .get();
 
             let idPoliticaCancelacion: number;
             if (!politicaRecord) {
                 const newPoliticaRows = await db.insert(politicasCancelacion)
-                    .values({ tipoPolitica: tipoPolitica as "Reembolso Total" | "Reembolso Parcial" | "Sin Reembolso" })
+                    .values({ tipoPolitica })
                     .returning({ id: politicasCancelacion.id });
                 if (!newPoliticaRows || newPoliticaRows.length === 0 || typeof newPoliticaRows[0].id !== 'number') {
                     throw new Error('No se pudo crear la política de cancelación o recuperar su ID.');
@@ -198,19 +208,19 @@ export const actions = {
             }
 
             // Preparar los datos de actualización
-            const updateData: any = {
-                marca: marca!.toString().trim(),
-                modelo: modeloNombre!.toString().trim(),
+            const updateData = {
+                marca: fields.marca!.toString().trim(),
+                modelo: fields.modeloNombre!.toString().trim(),
                 capacidadPasajeros: capacidadPasajerosNum!,
                 precioPorDia: precioPorDiaNum!,
                 idCategoria: categoriaId,
-                idPoliticaCancelacion: idPoliticaCancelacion,
+                idPoliticaCancelacion,
                 porcentajeReembolsoParcial: tipoPolitica === 'Reembolso Parcial' ? porcentajeReembolsoParcialNum : null,
             };
 
             // Solo actualizar la imagen si se proporcionó una nueva
             if (imagenBlob) {
-                updateData.imagenBlob = imagenBlob;
+                (updateData as any).imagenBlob = imagenBlob;
             }
 
             await db.update(modelosVehiculos)

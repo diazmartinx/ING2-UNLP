@@ -2,6 +2,7 @@
     import type { ActionData, PageData } from './$types';
     import { enhance } from '$app/forms';
     import { invalidateAll, goto } from '$app/navigation';
+    import { onDestroy } from 'svelte';
 
     let { data, form }: { data: PageData, form: ActionData } = $props();
 
@@ -15,7 +16,8 @@
     let marca = $state(form?.marca ?? '');
     let modeloNombre = $state(form?.modeloNombre ?? '');
     let capacidadPasajeros = $state(form?.capacidadPasajeros ?? 0);
-    let precioPorDia = $state(form?.precioPorDia ?? 0);    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
+    let precioPorDia = $state(form?.precioPorDia ?? 0);
+    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : null);
     let selectedTipoPolitica = $state(form?.tipoPolitica ?? 'Sin Reembolso');
     let selectedCategoriaId = $state(form?.categoriaId?.toString() ?? data.modelo.idCategoria?.toString() ?? '');
     
@@ -27,12 +29,13 @@
     let selectedFile = $state<File | null>(null);
     let displayImageUrl = $state('');
     let createImageError = $state(false);
-    let imageLoadAttempted = $state(false);
 
     // Effect to reset form fields to latest data when `data` prop changes (e.g., after successful update)
     // and to repopulate from `form` if there are errors.
     $effect(() => {
-        if (form && Object.keys(form).length > 0 && form.errors) {
+        const hasFormErrors = form && Object.keys(form).length > 0 && form.errors;
+        
+        if (hasFormErrors) {
             // If there are form errors, keep the user's input
             marca = form.marca ?? marca;
             modeloNombre = form.modeloNombre ?? modeloNombre;
@@ -56,10 +59,14 @@
     function handleImageInput(e: Event) {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
+            // Clean up previous object URL to prevent memory leaks
+            if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(displayImageUrl);
+            }
+            
             selectedFile = input.files[0];
             displayImageUrl = URL.createObjectURL(selectedFile);
             createImageError = false;
-            imageLoadAttempted = false;
         }
     }
 
@@ -80,6 +87,13 @@
             goto('/admin/modelos');
         }, 2000);
     }
+
+    // Cleanup function to revoke object URLs when component is destroyed
+    onDestroy(() => {
+        if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(displayImageUrl);
+        }
+    });
 </script>
 
 <!-- Success Message -->
