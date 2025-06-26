@@ -14,40 +14,38 @@
         nombreSucursal: string;
         direccionSucursal: string;
         unidadesDisponibles: number;
+        categoria?: string;
     }
 
-    let fechaInicio = data.fechaInicio;
-    let fechaFin = data.fechaFin;
-    let ubicacion = decodeURIComponent(data.ubicacion);
+    // Estado reactivo optimizado
+    $: ({ fechaInicio, fechaFin, ubicacion } = data);
+    $: ubicacionDecoded = decodeURIComponent(ubicacion);
     let mensajeSolapamiento = '';
 
-    // Lógica de adicionales
+    // Lógica de adicionales optimizada
     let adicionalesVisiblesPara: string | null = null;
-    let adicionalesSeleccionados: Record<string, { [id: number]: number }> = {}; // key: marca+modelo, value: {idAdicional: cantidad}
+    let adicionalesSeleccionados: Record<string, Record<number, number>> = {};
 
     function toggleAdicionales(key: string) {
-        if (adicionalesVisiblesPara === key) {
-            adicionalesVisiblesPara = null;
-        } else {
-            adicionalesVisiblesPara = key;
-        }
+        adicionalesVisiblesPara = adicionalesVisiblesPara === key ? null : key;
     }
 
     function toggleAdicional(marcaModelo: string, idAdicional: number, cantidadMaxima: number, nuevaCantidad?: number) {
         if (!adicionalesSeleccionados[marcaModelo]) {
             adicionalesSeleccionados[marcaModelo] = {};
         }
+        
         if (cantidadMaxima === 1) {
-            adicionalesSeleccionados[marcaModelo][idAdicional] = adicionalesSeleccionados[marcaModelo][idAdicional] === 1 ? 0 : 1;
+            adicionalesSeleccionados[marcaModelo][idAdicional] = 
+                adicionalesSeleccionados[marcaModelo][idAdicional] === 1 ? 0 : 1;
         } else if (typeof nuevaCantidad === 'number') {
-            adicionalesSeleccionados[marcaModelo][idAdicional] = Math.max(0, Math.min(nuevaCantidad, cantidadMaxima));
+            adicionalesSeleccionados[marcaModelo][idAdicional] = 
+                Math.max(0, Math.min(nuevaCantidad, cantidadMaxima));
         }
     }
 
     afterNavigate(() => {
-        fechaInicio = data.fechaInicio;
-        fechaFin = data.fechaFin;
-        ubicacion = decodeURIComponent(data.ubicacion);
+        // Los valores se actualizan automáticamente con el estado reactivo
     });
 
     function formatDate(dateStr: string): string {
@@ -56,29 +54,31 @@
     }
 
     function handleSearch() {
-        goto(`/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacion)}`);
+        goto(`/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacionDecoded)}`);
     }
 
     async function handleReservar(marca: string, modelo: string) {
-        console.log('is logged: ', data.isLoggedIn);
         const key = marca + modelo;
         const adicionalesObj = adicionalesSeleccionados[key] || {};
+        
         // Solo enviar adicionales con cantidad > 0
         const adicionalesIds = Object.entries(adicionalesObj)
-            .filter(([_, cantidad]) => cantidad > 0)
+            .filter(([, cantidad]) => cantidad > 0)
             .map(([id, cantidad]) => cantidad > 1 ? `${id}:${cantidad}` : id)
             .join(',');
 
-        const pagoPagina = `/pago/${data.fechaInicio}/${data.fechaFin}/${encodeURIComponent(data.ubicacion)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}${adicionalesIds ? `?adicionales=${adicionalesIds}` : ''}`;
+        const pagoPagina = `/pago/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacionDecoded)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}${adicionalesIds ? `?adicionales=${adicionalesIds}` : ''}`;
         const paginaActual = window.location.pathname;
         
-        if (data.isLoggedIn === false) {
-            // Redirigir al inicio de sesión with redirectTo
+        if (!data.isLoggedIn) {
             goto(`/ingresar?redirectTo=${encodeURIComponent(paginaActual)}`);
-        } else {
+            return;
+        }
+
+        try {
             const formData = new FormData();
-            formData.append('fechaInicio', data.fechaInicio);
-            formData.append('fechaFin', data.fechaFin);
+            formData.append('fechaInicio', fechaInicio);
+            formData.append('fechaFin', fechaFin);
 
             const response = await fetch('?/tieneReservasEnRango', {
                 method: 'POST',
@@ -86,21 +86,19 @@
             });
 
             const result = await response.json();
+            const hasOverlap = typeof result.data === 'string' 
+                ? JSON.parse(result.data)[1] 
+                : result.data[1];
 
-            console.log('Response from server:', result);
-
-            if (typeof result.data === 'string') {
-                result.data = JSON.parse(result.data);
-            }
-
-            console.log('Parsed response:', result.data);
-
-            if (result.data[1] == false){
+            if (!hasOverlap) {
                 goto(pagoPagina);
             } else {
                 mensajeSolapamiento = 'Ya tiene una reserva pendiente en el rango de fechas seleccionado.';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
+        } catch (error) {
+            console.error('Error checking reservations:', error);
+            mensajeSolapamiento = 'Error al verificar reservas. Intente nuevamente.';
         }
     }
 
@@ -109,18 +107,69 @@
         img.src = '/no-image-icon.svg';
     }
 
-    function getImageUrlFromBlob(base64Data: string | null) {
-        if (!base64Data) {
-            return '/no-image-icon.svg';
-        }
+    function getImageUrlFromBlob(base64Data: string | null): string {
+        if (!base64Data) return '/no-image-icon.svg';
         try {
             return `data:image/jpeg;base64,${base64Data}`;
-        } catch (error) {
+        } catch {
             return '/no-image-icon.svg';
         }
     }
 
-    // Statement reactivo para filtrar vehículos
+    // Variables para los filtros
+    let filtros = {
+        precioMaximo: null as number | null,
+        capacidadMinima: null as number | null,
+        categoria: '' as string
+    };
+
+    // Constantes para rangos de precios
+    const RANGOS_PRECIOS = [
+        { max: 5000, label: 'Hasta $5.000' },
+        { max: 10000, label: 'Hasta $10.000' },
+        { max: 15000, label: 'Hasta $15.000' },
+        { max: 20000, label: 'Hasta $20.000' },
+        { max: 999999, label: 'Más de $20.000' }
+    ] as const;
+
+    // Funciones auxiliares optimizadas para los filtros
+    function obtenerRangosPrecios(vehiculos: UnidadAgrupada[]) {
+        return RANGOS_PRECIOS.filter(rango => {
+            return vehiculos.some(v => {
+                if (rango.max === 999999) {
+                    return v.precioPorDia > 20000;
+                }
+                return v.precioPorDia <= rango.max;
+            });
+        });
+    }
+
+    function obtenerCapacidadesUnicas(vehiculos: UnidadAgrupada[]): number[] {
+        return [...new Set(vehiculos.map(v => v.capacidadPasajeros))].sort((a, b) => a - b);
+    }
+
+    function obtenerCategoriasUnicas(vehiculos: UnidadAgrupada[]): string[] {
+        return [...new Set(vehiculos.map(v => v.categoria).filter((cat): cat is string => Boolean(cat)))];
+    }
+
+    // Función optimizada para contar vehículos por filtro
+    function contarVehiculosPorFiltro(vehiculos: UnidadAgrupada[], filtroActual: typeof filtros): number {
+        return vehiculos.filter(v => {
+            const cumplePrecio = !filtroActual.precioMaximo || (
+                filtroActual.precioMaximo === 999999 
+                    ? v.precioPorDia > 20000
+                    : v.precioPorDia <= filtroActual.precioMaximo
+            );
+            const cumpleCapacidad = !filtroActual.capacidadMinima || 
+                v.capacidadPasajeros >= filtroActual.capacidadMinima;
+            const cumpleCategoria = !filtroActual.categoria || 
+                v.categoria === filtroActual.categoria;
+                
+            return cumplePrecio && cumpleCapacidad && cumpleCategoria;
+        }).length;
+    }
+
+    // Statement reactivo optimizado para filtrar vehículos
     $: vehiculosFiltrados = data.unidadesDisponibles?.filter(v => {
         const cumplePrecio = !filtros.precioMaximo || (
             filtros.precioMaximo === 999999 
@@ -133,63 +182,15 @@
             v.categoria === filtros.categoria;
         
         return cumplePrecio && cumpleCapacidad && cumpleCategoria;
-    });
+    }) || [];
 
-    // Use the server data directly since it's already grouped
-    $: groupedVehiclesArray = vehiculosFiltrados || [];
-
-    // Variables para los filtros
-    let filtros = {
-        precioMaximo: null as number | null,
-        capacidadMinima: null as number | null,
-        categoria: '' as string
-    };
-
-    // Funciones auxiliares para los filtros
-    function obtenerRangosPrecios(vehiculos: any[]) {
-        const rangos = [
-            { max: 5000, label: 'Hasta $5.000' },
-            { max: 10000, label: 'Hasta $10.000' },
-            { max: 15000, label: 'Hasta $15.000' },
-            { max: 20000, label: 'Hasta $20.000' },
-            { max: 999999, label: 'Más de $20.000' }
-        ];
-
-        // Filtrar rangos que tienen al menos un vehículo
-        return rangos.filter(rango => {
-            const hayVehiculos = vehiculos.some(v => {
-                if (rango.max === 999999) {
-                    return v.precioPorDia > 20000;
-                }
-                return v.precioPorDia <= rango.max;
-            });
-            return hayVehiculos;
-        });
-    }
-
-    function obtenerCapacidadesUnicas(vehiculos: any[]) {
-        return [...new Set(vehiculos.map(v => v.capacidadPasajeros))].sort((a, b) => a - b);
-    }
-
-    function obtenerCategoriasUnicas(vehiculos: any[]) {
-        return [...new Set(vehiculos.map(v => v.categoria))];
-    }
-
-    // Función para contar vehículos por filtro
-    function contarVehiculosPorFiltro(vehiculos: any[], filtroActual: any) {
-        return vehiculos.filter(v => {
-            const cumplePrecio = !filtroActual.precioMaximo || (
-                filtroActual.precioMaximo === 999999 
-                    ? v.precioPorDia > 20000
-                    : v.precioPorDia <= filtroActual.precioMaximo
-            );
-            const cumpleCapacidad = !filtros.capacidadMinima || 
-                v.capacidadPasajeros >= filtroActual.capacidadMinima;
-            const cumpleCategoria = !filtros.categoria || 
-                v.categoria === filtroActual.categoria;
-                
-            return cumplePrecio && cumpleCapacidad && cumpleCategoria;
-        }).length;
+    // Función para limpiar filtros
+    function limpiarFiltros() {
+        filtros = {
+            precioMaximo: null,
+            capacidadMinima: null,
+            categoria: ''
+        };
     }
 </script>
 
@@ -251,109 +252,99 @@
     </div>
 
     <h1 class="text-2xl font-bold mb-4">Resultados de Búsqueda</h1>
-    <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(data.fechaInicio)}</strong> hasta el <strong>{formatDate(data.fechaFin)}</strong> en <strong>{data.ubicacion}</strong>.</p>
+    <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(fechaInicio)}</strong> hasta el <strong>{formatDate(fechaFin)}</strong> en <strong>{ubicacionDecoded}</strong>.</p>
     
     <!-- Nueva estructura de dos columnas -->
     <div class="flex flex-col md:flex-row gap-8">
-        {#if data.unidadesDisponibles && data.unidadesDisponibles.length > 0}
-            <p class="text-sm text-gray-600 mb-4">
-        <!-- Aquí podrías mostrar un resumen si lo deseas -->
-            </p>
-
-        <!-- Columna de filtros (izquierda) -->
-        <div class="md:w-1/4">
-            <div class="bg-base-100 shadow-lg rounded-lg p-6 sticky top-4">
-                <h2 class="text-xl font-semibold mb-6">Filtros</h2>
-                
-                <!-- Filtro de Precio -->
-                <div class="mb-8">
-                    <h3 class="font-semibold mb-4">Precio por día</h3>
-                    <div class="space-y-2">
-                        {#each obtenerRangosPrecios(data.unidadesDisponibles) as rango}
-                            <label class="flex items-center gap-2">
-                                <input 
-                                    type="radio" 
-                                    class="radio radio-primary"
-                                    name="precio"
-                                    bind:group={filtros.precioMaximo}
-                                    value={rango.max}
-                                />
-                                <span>{rango.label}</span>
-                            </label>
-                        {/each}
-                    </div>
-                </div>
-
-                <!-- Filtro de Capacidad -->
-                <div class="mb-8">
-                    <h3 class="font-semibold mb-4">Capacidad mínima</h3>
-                    <div class="space-y-2">
-                        {#each obtenerCapacidadesUnicas(data.unidadesDisponibles) as capacidad}
-                            <label class="flex items-center gap-2">
-                                <input 
-                                    type="radio" 
-                                    class="radio radio-primary"
-                                    name="capacidad"
-                                    bind:group={filtros.capacidadMinima}
-                                    value={capacidad}
-                                    disabled={contarVehiculosPorFiltro(data.unidadesDisponibles, {...filtros, capacidadMinima: capacidad}) === 0}
-                                />
-                                <span>{capacidad} pasajeros</span>
-                            </label>
-                        {/each}
-                    </div>
-                </div>
-
-                <!-- Filtro de Categoría -->
-                 {#if obtenerCategoriasUnicas(data.unidadesDisponibles).filter(cat => cat !== null && cat !== undefined && cat !== '').length > 0}
+        {#if data.unidadesDisponibles?.length > 0}
+            <!-- Columna de filtros (izquierda) -->
+            <div class="md:w-1/4">
+                <div class="bg-base-100 shadow-lg rounded-lg p-6 sticky top-4">
+                    <h2 class="text-xl font-semibold mb-6">Filtros</h2>
+                    
+                    <!-- Filtro de Precio -->
                     <div class="mb-8">
-                        <h3 class="font-semibold mb-4">Categoría</h3>
+                        <h3 class="font-semibold mb-4">Precio por día</h3>
                         <div class="space-y-2">
-                            {#each obtenerCategoriasUnicas(data.unidadesDisponibles).filter(cat => cat !== null && cat !== undefined && cat !== '') as cat}
+                            {#each obtenerRangosPrecios(data.unidadesDisponibles) as rango}
                                 <label class="flex items-center gap-2">
                                     <input 
                                         type="radio" 
                                         class="radio radio-primary"
-                                        name="categoria"
-                                        bind:group={filtros.categoria}
-                                        value={cat}
-                                        disabled={contarVehiculosPorFiltro(data.unidadesDisponibles, {...filtros, categoria: cat}) === 0}
+                                        name="precio"
+                                        bind:group={filtros.precioMaximo}
+                                        value={rango.max}
                                     />
-                                    <span>{cat}</span>
+                                    <span>{rango.label}</span>
                                 </label>
                             {/each}
                         </div>
                     </div>
-                {/if}
 
-                {#if filtros.precioMaximo || filtros.capacidadMinima || filtros.categoria}
-                    <button 
-                        class="btn btn-outline btn-sm w-full"
-                        on:click={() => {
-                            filtros = {
-                                precioMaximo: null,
-                                capacidadMinima: null,
-                                categoria: ''
-                            };
-                        }}
-                    >
-                        Limpiar filtros
-                    </button>
-                {/if}
+                    <!-- Filtro de Capacidad -->
+                    <div class="mb-8">
+                        <h3 class="font-semibold mb-4">Capacidad mínima</h3>
+                        <div class="space-y-2">
+                            {#each obtenerCapacidadesUnicas(data.unidadesDisponibles) as capacidad}
+                                <label class="flex items-center gap-2">
+                                    <input 
+                                        type="radio" 
+                                        class="radio radio-primary"
+                                        name="capacidad"
+                                        bind:group={filtros.capacidadMinima}
+                                        value={capacidad}
+                                        disabled={contarVehiculosPorFiltro(data.unidadesDisponibles, {...filtros, capacidadMinima: capacidad}) === 0}
+                                    />
+                                    <span>{capacidad} pasajeros</span>
+                                </label>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <!-- Filtro de Categoría -->
+                    {#if obtenerCategoriasUnicas(data.unidadesDisponibles).length > 0}
+                        <div class="mb-8">
+                            <h3 class="font-semibold mb-4">Categoría</h3>
+                            <div class="space-y-2">
+                                {#each obtenerCategoriasUnicas(data.unidadesDisponibles) as categoria}
+                                    <label class="flex items-center gap-2">
+                                        <input 
+                                            type="radio" 
+                                            class="radio radio-primary"
+                                            name="categoria"
+                                            bind:group={filtros.categoria}
+                                            value={categoria}
+                                            disabled={contarVehiculosPorFiltro(data.unidadesDisponibles, {...filtros, categoria}) === 0}
+                                        />
+                                        <span>{categoria}</span>
+                                    </label>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if filtros.precioMaximo || filtros.capacidadMinima || filtros.categoria}
+                        <button 
+                            class="btn btn-outline btn-sm w-full"
+                            on:click={limpiarFiltros}
+                        >
+                            Limpiar filtros
+                        </button>
+                    {/if}
+                </div>
             </div>
-        </div>
-         {/if}
+        {/if}
 
         <!-- Columna de resultados (derecha) -->
         <div class="md:w-3/4">
-            {#if !data.unidadesDisponibles || data.unidadesDisponibles.length === 0}
+            {#if !data.unidadesDisponibles?.length}
                 <div class="alert alert-info">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>No se encontraron vehículos disponibles para las fechas seleccionadas.</span>
                 </div>
-            {:else if groupedVehiclesArray.length === 0}
+            {:else if vehiculosFiltrados.length === 0}
                 <div class="alert alert-warning">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -361,12 +352,12 @@
                 </div>
             {:else}
                 <div class="flex flex-col gap-6">
-                    {#each groupedVehiclesArray as unidad (unidad.marca + unidad.modelo)}
+                    {#each vehiculosFiltrados as unidad (unidad.marca + unidad.modelo)}
                         <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
                             <div class="flex flex-row">
                                 <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
                                     <img 
-                                        src={unidad.imagenBlob ? getImageUrlFromBlob(unidad.imagenBlob) : '/no-image-icon.svg'} 
+                                        src={getImageUrlFromBlob(unidad.imagenBlob)} 
                                         alt={`${unidad.marca} ${unidad.modelo}`} 
                                         class="h-60 w-60 object-cover rounded-lg" 
                                         style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
@@ -411,7 +402,6 @@
                                         >
                                             Reservar
                                         </button>
-
                                     </div>
                                 </div>
                             </div>
