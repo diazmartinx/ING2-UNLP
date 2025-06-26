@@ -49,7 +49,14 @@
 				sucursalSeleccionada = '';
 				modeloSeleccionado = '';
 				anio = '';
-				window.location.reload();
+				
+				// Refresh data without page reload
+				await invalidateAll();
+				
+				// Auto-hide toast after 4 seconds
+				setTimeout(() => {
+					successMessage = '';
+				}, 4000);
 			} else {
 				error = result.data[2] || 'Error: la patente ya se encuentra en el sistema.';
 			}
@@ -75,11 +82,11 @@
 				await invalidate('app:vehiculos');
 				patenteSeleccionada = '';
 				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : nuevoEstado === 'Inhabilitado' ? 'inhabilitado' : 'habilitado'} exitosamente`;
-				window.location.reload();
+				
+				// Auto-hide toast after 4 seconds
 				setTimeout(() => {
 					successMessage = '';
-					
-				}, 3000);
+				}, 4000);
 			} else {
 				error = result.data?.error || 'Error al actualizar el estado del vehículo';
 				mostrarConfirmacion = true;
@@ -107,14 +114,35 @@
 <div class="mb-6 flex items-center justify-between">
 	<h2 class="text-3xl font-bold text-gray-800">Vehículos</h2>
 	<div class="flex items-center gap-4">
-		{#if successMessage}
-			<div class="font-medium text-green-600">{successMessage}</div>
-		{/if}
 		<button onclick={() => (mostrarModal = true)} type="button" class="btn btn-primary">
 			Crear Nuevo vehículo
 		</button>
 	</div>
 </div>
+
+<!-- Toast de éxito -->
+{#if successMessage}
+	<div class="fixed top-4 right-4 z-50 animate-in slide-in-from-right-2 duration-300">
+		<div class="flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3 shadow-lg">
+			<div class="flex-shrink-0">
+				<svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+				</svg>
+			</div>
+			<div class="flex-1">
+				<p class="text-sm font-medium text-green-800">{successMessage}</p>
+			</div>
+			<button
+				onclick={() => successMessage = ''}
+				class="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+			>
+				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+				</svg>
+			</button>
+		</div>
+	</div>
+{/if}
 
 {#if vehiculos.length === 0}
 	<div class="flex h-screen items-center justify-center">
@@ -218,9 +246,14 @@
 						¿Está seguro que desea <span class="font-bold">dar de baja</span> el vehículo con
 						patente {patenteSeleccionada}?
 					</p>
-				{:else}
+				{:else if accionSeleccionada === 'Inhabilitado'}
 					<p class="mb-4">
 						¿Está seguro que desea <span class="font-bold">inhabilitar</span> el vehículo con
+						patente {patenteSeleccionada}?
+					</p>
+				{:else if accionSeleccionada === 'Habilitado'}
+					<p class="mb-4">
+						¿Está seguro que desea <span class="font-bold">habilitar</span> el vehículo con
 						patente {patenteSeleccionada}?
 					</p>
 				{/if}
@@ -235,7 +268,7 @@
 					<button
 						onclick={() => actualizarEstadoVehiculo(accionSeleccionada as EstadoVehiculo)}
 						type="button"
-						class="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+						class="rounded-md px-4 py-2 text-white {accionSeleccionada === 'Habilitado' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}"
 					>
 						Confirmar
 					</button>
