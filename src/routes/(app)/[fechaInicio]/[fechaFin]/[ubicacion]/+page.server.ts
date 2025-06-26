@@ -185,10 +185,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     });
 
     // Convertir los blobs a base64 para la serialización
-    const unidadesSerializadas = Object.values(unidadesAgrupadas).map(unidad => ({
-        ...unidad,
-        imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
-    }));
+    const unidadesSerializadas = Object.values(unidadesAgrupadas)
+        .filter((unidad: any) => unidad.unidadesDisponibles > 0) // Solo incluir modelos con al menos 1 unidad disponible
+        .map(unidad => ({
+            ...unidad,
+            imagenBlob: unidad.imagenBlob instanceof Buffer ? unidad.imagenBlob.toString('base64') : null
+        }));
 
     // Lógica de los adicionales
     const adicionalesDisponibles = await db.select().from(adicionales);
