@@ -192,7 +192,7 @@
 								<button
 									onclick={() => confirmarAccion(patente, 'Inhabilitado')}
 									type="button"
-									class="text-600 font-medium hover:underline dark:text-red-500"
+									class="text-600 font-medium hover:underline dark:text-red-500 cursor-pointer"
 								>
 									Inhabilitar
 								</button>
@@ -200,7 +200,7 @@
 								<button
 									onclick={() => confirmarAccion(patente, 'Habilitado')}
 									type="button"
-									class="text-600 font-medium hover:underline dark:text-red-500"
+									class="text-600 font-medium hover:underline dark:text-red-500 cursor-pointer"
 								>
 									Habilitar
 								</button>
@@ -210,7 +210,7 @@
 								<button
 									onclick={() => confirmarAccion(patente, 'Dado de baja')}
 									type="button"
-									class="font-medium text-red-600 hover:underline dark:text-red-500"
+									class="font-medium text-red-600 hover:underline dark:text-red-500 cursor-pointer"
 								>
 									Dar de baja
 								</button>
