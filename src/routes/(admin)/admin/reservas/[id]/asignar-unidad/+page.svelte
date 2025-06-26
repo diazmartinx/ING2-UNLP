@@ -27,6 +27,7 @@
     let successMessage = $state('');
     let loading = $state(false);
     let patenteSeleccionada = $state('');
+    let adicionalesSeleccionados: Record<number, number> = {};
 
     // SVG Components como strings para evitar duplicación
     const svgIcons = {
@@ -52,21 +53,32 @@
         }
     };
 
+    function toggleAdicional(id: number) {
+        adicionalesSeleccionados[id] = adicionalesSeleccionados[id] === 1 ? 0 : 1;
+    }
+
     async function asignarUnidad() {
         if (!patenteSeleccionada) {
             error = 'Se debe seleccionar una unidad';
             return;
         }
-
         loading = true;
         error = '';
         successMessage = '';
-
         try {
             const formData = new FormData();
             formData.append('reservaId', reserva.id.toString());
             formData.append('estado', 'Entregada');
             formData.append('patente', patenteSeleccionada);
+
+            // Adicionales: solo los seleccionados
+            const adicionalesStr = Object.entries(adicionalesSeleccionados)
+                .filter(([, seleccionado]) => seleccionado === 1)
+                .map(([id]) => id)
+                .join(',');
+            if (adicionalesStr) {
+                formData.append('adicionales', adicionalesStr);
+            }
 
             const response = await fetch('?/asignarUnidad', {
                 method: 'POST',
@@ -163,6 +175,38 @@
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Agregar después de la selección de unidad -->
+    <div class="card bg-base-100 shadow-xl mt-6">
+        <div class="card-body">
+            <h3 class="card-title">Adicionales</h3>
+            {#if data.adicionalesDisponibles.length === 0}
+                <div class="alert alert-info mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        {@html svgIcons.info}
+                    </svg>
+                    <span>No hay adicionales disponibles</span>
+                </div>
+            {:else}
+                <div class="space-y-3 flex flex-wrap gap-4 justify-start">
+                    {#each data.adicionalesDisponibles as adicional}
+                        <div class="flex flex-col items-start p-3 rounded-lg bg-base-100 shadow-sm w-64 h-24 border-2 border-primary/60">
+                            <div class="mb-2 w-full">
+                                <span class="font-medium">{adicional.nombre}</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                class="checkbox"
+                                checked={adicionalesSeleccionados[adicional.id] === 1}
+                                onchange={() => toggleAdicional(adicional.id)}
+                                disabled={loading}
+                            />
+                        </div>
+                    {/each}
+                </div>
+            {/if}
         </div>
     </div>
 
@@ -280,4 +324,6 @@
             </div>
         </div>
     </div>
-</div> 
+
+    
+</div>

@@ -11,12 +11,10 @@
     
     // Form fields
     let nombre = $state('');
-    let cantidadMaxima = $state('');
     let precioPorDia = $state('');
     
     // Field errors
     let nombreError = $state('');
-    let cantidadMaximaError = $state('');
     let precioPorDiaError = $state('');
 
     function validateForm() {
@@ -24,7 +22,6 @@
         
         // Reset errors
         nombreError = '';
-        cantidadMaximaError = '';
         precioPorDiaError = '';
         
         // Validate nombre
@@ -34,18 +31,6 @@
         } else if (nombre.trim().length < 2) {
             nombreError = 'El nombre debe tener al menos 2 caracteres';
             isValid = false;
-        }
-        
-        // Validate cantidadMaxima
-        if (!cantidadMaxima.trim()) {
-            cantidadMaximaError = 'La cantidad máxima es requerida';
-            isValid = false;
-        } else {
-            const cantidad = Number(cantidadMaxima);
-            if (isNaN(cantidad) || cantidad <= 0) {
-                cantidadMaximaError = 'La cantidad debe ser un número mayor a 0';
-                isValid = false;
-            }
         }
         
         // Validate precioPorDia
@@ -76,7 +61,6 @@
                 errorMessage = '';
                 // Reset form
                 nombre = '';
-                cantidadMaxima = '';
                 precioPorDia = '';
             } else if (result.type === 'failure') {
                 errorMessage = result.data?.error || 'Error al crear el adicional';
@@ -156,25 +140,6 @@
                 {/if}
             </div>
 
-            <!-- Cantidad Máxima -->
-            <div>
-                <label for="cantidadMaxima" class="block text-sm font-medium text-gray-700 mb-2">
-                    Cantidad Máxima Disponible <span class="text-red-500">*</span>
-                </label>
-                <input
-                    type="number"
-                    id="cantidadMaxima"
-                    name="cantidadMaxima"
-                    bind:value={cantidadMaxima}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 {cantidadMaximaError ? 'border-red-500' : ''}"
-                    placeholder="Ej: 10"
-                    min="1"
-                    disabled={loading}
-                />
-                {#if cantidadMaximaError}
-                    <p class="mt-1 text-sm text-red-600">{cantidadMaximaError}</p>
-                {/if}
-            </div>
 
             <!-- Precio por Día -->
             <div>

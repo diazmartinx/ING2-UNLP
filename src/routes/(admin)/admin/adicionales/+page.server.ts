@@ -23,10 +23,9 @@ export const actions = {
         const formData = await request.formData();
         const id = Number(formData.get('id'));
         const nombre = formData.get('nombre')?.toString();
-        const cantidadMaxima = Number(formData.get('cantidadMaxima'));
         const precioPorDia = Number(formData.get('precioPorDia'));
 
-        if (!nombre || !cantidadMaxima || !precioPorDia) {
+        if (!nombre || !precioPorDia) {
             return fail(400, { error: 'Todos los campos son requeridos' });
         }
 
@@ -42,7 +41,7 @@ export const actions = {
 
         await db
             .update(adicionales)
-            .set({ nombre, cantidadMaxima, precioPorDia })
+            .set({ nombre, precioPorDia })
             .where(eq(adicionales.id, id));
         
         const adicionalesData = await db.select().from(adicionales);

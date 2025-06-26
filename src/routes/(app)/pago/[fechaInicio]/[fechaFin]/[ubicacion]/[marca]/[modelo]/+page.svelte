@@ -84,24 +84,7 @@
                 <div><span class="font-medium">Fecha inicio:</span> {data.fechaInicio}</div>
                 <div><span class="font-medium">Fecha fin:</span> {data.fechaFin}</div>
                 <div><span class="font-medium">Vehículo:</span> {data.marca} {data.modelo}</div>
-                <div><span class="font-medium">Importe de Reserva:</span> ARS <strong>{data.importeReserva}</strong></div>
-                {#if data.adicionalesSeleccionados && data.adicionalesSeleccionados.length > 0}
-                    <div class="col-span-2">
-                        <span class="font-medium">Adicionales:</span>
-                        <ul class="list-disc ml-6">
-                            {#each data.adicionalesSeleccionados as adicional}
-                                <li>{adicional.nombre} (${adicional.precioPorDia}/día)</li>
-                            {/each}
-                        </ul>
-                    </div>
-                    <div><span class="font-medium">Importe total con adicionales:</span> ARS <strong>{data.importeTotal}</strong></div>
-                {:else}
-                    <div class="col-span-2">
-                        <span class="font-medium">Adicionales:</span>
-                        <span class="text-gray-500 ml-2">No se seleccionaron adicionales.</span>
-                    </div>
-                    <div><span class="font-medium">Importe total:</span> ARS <strong>{data.importeTotal}</strong></div>
-                {/if}
+                <div><span class="font-medium">Importe total:</span> ARS <strong>{data.importeTotal}</strong></div>
             </div>
         </div>
 

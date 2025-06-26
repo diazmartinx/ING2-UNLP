@@ -22,28 +22,6 @@
     $: ubicacionDecoded = decodeURIComponent(ubicacion);
     let mensajeSolapamiento = '';
 
-    // Lógica de adicionales optimizada
-    let adicionalesVisiblesPara: string | null = null;
-    let adicionalesSeleccionados: Record<string, Record<number, number>> = {};
-
-    function toggleAdicionales(key: string) {
-        adicionalesVisiblesPara = adicionalesVisiblesPara === key ? null : key;
-    }
-
-    function toggleAdicional(marcaModelo: string, idAdicional: number, cantidadMaxima: number, nuevaCantidad?: number) {
-        if (!adicionalesSeleccionados[marcaModelo]) {
-            adicionalesSeleccionados[marcaModelo] = {};
-        }
-        
-        if (cantidadMaxima === 1) {
-            adicionalesSeleccionados[marcaModelo][idAdicional] = 
-                adicionalesSeleccionados[marcaModelo][idAdicional] === 1 ? 0 : 1;
-        } else if (typeof nuevaCantidad === 'number') {
-            adicionalesSeleccionados[marcaModelo][idAdicional] = 
-                Math.max(0, Math.min(nuevaCantidad, cantidadMaxima));
-        }
-    }
-
     afterNavigate(() => {
         // Los valores se actualizan automáticamente con el estado reactivo
     });
@@ -58,16 +36,7 @@
     }
 
     async function handleReservar(marca: string, modelo: string) {
-        const key = marca + modelo;
-        const adicionalesObj = adicionalesSeleccionados[key] || {};
-        
-        // Solo enviar adicionales con cantidad > 0
-        const adicionalesIds = Object.entries(adicionalesObj)
-            .filter(([, cantidad]) => cantidad > 0)
-            .map(([id, cantidad]) => cantidad > 1 ? `${id}:${cantidad}` : id)
-            .join(',');
-
-        const pagoPagina = `/pago/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacionDecoded)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}${adicionalesIds ? `?adicionales=${adicionalesIds}` : ''}`;
+        const pagoPagina = `/pago/${fechaInicio}/${fechaFin}/${encodeURIComponent(ubicacionDecoded)}/${encodeURIComponent(marca)}/${encodeURIComponent(modelo)}`;
         const paginaActual = window.location.pathname;
         
         if (!data.isLoggedIn) {
@@ -392,10 +361,6 @@
                                         </div>
                                     </div>
                                     <div class="card-actions justify-end mt-4">
-                                        <button class="btn btn-primary"
-                                            on:click={() => toggleAdicionales(unidad.marca + unidad.modelo)}>
-                                            Agregar adicional
-                                        </button>
                                         <button 
                                             class="btn btn-primary"
                                             on:click={() => handleReservar(unidad.marca, unidad.modelo)}
@@ -405,46 +370,6 @@
                                     </div>
                                 </div>
                             </div>
-                            {#if adicionalesVisiblesPara === (unidad.marca + unidad.modelo)}
-                                <div class="p-6 border-t border-gray-200 bg-base-200/50">
-                                    <h3 class="text-lg font-semibold mb-4">Adicionales Disponibles</h3>
-                                    <div class="space-y-3">
-                                        {#each data.adicionalesDisponibles as adicional}
-                                            <div class="flex justify-between items-center p-3 rounded-lg bg-base-100 shadow-sm">
-                                                <div>
-                                                    <span class="font-medium">{adicional.nombre}</span>
-                                                    <span class="text-sm text-gray-500 ml-2">(Max: {adicional.cantidadMaxima})</span>
-                                                </div>
-                                                <div class="flex items-center gap-3">
-                                                    <span class="font-semibold text-primary">${adicional.precioPorDia}/día</span>
-                                                    {#if adicional.cantidadMaxima > 1}
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max={adicional.cantidadMaxima}
-                                                            class="input input-bordered w-20"
-                                                            value={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] || 0}
-                                                            on:input={e => toggleAdicional(
-                                                                unidad.marca + unidad.modelo,
-                                                                adicional.id,
-                                                                adicional.cantidadMaxima,
-                                                                +(e.target as HTMLInputElement).value
-                                                            )}
-                                                        />
-                                                    {:else}
-                                                        <input
-                                                            type="checkbox"
-                                                            class="checkbox checkbox-primary"
-                                                            checked={adicionalesSeleccionados[unidad.marca + unidad.modelo]?.[adicional.id] === 1}
-                                                            on:change={() => toggleAdicional(unidad.marca + unidad.modelo, adicional.id, 1)}
-                                                        />
-                                                    {/if}
-                                                </div>
-                                            </div>
-                                        {/each}
-                                    </div>
-                                </div>
-                            {/if}
                         </div>
                     {/each}
                 </div>

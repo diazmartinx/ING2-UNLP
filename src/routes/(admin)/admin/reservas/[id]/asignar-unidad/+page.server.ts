@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { reservas, unidadesVehiculos, modelosVehiculos } from '$lib/server/db/schema';
+import { reservas, unidadesVehiculos, modelosVehiculos, adicionales, reservasAdicionales } from '$lib/server/db/schema';
 import { eq, sql, and, not, exists, lte, gte } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ params }) => {
     const disponibilidadCondition = getDisponibilidadCondition(reservaData.fechaInicio, reservaData.fechaFin);
 
     // Ejecutar ambas queries en paralelo
-    const [unidadesModeloReservado, unidadesOtrosModelos] = await Promise.all([
+    const [unidadesModeloReservado, unidadesOtrosModelos, adicionalesDisponibles] = await Promise.all([
         // Unidades del modelo reservado
         db.select({
             patente: unidadesVehiculos.patente,
@@ -95,13 +95,17 @@ export const load: PageServerLoad = async ({ params }) => {
                 not(eq(modelosVehiculos.id, reservaData.idModeloReservado)),
                 disponibilidadCondition
             )
-        )
+        ),
+
+        // Adicionales disponibles
+        db.select().from(adicionales)
     ]);
 
     return {
         reserva,
         unidadesModeloReservado,
-        unidadesOtrosModelos
+        unidadesOtrosModelos,
+        adicionalesDisponibles
     };
 };
 
@@ -111,6 +115,15 @@ export const actions: Actions = {
         const reservaId = parseInt(formData.get('reservaId') as string);
         const estado = formData.get('estado') as EstadoReserva;
         const patente = formData.get('patente') as string;
+        const adicionalesRaw = formData.get('adicionales') as string | null;
+        // adicionales: formato "1:2,3:1" (id:cantidad)
+        let adicionalesParsed: { id: number, cantidad: number }[] = [];
+        if (adicionalesRaw) {
+            adicionalesParsed = adicionalesRaw.split(',').filter(Boolean).map(str => {
+                const [id, cantidad] = str.split(':').map(Number);
+                return { id, cantidad: cantidad || 1 };
+            });
+        }
 
         if (!reservaId || !estado) {
             return {
@@ -154,6 +167,16 @@ export const actions: Actions = {
                 })
                 .where(eq(reservas.id, reservaId));
 
+            // Guardar adicionales
+            if (adicionalesParsed.length > 0) {
+                const inserts = adicionalesParsed.map(a => ({
+                    idReserva: reservaId,
+                    idAdicional: a.id,
+                    cantidad: a.cantidad
+                }));
+                await db.insert(reservasAdicionales).values(inserts);
+            }
+
             return {
                 type: 'success'
             };
@@ -165,4 +188,4 @@ export const actions: Actions = {
             };
         }
     }
-}; 
+};

@@ -43,14 +43,6 @@ let tarjetas = [
 
 export const load: PageServerLoad = async ({ params, url }) => {
     const { fechaInicio, fechaFin, ubicacion, marca, modelo } = params;
-    const adicionalesParam = url.searchParams.get('adicionales') || '';
-    // Parsear adicionales: puede venir como "1:2,3:1" (id:cantidad)
-    const adicionalesRaw = adicionalesParam.split(',').filter(Boolean);
-    const adicionalesParsed = adicionalesRaw.map(str => {
-        const [id, cantidad] = str.split(':').map(Number);
-        return { id, cantidad: cantidad || 1 };
-    });
-    const adicionalesIds = adicionalesParsed.map(a => a.id);
 
     let modeloVehiculo = await db.select().from(modelosVehiculos).where(and(eq(modelosVehiculos.marca, marca), eq(modelosVehiculos.modelo, modelo)));
 
@@ -63,27 +55,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
     }
 
     const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
-    console.log('Dias totales:', diasTotales);
-
     const importeReserva = modeloVehiculo[0].precioPorDia * diasTotales;
     let importeTotal = importeReserva;
-
-    // Obtener adicionales seleccionados
-    let adicionalesSeleccionados: (typeof adicionalesTable.$inferSelect & { cantidad: number })[] = [];
-    if (adicionalesIds.length > 0) {
-        const adicionalesFromDb = await db
-            .select()
-            .from(adicionalesTable)
-            .where(inArray(adicionalesTable.id, adicionalesIds));
-        // Mezclar con cantidad
-        adicionalesSeleccionados = adicionalesFromDb.map(adic => ({
-            ...adic,
-            cantidad: adicionalesParsed.find(a => a.id === adic.id)?.cantidad || 1
-        }));
-        for (const adicional of adicionalesSeleccionados) {
-            importeTotal += adicional.precioPorDia * diasTotales * adicional.cantidad;
-        }
-    }
 
     return {
         fechaInicio: fechaInicio || '',
@@ -92,8 +65,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         marca: marca || '',
         modelo: modelo || '',
         importeReserva,
-        importeTotal,
-        adicionalesSeleccionados
+        importeTotal
     };
 };
 
@@ -142,26 +114,6 @@ export const actions: Actions = {
         const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
         const importeReserva = modeloVehiculo.precioPorDia * diasTotales;
         let importeTotal = importeReserva;
-
-        const adicionalesParam = new URL(request.url).searchParams.get('adicionales') || '';
-        // Parsear adicionales: puede venir como "1:2,3:1" (id:cantidad)
-        const adicionalesRaw = adicionalesParam.split(',').filter(Boolean);
-        const adicionalesParsed = adicionalesRaw.map(str => {
-            const [id, cantidad] = str.split(':').map(Number);
-            return { id, cantidad: cantidad || 1 };
-        });
-        const adicionalesIds = adicionalesParsed.map(a => a.id);
-
-        if (adicionalesIds.length > 0) {
-            const adicionalesFromDb = await db
-                .select()
-                .from(adicionalesTable)
-                .where(inArray(adicionalesTable.id, adicionalesIds));
-            for (const adicional of adicionalesFromDb) {
-                const cantidad = adicionalesParsed.find(a => a.id === adicional.id)?.cantidad || 1;
-                importeTotal += adicional.precioPorDia * diasTotales * cantidad;
-            }
-        }
 
         // Validaciones básicas
         if (!tarjeta || !nombre || !fechaVencimiento || !cvv) {
@@ -229,15 +181,6 @@ export const actions: Actions = {
         }
 
         const [nuevaReserva] = await db.insert(reservas).values(reserva).returning();
-
-        if (adicionalesIds.length > 0) {
-            const inserts = adicionalesParsed.map(a => ({
-                idReserva: nuevaReserva.id,
-                idAdicional: a.id,
-                cantidad: a.cantidad
-            }));
-            await db.insert(reservasAdicionales).values(inserts);
-        }
 
         // Retornar éxito
         return {

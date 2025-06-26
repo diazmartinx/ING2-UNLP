@@ -5,13 +5,14 @@
 
 	let { data }: { data: PageData } = $props();
 	let adicionales = $state([...data.adicionales]);
-	let editando: { id: number; nombre: string; cantidadMaxima: number; precioPorDia: number } | null = $state(null);
+	let editando: { id: number; nombre: string; precioPorDia: number } | null = $state(null);
 	let error = $state('');
 	let mostrarDialogo = $state(false);
-	let adicionalAEliminar: { id: number; nombre: string } | null = $state(null);
+	let adicionalAEliminar: { id: number; nombre: string; precioPorDia: number } | null = $state(null);
 
-	function iniciarEdicion(adicional: { id: number; nombre: string; cantidadMaxima: number; precioPorDia: number }) {
-		editando = { ...adicional };
+	function iniciarEdicion(adicional: { id: number; nombre: string; precioPorDia: number }) {
+		adicionalAEliminar = null;
+		editando = { id: adicional.id, nombre: adicional.nombre, precioPorDia: adicional.precioPorDia };
 	}
 
 	function cancelarEdicion() {
@@ -19,7 +20,7 @@
 		error = '';
 	}
 
-	function confirmarEliminacion(adicional: { id: number; nombre: string }) {
+	function confirmarEliminacion(adicional: { id: number; nombre: string; precioPorDia: number }) {
 		adicionalAEliminar = adicional;
 		mostrarDialogo = true;
 	}
@@ -77,13 +78,6 @@
 								/>
 								<input
 									type="number"
-									name="cantidadMaxima"
-									class="input input-bordered w-32"
-									value={editando?.cantidadMaxima ?? 0}
-									placeholder="Cantidad"
-								/>
-								<input
-									type="number"
 									name="precioPorDia"
 									class="input input-bordered w-32"
 									value={editando?.precioPorDia ?? 0}
@@ -100,7 +94,7 @@
 						<div class="flex-1">
 							<span class="text-lg text-gray-700 font-medium">{adicional.nombre}</span>
 							<div class="text-sm text-gray-500">
-								Cantidad máxima: {adicional.cantidadMaxima} | Precio por día: ${adicional.precioPorDia}
+								Precio por día: ${adicional.precioPorDia}
 							</div>
 						</div>
 						<div class="flex gap-2">
