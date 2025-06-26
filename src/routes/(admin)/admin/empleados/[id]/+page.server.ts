@@ -39,15 +39,18 @@ function isValidYear(birthDate: Date): boolean {
 }
 
 export const load: PageServerLoad = async ({ params }) => {
-	const clienteDB = await db.select().from(usuarios).where(eq(usuarios.id, Number(params.id)));
-	console.log('Cliente encontrado:', clienteDB);
+	const empleadoDB = await db.select().from(usuarios).where(eq(usuarios.id, Number(params.id)));
 	
-	const cliente = clienteDB[0];
+	if (!empleadoDB[0]) {
+		throw new Error('Empleado no encontrado');
+	}
+	
+	const empleado = empleadoDB[0];
 	
 	return {
-		cliente: {
-			...cliente,
-			fechaNacimiento: formatDateForInput(cliente?.fechaNacimiento)
+		empleado: {
+			...empleado,
+			fechaNacimiento: formatDateForInput(empleado?.fechaNacimiento)
 		}
 	};
 };
@@ -57,12 +60,10 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const nombre = data.get('nombre')?.toString() ?? '';
 		const apellido = data.get('apellido')?.toString() ?? '';
-		const dni = data.get('dni')?.toString();
+		const dni = data.get('dni')?.toString() ?? '';
 		const email = data.get('email')?.toString() ?? '';
 		const telefono = data.get('telefono')?.toString() ?? '';
 		const fechaNacimiento = data.get('fechaNacimiento')?.toString() ?? '';
-
-        console.log('Datos recibidos:', data);
 
 		if (!nombre || !apellido || !email || !fechaNacimiento) {
 			return fail(400, { error: 'Todos los campos obligatorios deben estar completos' });
@@ -75,8 +76,6 @@ export const actions: Actions = {
 		}
 
 		// Validar que el año sea mayor a 1900
-        // hay error en la fecha, el dìa elegido se termina guardando con un dìa menor en la DB, por eso
-        // la validaciòn es a 01/01/1900 en lugar de 1900 (31/12/1899)
 		if (!isValidYear(fechaNacimientoDate)) {
 			return fail(400, { 
 				error: 'Debe ingresar una fecha correcta. El año debe ser mayor a 01/01/1900' 
@@ -91,7 +90,7 @@ export const actions: Actions = {
 		// Validar que sea mayor de 18 años
 		if (!isOver18(fechaNacimientoDate)) {
 			return fail(400, { 
-				error: `La persona debe ser mayor de 18 años.` 
+				error: 'La persona debe ser mayor de 18 años' 
 			});
 		}
 
@@ -118,14 +117,22 @@ export const actions: Actions = {
 		}
 
 		try {
-			const updated = await db.update(usuarios).set({ nombre, apellido, dni, email, telefono, fechaNacimiento: fechaNacimientoDate }).where(eq(usuarios.id, id));
+			const updated = await db.update(usuarios).set({ 
+				nombre, 
+				apellido, 
+				dni, 
+				email, 
+				telefono, 
+				fechaNacimiento: fechaNacimientoDate 
+			}).where(eq(usuarios.id, id));
+			
 			if (updated.rowsAffected === 0) {
-				return fail(404, { error: 'Cliente no encontrado' });
+				return fail(404, { error: 'Empleado no encontrado' });
 			}
-			return { success: true, message: 'Cliente actualizado exitosamente' };
+			return { success: true, message: 'Empleado actualizado exitosamente' };
 		} catch (err) {
-			console.error('Error al actualizar cliente:', err);
-			return fail(500, { error: 'Error interno al actualizar el cliente' });
+			console.error('Error al actualizar empleado:', err);
+			return fail(500, { error: 'Error interno al actualizar el empleado' });
 		}
 	}
 };
