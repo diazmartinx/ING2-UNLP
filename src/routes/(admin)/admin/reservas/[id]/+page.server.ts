@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
-import { reservas, unidadesVehiculos, usuarios, modelosVehiculos } from '$lib/server/db/schema';
+import { reservas, unidadesVehiculos, usuarios, modelosVehiculos, adicionales, reservasAdicionales } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 
@@ -44,6 +44,18 @@ export const load = (async ({ params }) => {
     .where(eq(reservas.id, id))
     .limit(1);
 
+    // Obtener adicionales asociados a la reserva
+    const adicionalesReserva = await db.select({
+        nombre: adicionales.nombre,
+        precioPorDia: adicionales.precioPorDia
+    })
+    .from(reservasAdicionales)
+    .innerJoin(adicionales, eq(reservasAdicionales.idAdicional, adicionales.id))
+    .where(eq(reservasAdicionales.idReserva, id));
+
+    // Calcular importe de adicionales
+    const importeAdicionales = adicionalesReserva.reduce((acc, a) => acc + a.precioPorDia, 0);
+
     if (!reserva || reserva.length === 0) {
         return {
             error: 'La reserva especificada no existe'
@@ -51,6 +63,8 @@ export const load = (async ({ params }) => {
     }
 
     return {
-        reserva: reserva[0]
+        reserva: reserva[0],
+        adicionalesReserva,
+        importeAdicionales
     };
-}) satisfies PageServerLoad; 
+}) satisfies PageServerLoad;
