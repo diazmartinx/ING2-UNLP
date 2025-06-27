@@ -25,10 +25,11 @@
         nombreModeloAsignado: string;
         precioPorDia: number;
         importeTotal: number;
+        importeAdicionales: number;
     }
 
     export let data: PageData;
-    const { reserva, error, adicionalesReserva = [], importeAdicionales = 0 } = data as any;
+    const { reserva, error, adicionalesReserva = [] } = data as any;
 
     const getEstadoColor = (estado: string) => {
         switch (estado) {
@@ -143,18 +144,18 @@
                                 <p><span class="font-medium">Fecha de Creación:</span> {formatDateTime(reserva.fechaCreacion)}</p>
                             </div>
                             <div>
-                                <p><span class="font-medium">Importe de Reserva:</span> {formatCurrency(reserva.importeTotal - importeAdicionales)}</p>
+                                <p><span class="font-medium">Importe de Reserva:</span> {formatCurrency(reserva.importeTotal - reserva.importeAdicionales)}</p>
                                 {#if adicionalesReserva.length > 0}
                                     <div class="mt-2">
                                         <span class="font-medium">Adicionales:</span>
                                         <ul class="list-disc ml-6">
                                             {#each adicionalesReserva as adicional}
-                                                <li>{adicional.nombre} ({formatCurrency(adicional.precioPorDia)})</li>
+                                                <li>{adicional.nombre}</li>
                                             {/each}
                                         </ul>
                                     </div>
                                 {/if}
-                                <p><span class="font-medium">Importe de Adicionales:</span> {formatCurrency(importeAdicionales)}</p><br>
+                                <p><span class="font-medium">Importe de Adicionales:</span> {formatCurrency(reserva.importeAdicionales)}</p><br>
                                 <p class="text-lg font-semibold text-green-900">Importe Total: {formatCurrency(reserva.importeTotal)}</p>
                             </div>
                         </div>

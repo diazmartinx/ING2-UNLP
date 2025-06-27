@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, adicionales, reservasAdicionales } from '$lib/server/db/schema';
-import { eq, sql, and, not, exists, lte, gte } from 'drizzle-orm';
+import { eq, sql, and, not, exists, lte, gte, inArray } from 'drizzle-orm';
 
 type EstadoReserva = 'Pendiente' | 'Entregada' | 'Cancelada';
 
@@ -119,10 +119,11 @@ export const actions: Actions = {
         // adicionales: formato "1:2,3:1" (id:cantidad)
         let adicionalesParsed: { id: number, cantidad: number }[] = [];
         if (adicionalesRaw) {
-            adicionalesParsed = adicionalesRaw.split(',').filter(Boolean).map(str => {
-                const [id, cantidad] = str.split(':').map(Number);
-                return { id, cantidad: cantidad || 1 };
-            });
+            // Ahora solo ids separados por coma, ejemplo: "1,3"
+            adicionalesParsed = adicionalesRaw.split(',').filter(Boolean).map(idStr => ({
+                id: Number(idStr),
+                cantidad: 1
+            }));
         }
 
         if (!reservaId || !estado) {
@@ -160,10 +161,40 @@ export const actions: Actions = {
         }
 
         try {
+            // Obtener datos de la reserva para calcular días
+            const [reservaRow] = await db.select({
+                fechaInicio: reservas.fechaInicio,
+                fechaFin: reservas.fechaFin
+            }).from(reservas).where(eq(reservas.id, reservaId));
+
+            let importeAdicionales = 0;
+            if (adicionalesParsed.length > 0) {
+                console.log('Adicionales seleccionados:', adicionalesParsed);
+                // Traer precios de los adicionales seleccionados
+                const adicionalesIds = adicionalesParsed.map(a => a.id);
+                const adicionalesPrecios = await db.select({
+                    id: adicionales.id,
+                    precioPorDia: adicionales.precioPorDia
+                }).from(adicionales).where(inArray(adicionales.id, adicionalesIds));
+
+                // Calcular cantidad de días (inclusive)
+                const fechaInicio = new Date(reservaRow.fechaInicio);
+                const fechaFin = new Date(reservaRow.fechaFin);
+                const diffMs = fechaFin.getTime() - fechaInicio.getTime();
+                const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+                // Calcular el importe total de adicionales
+                for (const adicional of adicionalesParsed) {
+                    const precio = adicionalesPrecios.find(a => a.id === adicional.id)?.precioPorDia ?? 0;
+                    importeAdicionales += precio * adicional.cantidad * dias; // adicional.cantidad siempre es 1
+                }
+            }
+            console.log('Importe adicionales calculado:', importeAdicionales);
             await db.update(reservas)
                 .set({
                     patenteUnidadAsignada: estado === 'Entregada' ? patente : null,
-                    estado: estado
+                    estado: estado,
+                    importeAdicionales: importeAdicionales
                 })
                 .where(eq(reservas.id, reservaId));
 
