@@ -31,7 +31,7 @@ export const load = (async ({ locals }) => {
         modeloReservado: modelosVehiculos.modelo,
         marcaReservada: modelosVehiculos.marca,
         tipoPolitica: politicasCancelacion.tipoPolitica,
-        porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial
+        porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial, 
     })
     .from(reservas)
     .leftJoin(usuarios, eq(reservas.idUsuario, usuarios.id))
@@ -51,8 +51,45 @@ export const actions: Actions = {
         const idReserva = Number(data.get('idReserva'));
 
         try {
+            // 1. Obtener la reserva
+            const reserva = await db.select().from(reservas)
+                .where(eq(reservas.id, idReserva))
+                .limit(1);
+            if (!reserva || reserva.length === 0) {
+                return { success: false, error: 'Reserva no encontrada' };
+            }
+            const reservaData = reserva[0];
+
+            // 2. Obtener el modelo reservado
+            const modelo = await db.select().from(modelosVehiculos)
+                .where(eq(modelosVehiculos.id, reservaData.idModeloReservado))
+                .limit(1);
+            if (!modelo || modelo.length === 0) {
+                return { success: false, error: 'Modelo no encontrado' };
+            }
+            const modeloData = modelo[0];
+
+            // 3. Obtener la política de cancelación
+            const politica = await db.select().from(politicasCancelacion)
+                .where(eq(politicasCancelacion.id, modeloData.idPoliticaCancelacion))
+                .limit(1);
+            if (!politica || politica.length === 0) {
+                return { success: false, error: 'Política de cancelación no encontrada' };
+            }
+            const politicaData = politica[0];
+
+            // 4. Calcular el nuevo importe
+            let nuevoImporte = reservaData.importeTotal;
+            if (politicaData.tipoPolitica === 'Reembolso Total') {
+                nuevoImporte = 0;
+            } else if (politicaData.tipoPolitica === 'Reembolso Parcial' && modeloData.porcentajeReembolsoParcial != null) {
+                nuevoImporte = reservaData.importeTotal * (1 - modeloData.porcentajeReembolsoParcial / 100);
+            }
+            // Si es "Sin Reembolso", no se modifica el importe
+
+            // 5. Actualizar reserva
             await db.update(reservas)
-                .set({ estado: 'Cancelada' })
+                .set({ estado: 'Cancelada', importeTotal: nuevoImporte })
                 .where(eq(reservas.id, idReserva));
         } catch (error) {
             console.error('Error al cancelar la reserva:', error);
