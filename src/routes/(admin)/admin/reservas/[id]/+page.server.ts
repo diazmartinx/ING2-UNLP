@@ -53,8 +53,18 @@ export const load = (async ({ params }) => {
     .innerJoin(adicionales, eq(reservasAdicionales.idAdicional, adicionales.id))
     .where(eq(reservasAdicionales.idReserva, id));
 
-    // Calcular importe de adicionales
-    const importeAdicionales = adicionalesReserva.reduce((acc, a) => acc + a.precioPorDia, 0);
+    // Calcular cantidad de días de la reserva
+    let diasReserva = 1;
+    if (reserva && reserva.length > 0) {
+        const inicio = new Date(reserva[0].fechaInicio);
+        const fin = new Date(reserva[0].fechaFin);
+        diasReserva = Math.floor((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    // Calcular importe de adicionales correctamente
+    const importeAdicionales = adicionalesReserva.reduce(
+        (acc, a) => acc + (a.precioPorDia * diasReserva), 0
+    );
 
     if (!reserva || reserva.length === 0) {
         return {

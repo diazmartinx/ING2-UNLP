@@ -192,17 +192,20 @@
             {:else}
                 <div class="space-y-3 flex flex-wrap gap-4 justify-start">
                     {#each data.adicionalesDisponibles as adicional}
-                        <div class="flex flex-col items-start p-3 rounded-lg bg-base-100 shadow-sm w-64 h-24 border-2 border-primary/60">
+                        <div class="flex flex-col justify-between p-3 rounded-lg bg-base-100 shadow-sm w-64 h-24 border-2 border-primary/60 relative">
                             <div class="mb-2 w-full">
                                 <span class="font-medium">{adicional.nombre}</span>
+                                <span class="block text-sm text-primary mt-1">${adicional.precioPorDia}/día</span>
                             </div>
-                            <input
-                                type="checkbox"
-                                class="checkbox"
-                                checked={adicionalesSeleccionados[adicional.id] === 1}
-                                onchange={() => toggleAdicional(adicional.id)}
-                                disabled={loading}
-                            />
+                            <div class="absolute bottom-2 right-2">
+                                <input
+                                    type="checkbox"
+                                    class="checkbox"
+                                    checked={adicionalesSeleccionados[adicional.id] === 1}
+                                    onchange={() => toggleAdicional(adicional.id)}
+                                    disabled={loading}
+                                />
+                            </div>
                         </div>
                     {/each}
                 </div>

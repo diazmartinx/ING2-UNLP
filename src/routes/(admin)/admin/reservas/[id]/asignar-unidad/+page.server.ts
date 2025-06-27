@@ -171,8 +171,7 @@ export const actions: Actions = {
             if (adicionalesParsed.length > 0) {
                 const inserts = adicionalesParsed.map(a => ({
                     idReserva: reservaId,
-                    idAdicional: a.id,
-                    cantidad: a.cantidad
+                    idAdicional: a.id
                 }));
                 await db.insert(reservasAdicionales).values(inserts);
             }
