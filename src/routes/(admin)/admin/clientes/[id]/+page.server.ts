@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 
 // Función helper para formatear fecha a YYYY-MM-DD
@@ -54,32 +54,51 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	guardar: async ({ request, params }) => {
+		const id = Number(params.id);
 		const data = await request.formData();
-		const nombre = data.get('nombre')?.toString() ?? '';
-		const apellido = data.get('apellido')?.toString() ?? '';
-		const dni = data.get('dni')?.toString();
-		const email = data.get('email')?.toString() ?? '';
-		const telefono = data.get('telefono')?.toString() ?? '';
+		const nombre = data.get('nombre')?.toString().trim() ?? '';
+		const apellido = data.get('apellido')?.toString().trim() ?? '';
+		const dni = data.get('dni')?.toString().trim();
+		const email = data.get('email')?.toString().trim() ?? '';
+		const telefono = data.get('telefono')?.toString().trim() ?? '';
 		const fechaNacimiento = data.get('fechaNacimiento')?.toString() ?? '';
-
-        console.log('Datos recibidos:', data);
 
 		if (!nombre || !apellido || !email || !fechaNacimiento) {
 			return fail(400, { error: 'Todos los campos obligatorios deben estar completos' });
 		}
 
-		// Validar formato de fecha
-		const fechaNacimientoDate = new Date(fechaNacimiento);
+		// Validar unicidad de email
+		const [existingUserByEmail] = await db
+			.select()
+			.from(usuarios)
+			.where(and(eq(usuarios.email, email), ne(usuarios.id, id)));
+
+		if (existingUserByEmail) {
+			return fail(400, { error: 'El correo electrónico ya está en uso por otro cliente' });
+		}
+
+		// Validar unicidad de DNI si se proporciona
+		if (dni) {
+			const [existingUserByDni] = await db
+				.select()
+				.from(usuarios)
+				.where(and(eq(usuarios.dni, dni), ne(usuarios.id, id)));
+
+			if (existingUserByDni) {
+				return fail(400, { error: 'El DNI ya está en uso por otro cliente' });
+			}
+		}
+
+		// Validar formato de fecha, agregando T00:00:00 para evitar problemas de zona horaria
+		const fechaNacimientoDate = new Date(fechaNacimiento + 'T00:00:00');
 		if (isNaN(fechaNacimientoDate.getTime())) {
 			return fail(400, { error: 'Formato de fecha inválido' });
 		}
 
 		// Validar que el año sea mayor a 1900
-        // hay error en la fecha, el dìa elegido se termina guardando con un dìa menor en la DB, por eso
-        // la validaciòn es a 01/01/1900 en lugar de 1900 (31/12/1899)
 		if (!isValidYear(fechaNacimientoDate)) {
-			return fail(400, { 
-				error: 'Debe ingresar una fecha correcta. El año debe ser mayor a 01/01/1900' 
+			return fail(400, {
+				error: 'Debe ingresar una fecha correcta. El año debe ser mayor a 1900'
 			});
 		}
 
@@ -90,15 +109,16 @@ export const actions: Actions = {
 
 		// Validar que sea mayor de 18 años
 		if (!isOver18(fechaNacimientoDate)) {
-			return fail(400, { 
-				error: `La persona debe ser mayor de 18 años.` 
+			return fail(400, {
+				error: `La persona debe ser mayor de 18 años.`
 			});
 		}
 
-		const id = Number(params.id);
-
 		try {
-			const updated = await db.update(usuarios).set({ nombre, apellido, dni, email, telefono, fechaNacimiento: fechaNacimientoDate }).where(eq(usuarios.id, id));
+			const updated = await db
+				.update(usuarios)
+				.set({ nombre, apellido, dni, email, telefono, fechaNacimiento: fechaNacimientoDate })
+				.where(eq(usuarios.id, id));
 			if (updated.rowsAffected === 0) {
 				return fail(404, { error: 'Cliente no encontrado' });
 			}

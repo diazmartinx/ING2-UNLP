@@ -10,7 +10,8 @@ export const usuarios = sqliteTable('usuarios',{
 	telefono: text(),
 	passwordHash: text('password_hash').notNull(),
 	otp: text(),
-	rol: text({ enum: ["admin", "empleado", "cliente"] }).default('cliente')
+	rol: text({ enum: ["admin", "empleado", "cliente"] }).default('cliente'),
+	estado: text({ enum: ["activo", "inactivo"] }).default('activo')
 });
 
 export const categoriasVehiculos = sqliteTable ('categorias_vehiculos', {

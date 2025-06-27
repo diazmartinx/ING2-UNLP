@@ -6,7 +6,7 @@
 
 	export let data: PageData;
 
-	let modal_eliminar_cliente: HTMLDialogElement | null = null;
+	let modal_dar_de_baja_cliente: HTMLDialogElement | null = null;
 	let clienteSeleccionado: typeof data.clientes[number] | null = null;
 
 	let mensajeExito = '';
@@ -15,11 +15,11 @@
 
 	function abrirModal(cliente: typeof data.clientes[number]) {
 		clienteSeleccionado = cliente;
-		modal_eliminar_cliente?.showModal();
+		modal_dar_de_baja_cliente?.showModal();
 	}
 
 	function cerrarModal() {
-		modal_eliminar_cliente?.close();
+		modal_dar_de_baja_cliente?.close();
 		clienteSeleccionado = null;
 	}
 
@@ -145,6 +145,7 @@
 					<th>Apellido</th>
 					<th>Nombre</th>
 					<th>Email</th>
+					<th>Estado</th>
 					<th>Acciones</th>
 				</tr>
 			</thead>
@@ -155,30 +156,58 @@
 						<td>{cliente.apellido}</td>
 						<td>{cliente.nombre}</td>
 						<td>{cliente.email}</td>
+						<td>{cliente.estado}</td>
 						<td>
-							<a href={`./clientes/${cliente.id}`} role="button" class="btn btn-soft btn-info">Detalles</a>
-							<button on:click={() => abrirModal(cliente)} type="button" class="btn btn-soft btn-error">
-								Eliminar
-							</button>
+							<!-- CAMBIO AQUÍ: Añadido un div con Flexbox -->
+							<div class="flex flex-row items-center gap-2">
+								<a href={`./clientes/${cliente.id}`} role="button" class="btn btn-soft btn-info">Detalles</a>
+								{#if cliente.estado === 'activo'}
+								<button on:click={() => abrirModal(cliente)} type="button" class="btn btn-soft btn-error">
+									Dar de baja
+								</button>
+								{:else}
+								<form method="POST" action="?/darDeAlta" use:enhance={() => {
+									return async ({ result }) => {
+										if (result.type === 'success') {
+											mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Cliente dado de alta exitosamente';
+											await invalidateAll();
+											setTimeout(() => {
+												mensajeExito = '';
+											}, 2000);
+										}
+										if (result.type === 'failure') {
+											mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al dar de alta el cliente';
+											await invalidateAll();
+											setTimeout(() => {
+												mensajeError = '';
+											}, 2000);
+										}
+									};
+								}}>
+									<input type="hidden" name="clienteId" value={cliente.id} />
+									<button type="submit" class="btn btn-soft btn-success">Dar de alta</button>
+								</form>
+								{/if}
+							</div>
 						</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 
-		<dialog bind:this={modal_eliminar_cliente} id="modal_eliminar_cliente" class="modal">
+		<dialog bind:this={modal_dar_de_baja_cliente} id="modal_dar_de_baja_cliente" class="modal">
 			<div class="modal-box">
-				<h3 class="text-lg font-bold">¿Eliminar cliente?</h3>
+				<h3 class="text-lg font-bold">¿Dar de baja cliente?</h3>
 				<p class="py-4">
-					¿Está seguro que desea eliminar al cliente 
+					¿Está seguro que desea dar de baja al cliente 
 					<strong>{clienteSeleccionado?.nombre} {clienteSeleccionado?.apellido}</strong>?
 				</p>
 				<div class="modal-action">
 					<button class="btn" on:click={cerrarModal}>Cancelar</button>
-					<form method="POST" action="?/eliminar" use:enhance={() => {
+					<form method="POST" action="?/darDeBaja" use:enhance={() => {
 						return async ({ result }) => {
 							if (result.type === 'success') {
-								mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Cliente eliminado exitosamente';
+								mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Cliente dado de baja exitosamente';
 								cerrarModal();
 								await invalidateAll();
 								setTimeout(() => {
@@ -186,7 +215,7 @@
 								}, 2000);
 							}
 							if (result.type === 'failure') {
-								mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al eliminar el cliente';
+								mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al dar de baja el cliente';
 								cerrarModal();
 								await invalidateAll();
 								setTimeout(() => {

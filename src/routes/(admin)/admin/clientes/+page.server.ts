@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	eliminar: async ({ request }) => {
+	darDeBaja: async ({ request }) => {
 		const data = await request.formData();
 		const clienteId = data.get('clienteId');
 
@@ -49,13 +49,35 @@ export const actions: Actions = {
 				return fail(404, { error: 'Cliente no encontrado' });
 			}
 
-			const eliminarCliente = await db.delete(usuarios).where(eq(usuarios.id, obtenerCliente[0].id));
-			if (!eliminarCliente || eliminarCliente.rowsAffected === 0) {
+			await db.update(usuarios).set({ estado: 'inactivo' }).where(eq(usuarios.id, obtenerCliente[0].id));
+
+			// Si se eliminó correctamente, retornar éxito
+			return { success: true, message: 'Cliente dado de baja exitosamente' };
+
+		} catch (err) {
+			return fail(500, { error: 'Error interno del servidor' });
+		}
+	},
+	darDeAlta: async ({ request }) => {
+		const data = await request.formData();
+		const clienteId = data.get('clienteId');
+
+		if (!clienteId || typeof clienteId !== 'string') {
+			return fail(400, { error: 'ID de cliente inválido' });
+		}
+
+		try {
+			// Verificar si el cliente existe y es un cliente
+			const obtenerCliente = await db.select().from(usuarios).where(eq(usuarios.id, parseInt(clienteId)));
+
+			if (obtenerCliente.length === 0) {
 				return fail(404, { error: 'Cliente no encontrado' });
 			}
 
+			await db.update(usuarios).set({ estado: 'activo' }).where(eq(usuarios.id, obtenerCliente[0].id));
+
 			// Si se eliminó correctamente, retornar éxito
-			return { success: true, message: 'Cliente eliminado exitosamente' };
+			return { success: true, message: 'Cliente dado de alta exitosamente' };
 
 		} catch (err) {
 			return fail(500, { error: 'Error interno del servidor' });

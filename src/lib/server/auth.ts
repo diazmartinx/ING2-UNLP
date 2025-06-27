@@ -1,5 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import { db } from '$lib/server/db';
@@ -36,7 +36,7 @@ export async function validateSessionToken(token: string) {
 		})
 		.from(table.session)
 		.innerJoin(table.usuarios, eq(table.session.userId, table.usuarios.id))
-		.where(eq(table.session.id, sessionId));
+		.where(and(eq(table.session.id, sessionId), eq(table.usuarios.estado, 'activo')));
 
 	if (!result) {
 		return { session: null, user: null };

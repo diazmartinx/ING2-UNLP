@@ -3,7 +3,6 @@ import { usuarios } from '$lib/server/db/schema';
 import { eq, and, or, like } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { sendNewEmployeeEmail } from '$lib/server/resend';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const busqueda = url.searchParams.get('buscar') || '';
@@ -38,7 +37,7 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	eliminar: async ({ request }) => {
+	darDeBaja: async ({ request }) => {
 		const data = await request.formData();
 		const empleadoId = data.get('empleadoId');
 
@@ -59,19 +58,46 @@ export const actions: Actions = {
 			}
 
 			if (obtenerEmpleado[0].rol === 'admin') {
-				return fail(400, { error: 'No se puede eliminar un administrador' });
+				return fail(400, { error: 'No se puede dar de baja un administrador' });
 			}
 
-			const eliminarEmpleado = await db.delete(usuarios).where(eq(usuarios.id, id));
-			
-			if (!eliminarEmpleado || eliminarEmpleado.rowsAffected === 0) {
+			await db.update(usuarios).set({ estado: 'inactivo' }).where(eq(usuarios.id, id));
+
+			return { success: true, message: 'Empleado dado de baja exitosamente' };
+		} catch (err) {
+			console.error('Error al dar de baja empleado:', err);
+			return fail(500, { error: 'Error interno del servidor' });
+		}
+	},
+	darDeAlta: async ({ request }) => {
+		const data = await request.formData();
+		const empleadoId = data.get('empleadoId');
+
+		if (!empleadoId || typeof empleadoId !== 'string') {
+			return fail(400, { error: 'ID de empleado inválido' });
+		}
+
+		const id = parseInt(empleadoId);
+		if (isNaN(id)) {
+			return fail(400, { error: 'ID de empleado inválido' });
+		}
+
+		try {
+			const obtenerEmpleado = await db.select().from(usuarios).where(eq(usuarios.id, id));
+
+			if (obtenerEmpleado.length === 0) {
 				return fail(404, { error: 'Empleado no encontrado' });
 			}
 
-			return { success: true, message: 'Empleado eliminado exitosamente' };
+			if (obtenerEmpleado[0].rol === 'admin') {
+				return fail(400, { error: 'No se puede dar de alta un administrador' });
+			}
 
+			await db.update(usuarios).set({ estado: 'activo' }).where(eq(usuarios.id, id));
+
+			return { success: true, message: 'Empleado dado de alta exitosamente' };
 		} catch (err) {
-			console.error('Error al eliminar empleado:', err);
+			console.error('Error al dar de alta empleado:', err);
 			return fail(500, { error: 'Error interno del servidor' });
 		}
 	}

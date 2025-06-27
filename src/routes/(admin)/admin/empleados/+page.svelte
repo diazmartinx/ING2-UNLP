@@ -6,7 +6,7 @@
 
 	export let data: PageData;
 
-	let modal_eliminar_empleado: HTMLDialogElement | null = null;
+	let modal_dar_de_baja_empleado: HTMLDialogElement | null = null;
 	let empleadoSeleccionado: typeof data.empleado[number] | null = null;
 
 	let mensajeExito = '';
@@ -16,11 +16,11 @@
 
 	function abrirModal(empleado: typeof data.empleado[number]) {
 		empleadoSeleccionado = empleado;
-		modal_eliminar_empleado?.showModal();
+		modal_dar_de_baja_empleado?.showModal();
 	}
 
 	function cerrarModal() {
-		modal_eliminar_empleado?.close();
+		modal_dar_de_baja_empleado?.close();
 		empleadoSeleccionado = null;
 	}
 
@@ -137,6 +137,7 @@
 					<th>Nombre</th>
 					<th>Email</th>
 					<th>Rol</th>
+					<th>Estado</th>
 					<th>Acciones</th>
 				</tr>
 			</thead>
@@ -148,30 +149,59 @@
 						<td>{empleado.nombre}</td>
 						<td>{empleado.email}</td>
 						<td>{empleado.rol}</td>
+						<td>{empleado.estado}</td>
 						<td>
+							<div class="flex flex-row items-center gap-2">
 							<a href={`./empleados/${empleado.id}`} role="button" class="btn btn-soft btn-info">Detalles</a>
-							<button on:click={() => abrirModal(empleado)} type="button" class="btn btn-soft btn-error" disabled={empleado.rol === 'admin'}>
-								Eliminar
-							</button>
+							{#if empleado.rol !== 'admin'}
+								{#if empleado.estado === 'activo'}
+									<button on:click={() => abrirModal(empleado)} type="button" class="btn btn-soft btn-error">
+										Dar de baja
+									</button>
+								{:else}
+									<form method="POST" action="?/darDeAlta" use:enhance={() => {
+										return async ({ result }) => {
+											if (result.type === 'success') {
+												mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Empleado dado de alta exitosamente';
+												await invalidateAll();
+												setTimeout(() => {
+													mensajeExito = '';
+												}, 2000);
+											}
+											if (result.type === 'failure') {
+												mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al dar de alta el empleado';
+												await invalidateAll();
+												setTimeout(() => {
+													mensajeError = '';
+												}, 2000);
+											}
+										};
+									}}>
+										<input type="hidden" name="empleadoId" value={empleado.id} />
+										<button type="submit" class="btn btn-soft btn-success">Dar de alta</button>
+									</form>
+								{/if}
+							{/if}
+							</div>
 						</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 
-		<dialog bind:this={modal_eliminar_empleado} id="modal_eliminar_empleado" class="modal">
+		<dialog bind:this={modal_dar_de_baja_empleado} id="modal_dar_de_baja_empleado" class="modal">
 			<div class="modal-box">
-				<h3 class="text-lg font-bold">¿Eliminar empleado?</h3>
+				<h3 class="text-lg font-bold">¿Dar de baja empleado?</h3>
 				<p class="py-4">
-					¿Está seguro que desea eliminar al empleado 
+					¿Está seguro que desea dar de baja al empleado 
 					<strong>{empleadoSeleccionado?.nombre} {empleadoSeleccionado?.apellido}</strong>?
 				</p>
 				<div class="modal-action">
 					<button class="btn" on:click={cerrarModal}>Cancelar</button>
-					<form method="POST" action="?/eliminar" use:enhance={() => {
+					<form method="POST" action="?/darDeBaja" use:enhance={() => {
 						return async ({ result }) => {
 							if (result.type === 'success') {
-								mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Empleado eliminado exitosamente';
+								mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Empleado dado de baja exitosamente';
 								cerrarModal();
 								await invalidateAll();
 								setTimeout(() => {
@@ -179,7 +209,7 @@
 								}, 2000);
 							}
 							if (result.type === 'failure') {
-								mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al eliminar el empleado';
+								mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al dar de baja el empleado';
 								cerrarModal();
 								await invalidateAll();
 								setTimeout(() => {
