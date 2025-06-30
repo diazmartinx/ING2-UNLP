@@ -16,11 +16,18 @@
         ingresos: number;
     }
 
+    interface ReporteAdicionales {
+        sucursal: string;
+        ingresosAdicionales: number;
+    }
+
     interface CustomPageData extends PageData {
         cantidadPorSucursal: ReporteSucursal[];
         ingresosPorSucursal: ReporteIngresos[];
+        ingresosAdicionalesPorSucursal: ReporteAdicionales[];
         totalReservas: number;
         totalIngresos: number;
+        totalIngresosAdicionales: number;
     }
 
     let { data } = $props<{ data: CustomPageData }>();
@@ -29,6 +36,7 @@
     let mes = $state('');
     let chartReservas: Chart;
     let chartIngresos: Chart;
+    let chartAdicionales: Chart;
 
     // Genera las opciones de meses para el selector
     function generarOpcionesMeses() {
@@ -64,9 +72,11 @@
     function actualizarGraficos() {
         const ctx1 = document.getElementById('chartReservas') as HTMLCanvasElement;
         const ctx2 = document.getElementById('chartIngresos') as HTMLCanvasElement;
+        const ctx3 = document.getElementById('chartAdicionales') as HTMLCanvasElement;
 
         if (chartReservas) chartReservas.destroy();
         if (chartIngresos) chartIngresos.destroy();
+        if (chartAdicionales) chartAdicionales.destroy();
 
         chartReservas = new Chart(ctx1, {
             type: 'bar',
@@ -97,13 +107,22 @@
             type: 'bar',
             data: {
                 labels: data.ingresosPorSucursal.map((item: ReporteIngresos) => item.sucursal),
-                datasets: [{
-                    label: 'Ingresos Totales (ARS)',
-                    data: data.ingresosPorSucursal.map((item: ReporteIngresos) => item.ingresos),
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgb(75, 192, 192)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Ingresos por Reservas (ARS)',
+                        data: data.ingresosPorSucursal.map((item: ReporteIngresos) => item.ingresos),
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgb(75, 192, 192)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Ingresos por Adicionales (ARS)',
+                        data: data.ingresosAdicionalesPorSucursal.map((item: ReporteAdicionales) => item.ingresosAdicionales),
+                        backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -113,6 +132,19 @@
                     }
                 }
             }
+        });
+
+        chartAdicionales = new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: data.ingresosAdicionalesPorSucursal.map((i: ReporteAdicionales) => i.sucursal),
+                datasets: [{
+                    label: 'Ingresos por Adicionales',
+                    data: data.ingresosAdicionalesPorSucursal.map((i: ReporteAdicionales) => i.ingresosAdicionales),
+                    backgroundColor: 'rgba(255, 206, 86, 0.5)'
+                }]
+            },
+            options: { responsive: true }
         });
     }
 
@@ -231,7 +263,9 @@
             </div>
             <div class="text-center">
                 <h3 class="font-medium text-gray-600 mb-2">Total de Ingresos</h3>
-                <p class="text-2xl font-bold text-gray-800">$ {data.totalIngresos.toLocaleString('es-AR')}</p>
+                <p class="text-2xl font-bold text-gray-800">
+                    $ {(data.totalIngresos + (data.totalIngresosAdicionales ?? 0)).toLocaleString('es-AR')}
+                </p>
             </div>
         </div>
     </div>

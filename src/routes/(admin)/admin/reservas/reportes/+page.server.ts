@@ -43,17 +43,33 @@ export const load = (async ({ locals, url }) => {
         })
         .from(reservas)
         .innerJoin(sucursales, sql`${sucursales.id} = ${reservas.idSucursal}`)
-        .where(sql`${whereClause} AND ${reservas.estado} != 'Cancelada'`)
+        .where(sql`${whereClause}`)
+        .groupBy(sucursales.id, sucursales.nombre);
+
+    // Consulta para ingresos de adicionales por sucursal
+    const ingresosAdicionalesPorSucursal = await db
+        .select({
+            sucursal: sucursales.nombre,
+            ingresosAdicionales: sql<number>`COALESCE(sum(${reservas.importeAdicionales}), 0)`,
+        })
+        .from(reservas)
+        .innerJoin(sucursales, sql`${sucursales.id} = ${reservas.idSucursal}`)
+        .where(whereClause)
         .groupBy(sucursales.id, sucursales.nombre);
 
     // Calcular totales
     const totalReservas = cantidadPorSucursal.reduce((sum, item) => sum + item.cantidad, 0);
     const totalIngresos = ingresosPorSucursal.reduce((sum, item) => sum + Number(item.ingresos), 0);
+    const totalIngresosAdicionales = ingresosAdicionalesPorSucursal.reduce(
+        (acc, curr) => acc + (curr.ingresosAdicionales ?? 0), 0
+    );
 
     return {
         cantidadPorSucursal,
         ingresosPorSucursal,
+        ingresosAdicionalesPorSucursal,
         totalReservas,
-        totalIngresos
+        totalIngresos,
+        totalIngresosAdicionales
     };
 }) satisfies PageServerLoad;
