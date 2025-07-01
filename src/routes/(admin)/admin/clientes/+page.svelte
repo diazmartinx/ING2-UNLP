@@ -88,7 +88,7 @@
 					<input
 						type="text"
 						name="search"
-						placeholder="Buscar por nombre, apellido o DNI..."
+						placeholder="Buscar por nombre, apellido, DNI o estado..."
 						class="input input-bordered join-item w-full"
 						bind:value={terminoBusqueda}
 						on:keydown={manejarTeclaBusqueda}

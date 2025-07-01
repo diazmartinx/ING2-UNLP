@@ -1,5 +1,5 @@
-import { error, fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -24,8 +24,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
-export const actions: Actions = {
-	default: async ({ request, locals }) => {
+export const actions = {
+	updateProfile: async ({ request, locals }) => {
 		if (!locals.user) {
 			throw error(401, 'No autorizado');
 		}
@@ -55,10 +55,10 @@ export const actions: Actions = {
 				error: null
 			};
 		} catch (e) {
-			return fail(500, {
+			return {
 				error: 'Error al actualizar los datos',
 				success: null
-			});
+			};
 		}
 	}
-}; 
+};

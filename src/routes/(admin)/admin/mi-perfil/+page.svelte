@@ -114,7 +114,7 @@
 			</div>
 		{/if}
 
-		<form method="POST" use:enhance={({ formData }) => {
+		<form method="POST" action="?/updateProfile" use:enhance={({ formData }) => {
 			return async ({ result }) => {
 				if (result.type === 'success') {
 					handleSubmit();
@@ -233,4 +233,13 @@
 			</div>
 		</form>
 	</div>
-</div> 
+
+	<!-- Password Change Section -->
+	<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mt-6">
+		<h2 class="text-xl font-bold mb-4">Cambiar Contraseña</h2>
+		<p class="text-gray-600 mb-4">Para mayor seguridad, cambia tu contraseña regularmente.</p>
+		<a href="/admin/mi-perfil/cambiar-contrasena" class="btn btn-secondary">
+			Cambiar Contraseña
+		</a>
+	</div>
+</div>

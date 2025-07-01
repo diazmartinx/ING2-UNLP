@@ -144,7 +144,7 @@ export const actions: Actions = {
         } catch (err) {
             return fail(500, {
                 success: false,
-                error: 'Error al actualizar el estado del vehículo.'
+                error: 'Error al actualizar el estado del vehículo. Posee reservas.'
             });
         }
     }

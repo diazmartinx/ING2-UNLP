@@ -17,7 +17,8 @@ export const load: PageServerLoad = async ({ url }) => {
 			like(usuarios.apellido, termino),
 			like(usuarios.nombre, termino),
 			like(usuarios.email, termino),
-			like(usuarios.rol, termino)
+			like(usuarios.rol, termino),
+			like(usuarios.estado, termino)
 		];
 		
 		
