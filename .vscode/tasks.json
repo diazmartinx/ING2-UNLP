@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "rmdir /S /Q \"c:\\Users\\Ernes\\GitHub\\UNLP\\ING2-UNLP\\src\\routes\\admin\\reservas\"",
+			"label": "Eliminar carpeta admin/reservas"
+		}
+	]
+}

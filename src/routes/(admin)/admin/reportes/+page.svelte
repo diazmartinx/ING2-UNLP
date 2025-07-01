@@ -21,10 +21,20 @@
         ingresosAdicionales: number;
     }
 
+    interface ReporteModelo {
+        modelo: string;
+        cantidad: number;
+    }
+    interface ReporteCategoria {
+        categoria: string;
+        cantidad: number;
+    }
     interface CustomPageData extends PageData {
         cantidadPorSucursal: ReporteSucursal[];
         ingresosPorSucursal: ReporteIngresos[];
         ingresosAdicionalesPorSucursal: ReporteAdicionales[];
+        cantidadPorModelo: ReporteModelo[];
+        cantidadPorCategoria: ReporteCategoria[];
         totalReservas: number;
         totalIngresos: number;
         totalIngresosAdicionales: number;
@@ -37,6 +47,8 @@
     let chartReservas: Chart;
     let chartIngresos: Chart;
     let chartAdicionales: Chart;
+    let chartModelos: Chart;
+    let chartCategorias: Chart;
 
     // Genera las opciones de meses para el selector
     function generarOpcionesMeses() {
@@ -73,10 +85,14 @@
         const ctx1 = document.getElementById('chartReservas') as HTMLCanvasElement;
         const ctx2 = document.getElementById('chartIngresos') as HTMLCanvasElement;
         const ctx3 = document.getElementById('chartAdicionales') as HTMLCanvasElement;
+        const ctx4 = document.getElementById('chartModelos') as HTMLCanvasElement;
+        const ctx5 = document.getElementById('chartCategorias') as HTMLCanvasElement;
 
         if (chartReservas) chartReservas.destroy();
         if (chartIngresos) chartIngresos.destroy();
         if (chartAdicionales) chartAdicionales.destroy();
+        if (chartModelos) chartModelos.destroy();
+        if (chartCategorias) chartCategorias.destroy();
 
         chartReservas = new Chart(ctx1, {
             type: 'bar',
@@ -142,6 +158,36 @@
                     label: 'Ingresos por Adicionales',
                     data: data.ingresosAdicionalesPorSucursal.map((i: ReporteAdicionales) => i.ingresosAdicionales),
                     backgroundColor: 'rgba(255, 206, 86, 0.5)'
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        chartModelos = new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: data.cantidadPorModelo.map((item: ReporteModelo) => item.modelo),
+                datasets: [{
+                    label: 'Reservas por Modelo',
+                    data: data.cantidadPorModelo.map((item: ReporteModelo) => item.cantidad),
+                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        chartCategorias = new Chart(ctx5, {
+            type: 'bar',
+            data: {
+                labels: data.cantidadPorCategoria.map((item: ReporteCategoria) => item.categoria),
+                datasets: [{
+                    label: 'Reservas por Categoría',
+                    data: data.cantidadPorCategoria.map((item: ReporteCategoria) => item.cantidad),
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
                 }]
             },
             options: { responsive: true }
@@ -253,6 +299,34 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Adicional más vendido -->
+        <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+            <h2 class="text-lg font-semibold mb-4">Adicional más vendido</h2>
+            {#if data.adicionalMasVendido}
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-indigo-700">{data.adicionalMasVendido.nombre}</p>
+                    <p class="text-gray-600">Monto total: <span class="font-bold">$ {data.adicionalMasVendido.montoTotal.toLocaleString('es-AR')}</span></p>
+                </div>
+            {:else}
+                <p class="text-gray-500">No hay datos de adicionales.</p>
+            {/if}
+        </div>
+
+        <!-- Categoría más vendida -->
+        <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+            <h2 class="text-lg font-semibold mb-4">Categoría más vendida</h2>
+            {#if data.cantidadPorCategoria.length > 0}
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-pink-700">{data.cantidadPorCategoria.reduce((max: ReporteCategoria, item: ReporteCategoria) => item.cantidad > max.cantidad ? item : max, data.cantidadPorCategoria[0]).categoria}</p>
+                    <p class="text-gray-600">Reservas: <span class="font-bold">{data.cantidadPorCategoria.reduce((max: ReporteCategoria, item: ReporteCategoria) => item.cantidad > max.cantidad ? item : max, data.cantidadPorCategoria[0]).cantidad}</span></p>
+                </div>
+            {:else}
+                <p class="text-gray-500">No hay datos de categorías.</p>
+            {/if}
+        </div>
+    </div>
+
     <!-- Totales -->
     <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold mb-4 text-center">Totales</h2>
@@ -262,11 +336,58 @@
                 <p class="text-2xl font-bold text-gray-800">{data.totalReservas}</p>
             </div>
             <div class="text-center">
-                <h3 class="font-medium text-gray-600 mb-2">Total de Ingresos</h3>
+                <h3 class="font-medium text-gray-600 mb-2">Total de Ingresos (Reservas + Adicionales)</h3>
                 <p class="text-2xl font-bold text-gray-800">
                     $ {(data.totalIngresos + (data.totalIngresosAdicionales ?? 0)).toLocaleString('es-AR')}
                 </p>
             </div>
+            <div class="text-center">
+                <h3 class="font-medium text-gray-600 mb-2">Total solo de Adicionales</h3>
+                <p class="text-2xl font-bold text-yellow-700">
+                    $ {(data.totalIngresosAdicionales ?? 0).toLocaleString('es-AR')}
+                </p>
+            </div>
+            <div class="text-center">
+                <h3 class="font-medium text-gray-600 mb-2">Total a Devolver por Cancelaciones</h3>
+                <p class="text-2xl font-bold text-red-700">
+                    $ {(data.totalADevolver ?? 0).toLocaleString('es-AR')}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de reservas -->
+    <div class="bg-white rounded-lg shadow p-6 mt-8">
+        <h2 class="text-lg font-semibold mb-4 text-center">Listado de Reservas</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sucursal</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Total</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Adicional</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Política Cancelación</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {#each data.reservasListado as reserva}
+                        <tr>
+                            <td class="px-4 py-2">{reserva.id}</td>                            
+                            <td class="px-4 py-2">{reserva.categoria ?? 'Sin categoría'}</td>
+                            <td class="px-4 py-2">{reserva.sucursal ?? 'Sin sucursal'}</td>
+                            <td class="px-4 py-2">{reserva.estado ?? 'Sin estado'}</td>
+                            <td class="px-4 py-2">{reserva.importeTotal != null ? `$ ${reserva.importeTotal.toLocaleString('es-AR')}` : 'Sin importe'}</td>
+                            <td class="px-4 py-2">{reserva.importeAdicionales != null ? `$ ${reserva.importeAdicionales.toLocaleString('es-AR')}` : 'Sin adicional'}</td>
+                            <td class="px-4 py-2">{reserva.politicaCancelacion ?? 'Sin política'}</td>
+                            <td class="px-4 py-2">{reserva.usuario ?? 'Sin usuario'}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
