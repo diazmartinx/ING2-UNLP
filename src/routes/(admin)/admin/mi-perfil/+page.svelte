@@ -7,16 +7,6 @@
 	let isEditing = false;
 	let showSuccessToast = false;
 	let fechaError = '';
-	
-	// Password change form state
-	let isChangingPassword = false;
-	let passwordError = '';
-	let passwordSuccess = '';
-	let passwordFormData = {
-		currentPassword: '',
-		newPassword: '',
-		newPasswordConfirm: ''
-	};
 
 	// Función para ajustar la fecha a UTC-3
 	function adjustToUTC3(date: string | Date | null): string {
@@ -94,34 +84,6 @@
 			fechaError = '';
 			input.setCustomValidity('');
 		}
-	}
-
-	// Password form functions
-	function togglePasswordForm() {
-		isChangingPassword = !isChangingPassword;
-		passwordError = '';
-		passwordSuccess = '';
-		// Reset form data when toggling
-		passwordFormData = {
-			currentPassword: '',
-			newPassword: '',
-			newPasswordConfirm: ''
-		};
-	}
-
-
-
-	async function handlePasswordSubmit() {
-		passwordSuccess = '¡Contraseña actualizada exitosamente!';
-		isChangingPassword = false;
-		passwordFormData = {
-			currentPassword: '',
-			newPassword: '',
-			newPasswordConfirm: ''
-		};
-		setTimeout(() => {
-			passwordSuccess = '';
-		}, 3000);
 	}
 </script>
 
@@ -275,93 +237,9 @@
 	<!-- Password Change Section -->
 	<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mt-6">
 		<h2 class="text-xl font-bold mb-4">Cambiar Contraseña</h2>
-
-		{#if passwordError}
-			<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-				{passwordError}
-			</div>
-		{/if}
-
-		{#if passwordSuccess}
-			<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-				{passwordSuccess}
-			</div>
-		{/if}
-
-		{#if isChangingPassword}
-			<form method="POST" action="?/changePassword" use:enhance={() => {
-				return async ({ result }) => {
-					if (result.type === 'success') {
-						handlePasswordSubmit();
-					} else if (result.type === 'failure') {
-						passwordError = (result.data?.error as string) || 'Error al cambiar la contraseña';
-					}
-				};
-			}}>
-				<div class="space-y-4">
-					<div>
-						<label for="currentPassword" class="block text-sm font-medium text-gray-700">Contraseña Actual</label>
-						<input
-							id="currentPassword"
-							type="password"
-							name="currentPassword"
-							bind:value={passwordFormData.currentPassword}
-							class="input input-bordered w-full"
-							required
-						/>
-					</div>
-
-					<div>
-						<label for="newPassword" class="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
-						<input
-							id="newPassword"
-							type="password"
-							name="newPassword"
-							bind:value={passwordFormData.newPassword}
-							class="input input-bordered w-full"
-							required
-						/>
-					</div>
-
-					<div>
-						<label for="newPasswordConfirm" class="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
-						<input
-							id="newPasswordConfirm"
-							type="password"
-							name="newPasswordConfirm"
-							bind:value={passwordFormData.newPasswordConfirm}
-							class="input input-bordered w-full"
-							required
-						/>
-					</div>
-				</div>
-
-				<div class="flex justify-end space-x-4 mt-6">
-					<button
-						type="button"
-						on:click={togglePasswordForm}
-						class="btn btn-ghost"
-					>
-						Cancelar
-					</button>
-					<button
-						type="submit"
-						class="btn btn-primary"
-						disabled={!passwordFormData.currentPassword || !passwordFormData.newPassword || !passwordFormData.newPasswordConfirm}
-					>
-						Cambiar Contraseña
-					</button>
-				</div>
-			</form>
-		{:else}
-			<p class="text-gray-600 mb-4">Para mayor seguridad, cambia tu contraseña regularmente.</p>
-			<button
-				type="button"
-				on:click={togglePasswordForm}
-				class="btn btn-secondary"
-			>
-				Cambiar Contraseña
-			</button>
-		{/if}
+		<p class="text-gray-600 mb-4">Para mayor seguridad, cambia tu contraseña regularmente.</p>
+		<a href="/admin/mi-perfil/cambiar-contrasena" class="btn btn-secondary">
+			Cambiar Contraseña
+		</a>
 	</div>
-</div> 
+</div>
