@@ -38,29 +38,10 @@
     let chartIngresos: Chart;
     let chartAdicionales: Chart;
 
-    // Genera las opciones de meses para el selector
-    function generarOpcionesMeses() {
-        const añoActual = new Date().getFullYear();
-        const meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        
-        return meses.map((mesNombre, index) => ({
-            valor: `${añoActual}-${(index + 1).toString().padStart(2, '0')}`,
-            etiqueta: `${mesNombre} ${añoActual}`
-        }));
-    }
-
-    const opcionesMeses = generarOpcionesMeses();
-
     // Función para actualizar la URL con los filtros
     function actualizarFiltros() {
         const params = new URLSearchParams();
-        
-        if (mes) {
-            params.set('mes', mes);
-        } else if (fechaInicio && fechaFin) {
+        if (fechaInicio && fechaFin) {
             params.set('fechaInicio', fechaInicio);
             params.set('fechaFin', fechaFin);
         }
@@ -156,11 +137,23 @@
     });
 
     onMount(() => {
-        // Recuperar valores de la URL al cargar
         const searchParams = new URLSearchParams($page.url.search);
         fechaInicio = searchParams.get('fechaInicio') || '';
         fechaFin = searchParams.get('fechaFin') || '';
         mes = searchParams.get('mes') || '';
+
+        // Si no hay filtros, setear el mes actual por defecto
+        if (!fechaInicio && !fechaFin && !mes) {
+            const hoy = new Date();
+            const year = hoy.getFullYear();
+            const month = (hoy.getMonth() + 1).toString().padStart(2, '0');
+            fechaInicio = `${year}-${month}-01`;
+            // Último día del mes actual
+            const lastDay = new Date(year, hoy.getMonth() + 1, 0).getDate();
+            fechaFin = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+            // Actualiza la URL y recarga los datos
+            actualizarFiltros();
+        }
     });
 </script>
 
@@ -169,15 +162,7 @@
 
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <!-- Títulos -->
-            <div class="col-span-2">
-                <h3 class="font-medium text-center h-5">Por rango de fechas</h3>
-            </div>
-            <div class="col-span-1">
-                <h3 class="font-medium text-center h-5">Por mes específico</h3>
-            </div>
+        <div>
 
             <!-- Controles -->
             <div class="col-span-2 grid grid-cols-2 gap-4">
@@ -208,31 +193,6 @@
                         class="mt-1 block w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         min={fechaInicio}
                     >
-                </div>
-            </div>
-
-            <!-- Selector de mes -->
-            <div class="col-span-1">
-                <div class="relative">
-                    <select
-                        bind:value={mes}
-                        onchange={() => {
-                            fechaInicio = '';
-                            fechaFin = '';
-                            actualizarFiltros();
-                        }}
-                        class="mt-6 block w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                    >
-                        <option value="">Seleccionar mes...</option>
-                        {#each opcionesMeses as opcion}
-                            <option value={opcion.valor}>{opcion.etiqueta}</option>
-                        {/each}
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                        </svg>
-                    </div>
                 </div>
             </div>
         </div>
