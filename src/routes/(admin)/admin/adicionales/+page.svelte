@@ -69,13 +69,7 @@
 						>
 							<input type="hidden" name="id" value={adicional.id} />
 							<div class="flex gap-2 flex-1">
-								<input
-									type="text"
-									name="nombre"
-									class="input input-bordered flex-1"
-									value={editando?.nombre ?? ''}
-									placeholder="Nombre"
-								/>
+								<span class="text-lg text-gray-700 font-medium">{editando?.nombre}</span>
 								<input
 									type="number"
 									name="precioPorDia"
