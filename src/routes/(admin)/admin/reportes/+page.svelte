@@ -21,10 +21,20 @@
         ingresosAdicionales: number;
     }
 
+    interface ReporteModelo {
+        modelo: string;
+        cantidad: number;
+    }
+    interface ReporteCategoria {
+        categoria: string;
+        cantidad: number;
+    }
     interface CustomPageData extends PageData {
         cantidadPorSucursal: ReporteSucursal[];
         ingresosPorSucursal: ReporteIngresos[];
         ingresosAdicionalesPorSucursal: ReporteAdicionales[];
+        cantidadPorModelo: ReporteModelo[];
+        cantidadPorCategoria: ReporteCategoria[];
         totalReservas: number;
         totalIngresos: number;
         totalIngresosAdicionales: number;
@@ -37,30 +47,13 @@
     let chartReservas: Chart;
     let chartIngresos: Chart;
     let chartAdicionales: Chart;
-
-    // Genera las opciones de meses para el selector
-    function generarOpcionesMeses() {
-        const añoActual = new Date().getFullYear();
-        const meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        
-        return meses.map((mesNombre, index) => ({
-            valor: `${añoActual}-${(index + 1).toString().padStart(2, '0')}`,
-            etiqueta: `${mesNombre} ${añoActual}`
-        }));
-    }
-
-    const opcionesMeses = generarOpcionesMeses();
+    let chartModelos: Chart;
+    let chartCategorias: Chart;
 
     // Función para actualizar la URL con los filtros
     function actualizarFiltros() {
         const params = new URLSearchParams();
-        
-        if (mes) {
-            params.set('mes', mes);
-        } else if (fechaInicio && fechaFin) {
+        if (fechaInicio && fechaFin) {
             params.set('fechaInicio', fechaInicio);
             params.set('fechaFin', fechaFin);
         }
@@ -73,10 +66,14 @@
         const ctx1 = document.getElementById('chartReservas') as HTMLCanvasElement;
         const ctx2 = document.getElementById('chartIngresos') as HTMLCanvasElement;
         const ctx3 = document.getElementById('chartAdicionales') as HTMLCanvasElement;
+        const ctx4 = document.getElementById('chartModelos') as HTMLCanvasElement;
+        const ctx5 = document.getElementById('chartCategorias') as HTMLCanvasElement;
 
         if (chartReservas) chartReservas.destroy();
         if (chartIngresos) chartIngresos.destroy();
         if (chartAdicionales) chartAdicionales.destroy();
+        if (chartModelos) chartModelos.destroy();
+        if (chartCategorias) chartCategorias.destroy();
 
         chartReservas = new Chart(ctx1, {
             type: 'bar',
@@ -146,6 +143,36 @@
             },
             options: { responsive: true }
         });
+
+        chartModelos = new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: data.cantidadPorModelo.map((item: ReporteModelo) => item.modelo),
+                datasets: [{
+                    label: 'Reservas por Modelo',
+                    data: data.cantidadPorModelo.map((item: ReporteModelo) => item.cantidad),
+                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        chartCategorias = new Chart(ctx5, {
+            type: 'bar',
+            data: {
+                labels: data.cantidadPorCategoria.map((item: ReporteCategoria) => item.categoria),
+                datasets: [{
+                    label: 'Reservas por Categoría',
+                    data: data.cantidadPorCategoria.map((item: ReporteCategoria) => item.cantidad),
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true }
+        });
     }
 
     // Actualizar gráficos cuando cambian los datos
@@ -156,11 +183,23 @@
     });
 
     onMount(() => {
-        // Recuperar valores de la URL al cargar
         const searchParams = new URLSearchParams($page.url.search);
         fechaInicio = searchParams.get('fechaInicio') || '';
         fechaFin = searchParams.get('fechaFin') || '';
         mes = searchParams.get('mes') || '';
+
+        // Si no hay filtros, setear el mes actual por defecto
+        if (!fechaInicio && !fechaFin && !mes) {
+            const hoy = new Date();
+            const year = hoy.getFullYear();
+            const month = (hoy.getMonth() + 1).toString().padStart(2, '0');
+            fechaInicio = `${year}-${month}-01`;
+            // Último día del mes actual
+            const lastDay = new Date(year, hoy.getMonth() + 1, 0).getDate();
+            fechaFin = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+            // Actualiza la URL y recarga los datos
+            actualizarFiltros();
+        }
     });
 </script>
 
@@ -169,15 +208,7 @@
 
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <!-- Títulos -->
-            <div class="col-span-2">
-                <h3 class="font-medium text-center h-5">Por rango de fechas</h3>
-            </div>
-            <div class="col-span-1">
-                <h3 class="font-medium text-center h-5">Por mes específico</h3>
-            </div>
+        <div>
 
             <!-- Controles -->
             <div class="col-span-2 grid grid-cols-2 gap-4">
@@ -210,31 +241,6 @@
                     >
                 </div>
             </div>
-
-            <!-- Selector de mes -->
-            <div class="col-span-1">
-                <div class="relative">
-                    <select
-                        bind:value={mes}
-                        onchange={() => {
-                            fechaInicio = '';
-                            fechaFin = '';
-                            actualizarFiltros();
-                        }}
-                        class="mt-6 block w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                    >
-                        <option value="">Seleccionar mes...</option>
-                        {#each opcionesMeses as opcion}
-                            <option value={opcion.valor}>{opcion.etiqueta}</option>
-                        {/each}
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -253,6 +259,34 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Adicional más vendido -->
+        <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+            <h2 class="text-lg font-semibold mb-4">Adicional más vendido</h2>
+            {#if data.adicionalMasVendido}
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-indigo-700">{data.adicionalMasVendido.nombre}</p>
+                    <p class="text-gray-600">Monto total: <span class="font-bold">$ {data.adicionalMasVendido.montoTotal.toLocaleString('es-AR')}</span></p>
+                </div>
+            {:else}
+                <p class="text-gray-500">No hay datos de adicionales.</p>
+            {/if}
+        </div>
+
+        <!-- Categoría más vendida -->
+        <div class="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center">
+            <h2 class="text-lg font-semibold mb-4">Categoría más vendida</h2>
+            {#if data.cantidadPorCategoria.length > 0}
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-pink-700">{data.cantidadPorCategoria.reduce((max: ReporteCategoria, item: ReporteCategoria) => item.cantidad > max.cantidad ? item : max, data.cantidadPorCategoria[0]).categoria}</p>
+                    <p class="text-gray-600">Reservas: <span class="font-bold">{data.cantidadPorCategoria.reduce((max: ReporteCategoria, item: ReporteCategoria) => item.cantidad > max.cantidad ? item : max, data.cantidadPorCategoria[0]).cantidad}</span></p>
+                </div>
+            {:else}
+                <p class="text-gray-500">No hay datos de categorías.</p>
+            {/if}
+        </div>
+    </div>
+
     <!-- Totales -->
     <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold mb-4 text-center">Totales</h2>
@@ -262,11 +296,58 @@
                 <p class="text-2xl font-bold text-gray-800">{data.totalReservas}</p>
             </div>
             <div class="text-center">
-                <h3 class="font-medium text-gray-600 mb-2">Total de Ingresos</h3>
+                <h3 class="font-medium text-gray-600 mb-2">Total de Ingresos (Reservas + Adicionales)</h3>
                 <p class="text-2xl font-bold text-gray-800">
                     $ {(data.totalIngresos + (data.totalIngresosAdicionales ?? 0)).toLocaleString('es-AR')}
                 </p>
             </div>
+            <div class="text-center">
+                <h3 class="font-medium text-gray-600 mb-2">Total solo de Adicionales</h3>
+                <p class="text-2xl font-bold text-yellow-700">
+                    $ {(data.totalIngresosAdicionales ?? 0).toLocaleString('es-AR')}
+                </p>
+            </div>
+            <div class="text-center">
+                <h3 class="font-medium text-gray-600 mb-2">Total a Devolver por Cancelaciones</h3>
+                <p class="text-2xl font-bold text-red-700">
+                    $ {(data.totalADevolver ?? 0).toLocaleString('es-AR')}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de reservas -->
+    <div class="bg-white rounded-lg shadow p-6 mt-8">
+        <h2 class="text-lg font-semibold mb-4 text-center">Listado de Reservas</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sucursal</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Total</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Adicional</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Política Cancelación</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {#each data.reservasListado as reserva}
+                        <tr>
+                            <td class="px-4 py-2">{reserva.id}</td>                            
+                            <td class="px-4 py-2">{reserva.categoria ?? 'Sin categoría'}</td>
+                            <td class="px-4 py-2">{reserva.sucursal ?? 'Sin sucursal'}</td>
+                            <td class="px-4 py-2">{reserva.estado ?? 'Sin estado'}</td>
+                            <td class="px-4 py-2">{reserva.importeTotal != null ? `$ ${reserva.importeTotal.toLocaleString('es-AR')}` : 'Sin importe'}</td>
+                            <td class="px-4 py-2">{reserva.importeAdicionales != null ? `$ ${reserva.importeAdicionales.toLocaleString('es-AR')}` : 'Sin adicional'}</td>
+                            <td class="px-4 py-2">{reserva.politicaCancelacion ?? 'Sin política'}</td>
+                            <td class="px-4 py-2">{reserva.usuario ?? 'Sin usuario'}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

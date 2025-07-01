@@ -10,18 +10,12 @@ export const load = (async ({ locals, url }) => {
     // Obtener parámetros de fecha del query string
     const fechaInicio = url.searchParams.get('fechaInicio');
     const fechaFin = url.searchParams.get('fechaFin');
-    const mes = url.searchParams.get('mes');
 
     // Construir la cláusula WHERE base para el filtro de fechas
     let whereClause = sql`1=1`;
     
     if (fechaInicio && fechaFin) {
         whereClause = sql`${reservas.fechaCreacion} BETWEEN strftime('%s', ${fechaInicio}) AND strftime('%s', date(${fechaFin}, '+1 day'))`;
-    } else if (mes) {
-        // Si se especifica un mes (formato YYYY-MM)
-        const inicioMes = sql`${mes} || '-01'`;
-        const finMes = sql`date(${mes} || '-01', '+1 month')`;
-        whereClause = sql`${reservas.fechaCreacion} BETWEEN strftime('%s', ${inicioMes}) AND strftime('%s', ${finMes})`;
     }
 
     // Consulta para cantidad de reservas por sucursal (incluye todas las reservas)

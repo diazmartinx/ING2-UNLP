@@ -32,7 +32,7 @@
         },
         {
             label: 'Reportes',
-            href: '/admin/reservas/reportes'
+            href: '/admin/reportes'
         },
         {
             label: 'Mi Perfil',
