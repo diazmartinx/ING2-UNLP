@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { categoriasVehiculos, modelosVehiculos, reservas } from '$lib/server/db/schema';
+import { categoriasVehiculos, modelosVehiculos, reservas, unidadesVehiculos } from '$lib/server/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -33,10 +33,16 @@ export const actions = {
 					error: 'No se puede eliminar la categoría porque tiene modelos con reservas asociadas.'
 				});
 			}
+
+			// Si no hay reservas, eliminar primero las unidades de vehículos asociadas a los modelos
+			await db.delete(unidadesVehiculos).where(inArray(unidadesVehiculos.idModelo, modeloIds));
+			
+			// Luego eliminar los modelos asociados
+			await db.delete(modelosVehiculos).where(inArray(modelosVehiculos.id, modeloIds));
 		}
 
 		await db.delete(categoriasVehiculos).where(eq(categoriasVehiculos.id, id));
 		const categorias = await db.select().from(categoriasVehiculos);
-		return { success: true, categorias, message: 'Categoría eliminada exitosamente' };
+		return { success: true, categorias, message: 'Categoría, modelos y vehículos asociados eliminados exitosamente' };
 	}
 } satisfies Actions;

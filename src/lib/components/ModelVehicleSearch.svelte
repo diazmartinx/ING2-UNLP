@@ -1,4 +1,6 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte';
+    
     interface ModeloVehiculo {
         id: number;
         marca: string;
@@ -16,9 +18,10 @@
         nombre: string;
     }
 
-    const { modelos, categorias } = $props<{
+    const { modelos, categorias, children } = $props<{
         modelos: ModeloVehiculo[];
         categorias: Categoria[];
+        children?: Snippet<[ModeloVehiculo[]]>;
     }>();
 
     let searchQuery = $state('');
@@ -130,6 +133,6 @@
             <span>No se encontraron modelos con los filtros seleccionados.</span>
         </div>
     {:else}
-        <slot {filteredModelos} />
+        {@render children?.(filteredModelos)}
     {/if}
 </div>
