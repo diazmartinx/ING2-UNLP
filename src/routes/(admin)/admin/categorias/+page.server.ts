@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { categoriasVehiculos } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { categoriasVehiculos, modelosVehiculos, reservas } from '$lib/server/db/schema';
+import { eq, inArray } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -10,40 +10,33 @@ export const load = (async () => {
 }) satisfies PageServerLoad;
 
 export const actions = {
-    eliminar: async ({ request }) => {
-        const formData = await request.formData();
-        const id = Number(formData.get('id'));
+	eliminar: async ({ request }) => {
+		const formData = await request.formData();
+		const id = Number(formData.get('id'));
 
-        await db.delete(categoriasVehiculos).where(eq(categoriasVehiculos.id, id));
-        const categorias = await db.select().from(categoriasVehiculos);
-        return { success: true, categorias };
-    },
+		const modelosEnCategoria = await db
+			.select({ id: modelosVehiculos.id })
+			.from(modelosVehiculos)
+			.where(eq(modelosVehiculos.idCategoria, id));
 
-    editar: async ({ request }) => {
-        const formData = await request.formData();
-        const id = Number(formData.get('id'));
-        const nombre = formData.get('nombre')?.toString();
+		if (modelosEnCategoria.length > 0) {
+			const modeloIds = modelosEnCategoria.map((m) => m.id);
 
-        if (!nombre) {
-            return fail(400, { error: 'El nombre es requerido' });
-        }
+			const reservasExistentes = await db
+				.select({ id: reservas.id })
+				.from(reservas)
+				.where(inArray(reservas.idModeloReservado, modeloIds))
+				.limit(1);
 
-        // Verificar si ya existe una categoría con ese nombre
-        const existente = await db
-            .select()
-            .from(categoriasVehiculos)
-            .where(eq(categoriasVehiculos.nombre, nombre));
+			if (reservasExistentes.length > 0) {
+				return fail(400, {
+					error: 'No se puede eliminar la categoría porque tiene modelos con reservas asociadas.'
+				});
+			}
+		}
 
-        if (existente.length > 0 && existente[0].id !== id) {
-            return fail(400, { error: 'Ya existe una categoría con ese nombre' });
-        }
-
-        await db
-            .update(categoriasVehiculos)
-            .set({ nombre })
-            .where(eq(categoriasVehiculos.id, id));
-        
-        const categorias = await db.select().from(categoriasVehiculos);
-        return { success: true, categorias };
-    }
+		await db.delete(categoriasVehiculos).where(eq(categoriasVehiculos.id, id));
+		const categorias = await db.select().from(categoriasVehiculos);
+		return { success: true, categorias, message: 'Categoría eliminada exitosamente' };
+	}
 } satisfies Actions;
