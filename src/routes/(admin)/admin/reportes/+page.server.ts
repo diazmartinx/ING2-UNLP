@@ -146,14 +146,21 @@ export const load = (async ({ locals, url }) => {
 
     // Calcular monto total a devolver según política de cancelación
     let totalADevolver = 0;
+	let subtotalReembolsoTotal = 0;
+	let subtotalReembolsoParcial = 0;
+
     for (const reserva of reservasListado) {
         const politica = politicasPorModelo[String(reserva.idModeloReservado)];
         if (!politica) continue;
         if (reserva.estado !== 'Cancelada') continue;
         if (politica.tipoPolitica === 'Reembolso Total') {
-            totalADevolver += reserva.importeTotal ?? 0;
+			const monto = reserva.importeTotal ?? 0;
+            totalADevolver += monto;
+			subtotalReembolsoTotal += monto;
         } else if (politica.tipoPolitica === 'Reembolso Parcial' && politica.porcentajeReembolsoParcial != null) {
-            totalADevolver += (reserva.importeTotal ?? 0) * (politica.porcentajeReembolsoParcial / 100);
+			const monto = (reserva.importeTotal ?? 0) * (politica.porcentajeReembolsoParcial / 100);
+            totalADevolver += monto;
+			subtotalReembolsoParcial += monto;
         }
         // Sin Reembolso: no suma nada
     }
@@ -169,6 +176,8 @@ export const load = (async ({ locals, url }) => {
         totalIngresosAdicionales,
         adicionalMasVendido,
         reservasListado,
-        totalADevolver
+        totalADevolver,
+		subtotalReembolsoTotal,
+		subtotalReembolsoParcial
     };
 }) satisfies PageServerLoad;

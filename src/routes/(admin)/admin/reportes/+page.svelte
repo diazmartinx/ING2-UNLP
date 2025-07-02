@@ -38,6 +38,9 @@
         totalReservas: number;
         totalIngresos: number;
         totalIngresosAdicionales: number;
+		totalADevolver: number;
+		subtotalReembolsoTotal: number;
+		subtotalReembolsoParcial: number;
     }
 
     let { data } = $props<{ data: CustomPageData }>();
@@ -266,7 +269,7 @@
             {#if data.adicionalMasVendido}
                 <div class="text-center">
                     <p class="text-2xl font-bold text-indigo-700">{data.adicionalMasVendido.nombre}</p>
-                    <p class="text-gray-600">Monto total: <span class="font-bold">$ {data.adicionalMasVendido.montoTotal.toLocaleString('es-AR')}</span></p>
+                    <p class="text-gray-600">Veces vendido: <span class="font-bold">{data.adicionalMasVendido.cantidad}</span></p>
                 </div>
             {:else}
                 <p class="text-gray-500">No hay datos de adicionales.</p>
@@ -312,6 +315,25 @@
                 <p class="text-2xl font-bold text-red-700">
                     $ {(data.totalADevolver ?? 0).toLocaleString('es-AR')}
                 </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devoluciones -->
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-4 text-center">Devoluciones por Cancelación</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center p-4 border rounded-lg">
+                <p class="text-xl font-bold text-blue-600">${data.subtotalReembolsoTotal.toFixed(2)}</p>
+                <p class="text-gray-500">Reembolso Total</p>
+            </div>
+            <div class="text-center p-4 border rounded-lg">
+                <p class="text-xl font-bold text-orange-600">${data.subtotalReembolsoParcial.toFixed(2)}</p>
+                <p class="text-gray-500">Reembolso Parcial</p>
+            </div>
+            <div class="text-center bg-gray-100 p-4 rounded-lg">
+                <p class="text-xl font-bold text-red-600">${data.totalADevolver.toFixed(2)}</p>
+                <p class="text-gray-500 font-semibold">Total a Devolver</p>
             </div>
         </div>
     </div>

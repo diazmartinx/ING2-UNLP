@@ -162,7 +162,6 @@
             goto('/admin/modelos');
         }, 1500);
     }
-
     // Cleanup function to revoke object URLs
     function cleanup() {
         modelImages.forEach(url => {
@@ -224,20 +223,20 @@
         <ModelVehicleSearch 
             modelos={data.modelos} 
             categorias={data.categorias}
-            let:filteredModelos
         >
-            {#each filteredModelos as modelo}
-                <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
-                    <div class="flex flex-row">
-                        <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
-                            <img 
-                                src={modelo.imagenBlob ? getImageUrlFromBlob(modelo.imagenBlob) : '/no-image-icon.svg'} 
-                                alt={`${modelo.marca} ${modelo.modelo}`} 
-                                class="h-60 w-60 object-cover rounded-lg" 
-                                style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
-                                onerror={handleModelImageError}
-                            />
-                        </figure>
+            {#snippet children(filteredModelos)}
+                {#each filteredModelos as modelo}
+                    <div class="card bg-base-100 shadow-lg border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="flex flex-row">
+                            <figure class="w-80 p-4 flex items-center justify-center bg-gray-50">
+                                <img 
+                                    src={modelo.imagenBlob ? getImageUrlFromBlob(modelo.imagenBlob) : '/no-image-icon.svg'} 
+                                    alt={`${modelo.marca} ${modelo.modelo}`} 
+                                    class="h-60 w-60 object-cover rounded-lg" 
+                                    style="max-width: 260px; max-height: 260px; width: 260px; height: 260px;"
+                                    onerror={handleModelImageError}
+                                />
+                            </figure>
                         <div class="card-body p-4 flex-1 flex flex-col justify-center">
                             <div class="flex justify-between items-start mb-4">
                                 <h2 class="card-title text-2xl font-bold text-gray-800">
@@ -288,6 +287,7 @@
                     </div>
                 </div>
             {/each}
+            {/snippet}
         </ModelVehicleSearch>
     {/if}
 </div>
