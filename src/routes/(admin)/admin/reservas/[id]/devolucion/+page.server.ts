@@ -169,6 +169,18 @@ export const actions: Actions = {
                 })
                 .where(eq(reservas.id, parseInt(reservaId.toString())));
 
+            // Obtener la patente de la unidad asignada a la reserva
+            const [res] = await db.select({ patenteUnidadAsignada: reservas.patenteUnidadAsignada })
+                .from(reservas)
+                .where(eq(reservas.id, parseInt(reservaId.toString())));
+
+            if (res?.patenteUnidadAsignada) {
+                // Cambiar el estado del vehículo a Inhabilitado
+                await db.update(unidadesVehiculos)
+                    .set({ estado: 'Inhabilitado' })
+                    .where(eq(unidadesVehiculos.patente, res.patenteUnidadAsignada));
+            }
+
             return {
                 type: 'success'
             };
@@ -180,4 +192,4 @@ export const actions: Actions = {
             });
         }
     }
-}; 
+};
