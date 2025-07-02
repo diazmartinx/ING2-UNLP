@@ -53,7 +53,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
         }
 
         // Si es empleado, no puede acceder a las rutas restringidas generales
-        if (user.rol === 'empleado' && restrictedPaths.some(p => path.startsWith(p))) {
+        if (user.rol === 'empleado' && restrictedPaths.some(p => path === p)) {
             redirect(302, '/admin');
         }
     }

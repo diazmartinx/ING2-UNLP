@@ -48,6 +48,10 @@
         {
             label: 'Mi Perfil',
             href: '/admin/mi-perfil'
+        },
+        {
+            label: 'Vehiculos',
+            href: '/admin/vehiculos-mantenimiento'
         }
     ]
 
