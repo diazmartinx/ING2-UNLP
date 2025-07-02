@@ -49,25 +49,6 @@
     let chartAdicionales: Chart;
     let chartModelos: Chart;
     let chartCategorias: Chart;
-<<<<<<< HEAD
-
-    // Genera las opciones de meses para el selector
-    function generarOpcionesMeses() {
-        const añoActual = new Date().getFullYear();
-        const meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        
-        return meses.map((mesNombre, index) => ({
-            valor: `${añoActual}-${(index + 1).toString().padStart(2, '0')}`,
-            etiqueta: `${mesNombre} ${añoActual}`
-        }));
-    }
-
-    const opcionesMeses = generarOpcionesMeses();
-=======
->>>>>>> main
 
     // Función para actualizar la URL con los filtros
     function actualizarFiltros() {
