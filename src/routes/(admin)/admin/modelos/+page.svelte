@@ -3,9 +3,7 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
-    import { goto } from '$app/navigation';
     import { invalidateAll } from '$app/navigation';
-    import { onDestroy } from 'svelte';
     import ModelVehicleSearch from '$lib/components/ModelVehicleSearch.svelte';
 
     interface Modelo {
@@ -41,21 +39,15 @@
     let { data }: { data: PageData } = $props();
     let showCreateModal = $state(false);
     let createError = $state('');
-    let createImageUrl = $state('');
     let createImageError = $state(false);
     let selectedPolitica = $state('');
     let porcentajeReembolsoParcial = $state('');
     let porcentajeReembolsoParcialError = $state('');
     let showSuccessToast = $state(false);
     let displayImageUrl = $state('');
-    let imageLoadAttempted = $state(false);
-    let modelImages = $state(new Map());
     let selectedFile = $state<File | null>(null);
 
-
-
-
-        // Agregar estas variables al estado existente
+    // Variables para el modal de eliminación
     let showDeleteModal = $state(false);
     let modeloAEliminar = $state<Modelo | null>(null);
     let deleteError = $state('');
@@ -89,21 +81,23 @@
     function openCreateModal() {
         showCreateModal = true;
         createError = '';
-        createImageUrl = '';
         displayImageUrl = '';
         createImageError = false;
-        imageLoadAttempted = false;
         selectedFile = null;
+        selectedPolitica = '';
+        porcentajeReembolsoParcial = '';
+        porcentajeReembolsoParcialError = '';
     }
 
     function closeModal() {
         showCreateModal = false;
         createError = '';
-        createImageUrl = '';
         displayImageUrl = '';
         createImageError = false;
-        imageLoadAttempted = false;
         selectedFile = null;
+        selectedPolitica = '';
+        porcentajeReembolsoParcial = '';
+        porcentajeReembolsoParcialError = '';
     }
 
     function handleImageInput(e: Event) {
@@ -112,17 +106,12 @@
             selectedFile = input.files[0];
             displayImageUrl = URL.createObjectURL(selectedFile);
             createImageError = false;
-            imageLoadAttempted = false;
         }
     }
 
     function handleImageError() {
         displayImageUrl = '/no-image-icon.svg';
         createImageError = true;
-    }
-
-    function handleImageLoad() {
-        createImageError = false;
     }
 
     function handleModelImageError(event: Event) {
@@ -141,52 +130,15 @@
         }
     }
 
-    function getMimeType(buffer: ArrayBuffer): string {
-        const arr = new Uint8Array(buffer.slice(0, 4));
-        const header = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        if (header.startsWith('89504e47')) return 'image/png';
-        if (header.startsWith('ffd8ffe0') || header.startsWith('ffd8ffe1')) return 'image/jpeg';
-        if (header.startsWith('47494638')) return 'image/gif';
-        if (header.startsWith('52494646')) return 'image/webp';
-        if (header.startsWith('0000001c6674797061766966')) return 'image/avif';
-        
-        return 'application/octet-stream';
-    }
-
     async function showSuccessAndRedirect() {
         showSuccessToast = true;
         await invalidateAll();
         setTimeout(() => {
             showSuccessToast = false;
-            goto('/admin/modelos');
         }, 1500);
     }
-    // Cleanup function to revoke object URLs
-    function cleanup() {
-        modelImages.forEach(url => {
-            if (url.startsWith('blob:')) {
-                URL.revokeObjectURL(url);
-            }
-        });
-    }
-
-    // Call cleanup when component is destroyed
-    onDestroy(cleanup);
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo creado exitosamente!</span>
-        </div>
-    {/if}
-</div>
-
-<!-- Agregar después del toast existente -->
 <div class="toast toast-top toast-end z-50">
     {#if showSuccessToast}
         <div class="alert alert-success">
@@ -253,6 +205,10 @@
                                         <span class="font-semibold text-gray-600 text-lg">Capacidad:</span>
                                         <span class="badge badge-outline px-3 py-1 text-base">{modelo.capacidadPasajeros} pasajeros</span>
                                     </p>
+                                    <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Autos asignados:</span>
+                                        <span class="badge px-3 py-1 text-base">{modelo.unidadesAsignadas || 0} unidades</span>
+                                    </p>
                                 </div>
                                 <div class="space-y-3">
                                     <p class="flex items-center gap-2">
@@ -273,7 +229,7 @@
                                 <div>
                                     <div class="card-actions justify-end ">
                                         <a href={`/admin/modelos/${modelo.id}`} class="btn btn-primary">
-                                            Ver detalles
+                                            Editar
                                         </a>
                                         <button onclick={() => confirmarEliminacion(modelo)} class="btn btn-error">
                                             Dar de baja
@@ -373,7 +329,6 @@
                         class="h-40 w-40 object-cover rounded border"
                         style="max-width: 160px; max-height: 160px;"
                         onerror={handleImageError}
-                        onload={handleImageLoad}
                     />
                 </div>
             {/if}
