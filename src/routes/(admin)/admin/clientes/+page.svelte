@@ -61,7 +61,7 @@
 	}
 
 	onMount(() => {
-		if (data.toast === 'cliente-creado') {
+		if (data.toast === 'cliente-creado' || data.toast === 'cliente-actualizado') {
 			showToast = true;
 			setTimeout(() => {
 				showToast = false;
@@ -97,7 +97,15 @@
 			<svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 			</svg>
-			<span>{data.toast === 'cliente-creado-sin-email' ? 'Cliente creado, pero no se pudo enviar el email' : 'Cliente creado exitosamente'}</span>
+			<span>
+				{#if data.toast === 'cliente-creado-sin-email'}
+					Cliente creado, pero no se pudo enviar el email
+				{:else if data.toast === 'cliente-actualizado'}
+					Cliente actualizado exitosamente
+				{:else}
+					Cliente creado exitosamente
+				{/if}
+			</span>
 		</div>
 	</div>
 {/if}
