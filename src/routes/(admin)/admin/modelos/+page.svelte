@@ -273,7 +273,7 @@
                                 <div>
                                     <div class="card-actions justify-end ">
                                         <a href={`/admin/modelos/${modelo.id}`} class="btn btn-primary">
-                                            Ver detalles
+                                            Modificar
                                         </a>
                                         <button onclick={() => confirmarEliminacion(modelo)} class="btn btn-error">
                                             Dar de baja
