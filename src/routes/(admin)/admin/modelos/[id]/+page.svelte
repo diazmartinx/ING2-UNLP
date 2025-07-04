@@ -70,36 +70,9 @@
                 ← Volver a Modelos
             </button>
         </div>
-
-        {#if !puedeEditarMarcaModelo}
-            <div class="alert alert-info mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <strong>¿Cuándo se pueden editar la marca y modelo?</strong>
-                    <ul class="list-disc ml-6 mt-2">
-                        <li>Cuando el modelo no tenga vehículos asignados</li>
-                        <li>Cuando todos los vehículos del modelo no tengan reservas de ningún tipo</li>
-                    </ul>
-                </div>
-            </div>
-        {/if}
                 
         <div class="card bg-base-100 shadow-lg  mx-auto">
             <div class="card-body">
-                {#if !puedeEditarMarcaModelo}
-                    <div class="alert alert-warning mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.232 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <span>
-                            <strong>Los campos Marca y Modelo están deshabilitados</strong> porque este modelo tiene vehículos con reservas asociadas. 
-                            Solo se pueden editar cuando el modelo no tenga vehículos asignados o cuando todos sus vehículos estén sin reservas de ningún tipo.
-                        </span>
-                    </div>
-                {/if}
-                
                 <form 
                     method="POST" 
                     action="?/edit"
@@ -125,7 +98,7 @@
                                 <label class="label" for="marca">
                                     <span class="label-text font-semibold">Marca</span>
                                     {#if !puedeEditarMarcaModelo}
-                                        <span class="label-text-alt text-warning">No se puede editar - Tiene vehículos con reservas</span>
+                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
                                     {/if}
                                 </label>
                                 <input 
@@ -143,7 +116,7 @@
                                 <label class="label" for="modelo">
                                     <span class="label-text font-semibold">Modelo</span>
                                     {#if !puedeEditarMarcaModelo}
-                                        <span class="label-text-alt text-warning">No se puede editar - Tiene vehículos con reservas</span>
+                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
                                     {/if}
                                 </label>
                                 <input 
