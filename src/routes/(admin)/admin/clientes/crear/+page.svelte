@@ -98,26 +98,14 @@
         
         return async ({ result }) => {
             loading = false;
-            console.log('DEBUG: Resultado del submit:', result);
-            console.log('DEBUG: Tipo de resultado:', result.type);
-            if ('data' in result) {
-                console.log('DEBUG: Datos del resultado:', result.data);
-            }
             
             if (result.type === 'success') {
-                console.log('DEBUG: Éxito - redirigiendo...');
                 if (result.data?.redirect) {
-                    console.log('DEBUG: Redirigiendo a:', result.data.redirect);
                     window.location.href = result.data.redirect;
-                } else {
-                    console.log('DEBUG: No hay redirect especificado');
                 }
             } else if (result.type === 'failure') {
-                console.log('DEBUG: Error en el resultado:', result.data);
                 errorMessage = result.data?.error || 'Error al crear el cliente';
                 successMessage = '';
-            } else {
-                console.log('DEBUG: Tipo de resultado inesperado:', result.type);
             }
         };
     };

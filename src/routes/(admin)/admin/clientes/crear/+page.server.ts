@@ -75,21 +75,17 @@ export const actions: Actions = {
             try {
                 await sendNewUserEmail(email, nombre, password);
                 emailEnviado = true;
-                console.log('DEBUG: Email enviado correctamente');
             } catch (emailError) {
-                console.error('DEBUG: Error al enviar email:', emailError);
                 emailEnviado = false;
             }
 
             // Redirigir según si el email se envió o no
             if (emailEnviado) {
-                console.log('DEBUG: Email enviado, devolviendo éxito con redirect');
                 return {
                     success: true,
                     redirect: '/admin/clientes?toast=cliente-creado'
                 };
             } else {
-                console.log('DEBUG: Email no enviado, devolviendo éxito con redirect');
                 return {
                     success: true,
                     redirect: '/admin/clientes?toast=cliente-creado-sin-email'
@@ -100,7 +96,6 @@ export const actions: Actions = {
                 // Es un redirect, relanzar
                 throw error;
             }
-            console.error('DEBUG: Error al crear usuario:', error);
             return fail(500, {
                 error: 'Error al crear el usuario',
                 debug: error instanceof Error ? error.message : String(error)
