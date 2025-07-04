@@ -9,7 +9,7 @@
     let error = $state('');
     let successMessage = $state('');
     let dniBusqueda = $state('');
-    let estadoFiltro = $state('Cancelada');
+    let estadoFiltro = $state('Todos');
     let reservas = $state(data.reservas);
     let sortOrder = $state<'asc' | 'desc'>('desc');
 
@@ -30,14 +30,14 @@
     $effect(() => {
         const params = $page.url.searchParams;
         dniBusqueda = params.get('dni') || '';
-        estadoFiltro = params.get('estado') || 'Cancelada';
+        estadoFiltro = params.get('estado') || 'Todos';
         reservas = data.reservas;
     });
 
     async function buscarReservas() {
         const params = new URLSearchParams();
         if (dniBusqueda) params.set('dni', dniBusqueda);
-        if (estadoFiltro) params.set('estado', estadoFiltro);
+        if (estadoFiltro && estadoFiltro !== 'Todos') params.set('estado', estadoFiltro);
         await goto(`?${params.toString()}`);
         await invalidate('app:reservas');
     }
@@ -91,6 +91,7 @@
                 bind:value={estadoFiltro}
                 class="select select-bordered w-full"
             >
+                <option value="Todos">Todos</option>
                 <option value="Cancelada">Cancelada</option>
                 <option value="Devuelto">Devuelto</option>
             </select>

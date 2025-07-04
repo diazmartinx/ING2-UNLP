@@ -8,7 +8,7 @@ import { fail } from '@sveltejs/kit';
 export const load = (async ({ url }) => {
     const searchParams = url.searchParams;
     const dniCliente = searchParams.get('dni') || '';
-    const estado = searchParams.get('estado') || 'Cancelada';
+    const estado = searchParams.get('estado'); // Puede ser undefined
 
     const conditions = [];
 
@@ -16,11 +16,11 @@ export const load = (async ({ url }) => {
         conditions.push(like(usuarios.dni, `%${dniCliente}%`));
     }
 
-    // Por defecto, mostrar solo reservas canceladas y devueltas
-    if (estado) {
-        conditions.push(eq(reservas.estado, estado as 'Cancelada' | 'Devuelto'));
-    } else {
+    // Mostrar ambos estados si no hay filtro o si es 'Todos'
+    if (!estado || estado === 'Todos') {
         conditions.push(inArray(reservas.estado, ['Cancelada', 'Devuelto']));
+    } else {
+        conditions.push(eq(reservas.estado, estado as 'Cancelada' | 'Devuelto'));
     }
 
     const baseQuery = db.select({
