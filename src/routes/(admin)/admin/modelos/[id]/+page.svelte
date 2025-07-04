@@ -97,12 +97,7 @@
     }
 
     async function showSuccessAndRedirect() {
-        successMessage = '¡Modelo actualizado exitosamente!';
-        await invalidateAll();
-        setTimeout(() => {
-            successMessage = '';
-            goto('/admin/modelos');
-        }, 2000);
+        // No mostrar mensaje local, la redirección se maneja en el enhance
     }
 
     onDestroy(() => {
@@ -139,8 +134,12 @@
                     loading = false;
                     
                     if (result.type === 'success' && result.data?.success) {
-                        await update({ reset: false, invalidateAll: true });
-                        showSuccessAndRedirect();
+                        if (result.data?.redirect && typeof result.data.redirect === 'string') {
+                            window.location.href = result.data.redirect;
+                        } else {
+                            await update({ reset: false, invalidateAll: true });
+                            showSuccessAndRedirect();
+                        }
                     } else {
                         await update({ reset: false, invalidateAll: true });
                     }

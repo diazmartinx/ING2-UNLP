@@ -228,7 +228,10 @@ export const actions = {
                 .where(eq(modelosVehiculos.id, modeloId))
                 .run();
 
-            return { success: true, message: 'Modelo actualizado correctamente.' };
+            return {
+                success: true,
+                redirect: '/admin/modelos?toast=modelo-actualizado'
+            };
 
         } catch (dbError: any) {
             console.error("Error al actualizar el modelo:", dbError);

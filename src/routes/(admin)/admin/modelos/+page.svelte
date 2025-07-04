@@ -5,7 +5,7 @@
     import { enhance } from '$app/forms';
     import { goto } from '$app/navigation';
     import { invalidateAll } from '$app/navigation';
-    import { onDestroy } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import ModelVehicleSearch from '$lib/components/ModelVehicleSearch.svelte';
 
     interface Modelo {
@@ -36,6 +36,7 @@
         modelos: Modelo[];
         categorias: Categoria[];
         politicas: Politica[];
+        toast?: string;
     }
 
     let { data }: { data: PageData } = $props();
@@ -60,6 +61,9 @@
     let modeloAEliminar = $state<Modelo | null>(null);
     let deleteError = $state('');
     let showDeleteSuccessToast = $state(false);
+    let showToast = $state(false);
+    let createLoading = $state(false);
+    let deleteLoading = $state(false);
 
     // Función para abrir el modal de confirmación
     function confirmarEliminacion(modelo: Modelo) {
@@ -173,39 +177,58 @@
 
     // Call cleanup when component is destroyed
     onDestroy(cleanup);
+
+    onMount(() => {
+        if (data.toast === 'modelo-actualizado') {
+            showToast = true;
+            setTimeout(() => {
+                showToast = false;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('toast');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }, 3000);
+        }
+    });
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+{#if showSuccessToast}
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>¡Modelo creado exitosamente!</span>
         </div>
-    {/if}
-</div>
+    </div>
+{/if}
 
-<!-- Agregar después del toast existente -->
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo creado exitosamente!</span>
-        </div>
-    {/if}
-    
-    {#if showDeleteSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+{#if showDeleteSuccessToast}
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>¡Modelo eliminado exitosamente!</span>
         </div>
-    {/if}
-</div>
+    </div>
+{/if}
+
+{#if showToast}
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+                {#if data.toast === 'modelo-actualizado'}
+                    Modelo actualizado exitosamente
+                {:else}
+                    Operación completada exitosamente
+                {/if}
+            </span>
+        </div>
+    </div>
+{/if}
 
 <div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-6">
@@ -301,7 +324,12 @@
             action="?/create"
             enctype="multipart/form-data"
             use:enhance={({ formData }) => {
+                createLoading = true;
+                createError = '';
+                
                 return async ({ result }) => {
+                    createLoading = false;
+                    
                     if (result.type === 'failure') {
                         createError = (result.data as { message: string })?.message || 'Error al crear el modelo';
                     } else if (result.type === 'success') {
@@ -315,21 +343,21 @@
                 <label class="label" for="marca">
                     <span class="label-text">Marca</span>
                 </label>
-                <input type="text" id="marca" name="marca" class="input input-bordered w-full" required />
+                <input type="text" id="marca" name="marca" class="input input-bordered w-full" required disabled={createLoading} />
             </div>
             
             <div class="form-control">
                 <label class="label" for="modelo">
                     <span class="label-text">Modelo</span>
                 </label>
-                <input type="text" id="modelo" name="modelo" class="input input-bordered w-full" required />
+                <input type="text" id="modelo" name="modelo" class="input input-bordered w-full" required disabled={createLoading} />
             </div>
             
             <div class="form-control">
                 <label class="label" for="idCategoria">
                     <span class="label-text">Categoría</span>
                 </label>
-                <select id="idCategoria" name="idCategoria" class="select select-bordered w-full" required>
+                <select id="idCategoria" name="idCategoria" class="select select-bordered w-full" required disabled={createLoading}>
                     <option value="">Seleccione una categoría</option>
                     {#each data.categorias as categoria}
                         <option value={categoria.id}>{categoria.nombre}</option>
@@ -341,14 +369,14 @@
                 <label class="label" for="capacidadPasajeros">
                     <span class="label-text">Capacidad de Pasajeros</span>
                 </label>
-                <input type="number" id="capacidadPasajeros" name="capacidadPasajeros" class="input input-bordered w-full" required min="1" />
+                <input type="number" id="capacidadPasajeros" name="capacidadPasajeros" class="input input-bordered w-full" required min="1" disabled={createLoading} />
             </div>
 
             <div class="form-control">
                 <label class="label" for="precioPorDia">
                     <span class="label-text">Precio por Día</span>
                 </label>
-                <input type="number" id="precioPorDia" name="precioPorDia" class="input input-bordered w-full" required min="0" step="0.01" />
+                <input type="number" id="precioPorDia" name="precioPorDia" class="input input-bordered w-full" required min="0" step="0.01" disabled={createLoading} />
             </div>
 
             <div class="form-control">
@@ -361,7 +389,8 @@
                     name="imagen" 
                     class="file-input file-input-bordered w-full" 
                     accept="image/*"
-                    onchange={handleImageInput} 
+                    onchange={handleImageInput}
+                    disabled={createLoading}
                 />
             </div>
 
@@ -382,7 +411,7 @@
                 <label class="label" for="idPoliticaCancelacion">
                     <span class="label-text">Política de Cancelación</span>
                 </label>
-                <select id="idPoliticaCancelacion" name="idPoliticaCancelacion" class="select select-bordered w-full" required oninput={e => selectedPolitica = (e.target as HTMLSelectElement).value}>
+                <select id="idPoliticaCancelacion" name="idPoliticaCancelacion" class="select select-bordered w-full" required oninput={e => selectedPolitica = (e.target as HTMLSelectElement).value} disabled={createLoading}>
                     <option value="">Seleccione una política</option>
                     {#each data.politicas as politica}
                         <option value={politica.id}>{politica.tipoPolitica}</option>
@@ -413,6 +442,7 @@
                                 porcentajeReembolsoParcialError = '';
                             }
                         }}
+                        disabled={createLoading}
                     />
                     {#if porcentajeReembolsoParcialError}
                         <span class="text-error text-sm mt-1">{porcentajeReembolsoParcialError}</span>
@@ -425,8 +455,18 @@
             {/if}
 
             <div class="modal-action">
-                <button type="button" class="btn btn-ghost" onclick={closeModal}>Cancelar</button>
-                <button type="submit" class="btn btn-primary" disabled={!!porcentajeReembolsoParcialError}>Crear Modelo</button>
+                <button type="button" class="btn btn-ghost" onclick={closeModal} disabled={createLoading}>Cancelar</button>
+                <button type="submit" class="btn btn-primary" disabled={!!porcentajeReembolsoParcialError || createLoading}>
+                    {#if createLoading}
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creando modelo...
+                    {:else}
+                        Crear Modelo
+                    {/if}
+                </button>
             </div>
         </form>
     </div>
@@ -477,7 +517,12 @@
             method="POST" 
             action="?/eliminarModelo"
             use:enhance={() => {
+                deleteLoading = true;
+                deleteError = '';
+                
                 return async ({ result }) => {
+                    deleteLoading = false;
+                    
                     if (result.type === 'failure') {
                         deleteError = (result.data as { message: string })?.message || 'Error al eliminar el modelo';
                     } else if (result.type === 'success') {
@@ -490,14 +535,22 @@
             <input type="hidden" name="id" value={modeloAEliminar.id} />
             
             <div class="modal-action">
-                <button type="button" class="btn btn-ghost" onclick={cerrarModalEliminacion}>
+                <button type="button" class="btn btn-ghost" onclick={cerrarModalEliminacion} disabled={deleteLoading}>
                     Cancelar
                 </button>
-                <button type="submit" class="btn btn-error">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Eliminar Modelo
+                <button type="submit" class="btn btn-error" disabled={deleteLoading}>
+                    {#if deleteLoading}
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Eliminando modelo...
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Eliminar Modelo
+                    {/if}
                 </button>
             </div>
         </form>

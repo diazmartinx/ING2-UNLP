@@ -4,7 +4,8 @@ import { eq, and, count } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load = (async () => {
+export const load = (async ({ url }) => {
+    const toast = url.searchParams.get('toast') || '';
     const modelos = await db.select({
         id: modelosVehiculos.id,
         marca: modelosVehiculos.marca,
@@ -57,7 +58,8 @@ export const load = (async () => {
     return {
         modelos: modelosSerializados,
         categorias,
-        politicas
+        politicas,
+        toast
     };
 }) satisfies PageServerLoad;
 
