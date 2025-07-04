@@ -3,6 +3,7 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import type { PageData, ActionData } from './$types';
+	import { onMount } from 'svelte';
 
 	export let data: PageData;
 
@@ -12,6 +13,7 @@
 	let mensajeExito = '';
 	let mensajeError = '';
 	let terminoBusqueda = data.busqueda || '';
+	let showToast = false;
 
 	function abrirModal(cliente: typeof data.clientes[number]) {
 		clienteSeleccionado = cliente;
@@ -57,6 +59,18 @@
 			buscarClientes();
 		}
 	}
+
+	onMount(() => {
+		if (data.toast === 'cliente-creado') {
+			showToast = true;
+			setTimeout(() => {
+				showToast = false;
+				const url = new URL(window.location.href);
+				url.searchParams.delete('toast');
+				window.history.replaceState({}, '', url.pathname + url.search);
+			}, 3000);
+		}
+	});
 </script>
 
 {#if mensajeExito}
@@ -74,6 +88,17 @@
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
 		</svg>
 		<span>{mensajeError}</span>
+	</div>
+{/if}
+
+{#if showToast}
+	<div class="fixed top-4 right-4 z-50">
+		<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+			<svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			<span>{data.toast === 'cliente-creado-sin-email' ? 'Cliente creado, pero no se pudo enviar el email' : 'Cliente creado exitosamente'}</span>
+		</div>
 	</div>
 {/if}
 

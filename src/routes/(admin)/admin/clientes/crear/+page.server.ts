@@ -45,6 +45,11 @@ export const actions: Actions = {
             return fail(400, { error: 'El cliente debe tener al menos 18 años' });
         }
 
+        // Validar DNI
+        if (!/^\d{7,8}$/.test(dni)) {
+            return fail(400, { error: 'El DNI debe tener 7 u 8 dígitos' });
+        }
+
         // Generar contraseña aleatoria
         const password = generatePassword();
         const hashedPassword = await hash(password);
@@ -66,15 +71,39 @@ export const actions: Actions = {
             }
 
             // Enviar email con la contraseña
-            await sendNewUserEmail(email, nombre, password);
+            let emailEnviado = false;
+            try {
+                await sendNewUserEmail(email, nombre, password);
+                emailEnviado = true;
+                console.log('DEBUG: Email enviado correctamente');
+            } catch (emailError) {
+                console.error('DEBUG: Error al enviar email:', emailError);
+                emailEnviado = false;
+            }
 
-            return {
-                success: true
-            };
+            // Redirigir según si el email se envió o no
+            if (emailEnviado) {
+                console.log('DEBUG: Email enviado, devolviendo éxito con redirect');
+                return {
+                    success: true,
+                    redirect: '/admin/clientes?toast=cliente-creado'
+                };
+            } else {
+                console.log('DEBUG: Email no enviado, devolviendo éxito con redirect');
+                return {
+                    success: true,
+                    redirect: '/admin/clientes?toast=cliente-creado-sin-email'
+                };
+            }
         } catch (error) {
-            console.error('Error al crear usuario:', error);
+            if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+                // Es un redirect, relanzar
+                throw error;
+            }
+            console.error('DEBUG: Error al crear usuario:', error);
             return fail(500, {
-                error: 'Error al crear el usuario'
+                error: 'Error al crear el usuario',
+                debug: error instanceof Error ? error.message : String(error)
             });
         }
     }
