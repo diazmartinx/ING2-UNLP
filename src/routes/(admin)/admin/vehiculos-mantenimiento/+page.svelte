@@ -21,7 +21,7 @@
     }
 </script>
 
-<h1 class="text-2xl font-bold mb-4">Unidades en Mantenimiento</h1>
+<h1 class="text-2xl font-bold mb-4">Vehículos en Mantenimiento</h1>
 
 <form method="GET" class="mb-4 flex gap-2" on:submit|preventDefault>
     <input
