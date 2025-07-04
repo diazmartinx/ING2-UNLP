@@ -50,7 +50,7 @@
             href: '/admin/reservas'
         },
         {
-            label: 'Vehiculos en Mantenimiento',
+            label: 'Vehículos en Mantenimiento',
             href: '/admin/vehiculos-mantenimiento'
         },
         {
