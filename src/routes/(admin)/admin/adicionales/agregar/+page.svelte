@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+    import { goto } from '$app/navigation';
     import type { PageData, ActionData } from './$types';
     import type { SubmitFunction } from '@sveltejs/kit';
 
     let { data, form }: { data: PageData, form: ActionData } = $props();
     
     let loading = $state(false);
-    let successMessage = $state('');
     let errorMessage = $state('');
     
     // Form fields
@@ -25,16 +25,16 @@
         precioPorDiaError = '';
         
         // Validate nombre
-        if (!nombre.trim()) {
+        if (!nombre || !nombre.toString().trim()) {
             nombreError = 'El nombre es requerido';
             isValid = false;
-        } else if (nombre.trim().length < 2) {
+        } else if (nombre.toString().trim().length < 2) {
             nombreError = 'El nombre debe tener al menos 2 caracteres';
             isValid = false;
         }
         
         // Validate precioPorDia
-        if (!precioPorDia.trim()) {
+        if (!precioPorDia || precioPorDia.toString().trim() === '') {
             precioPorDiaError = 'El precio por día es requerido';
             isValid = false;
         } else {
@@ -50,21 +50,16 @@
 
     const submitAdicional: SubmitFunction = () => {
         loading = true;
-        successMessage = '';
         errorMessage = '';
         
         return async ({ result }) => {
             loading = false;
             
-            if (result.type === 'success') {
-                successMessage = 'Adicional creado exitosamente.';
-                errorMessage = '';
-                // Reset form
-                nombre = '';
-                precioPorDia = '';
-            } else if (result.type === 'failure') {
+            if (result.type === 'failure') {
                 errorMessage = result.data?.error || 'Error al crear el adicional';
-                successMessage = '';
+            } else if (result.type === 'success') {
+                // Redirigir al listado con toast
+                await goto('/admin/adicionales?toast=adicional-creado');
             }
         };
     };
@@ -87,22 +82,6 @@
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Crear Nuevo Adicional</h1>
             <p class="text-gray-600">Complete los datos del nuevo adicional que estará disponible para las reservas.</p>
         </div>
-
-        <!-- Success Message -->
-        {#if successMessage}
-            <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-green-800">{successMessage}</p>
-                    </div>
-                </div>
-            </div>
-        {/if}
 
         <!-- Error Message -->
         {#if errorMessage}
