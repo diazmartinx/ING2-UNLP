@@ -30,8 +30,6 @@ export async function load ({ params }) {
         categoria: categoria[0]
     };
 
-    console.log(vehiculoFinal);
-
     return {
         vehiculo: vehiculoFinal
     };
