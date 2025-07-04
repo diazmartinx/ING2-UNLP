@@ -18,6 +18,7 @@ export const load = (async ({ params }) => {
         fechaInicio: reservas.fechaInicio,
         fechaFin: reservas.fechaFin,
         fechaCreacion: reservas.fechaCreacion,
+        fechaDevolucion: reservas.fechaDevolucion,
         estado: reservas.estado,
         dniCliente: usuarios.dni,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,

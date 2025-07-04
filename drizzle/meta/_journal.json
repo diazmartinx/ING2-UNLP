@@ -162,34 +162,6 @@
       "when": 1750247549083,
       "tag": "0022_wakeful_ronan",
       "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "6",
-      "when": 1750946118944,
-      "tag": "0023_slimy_harry_osborn",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "6",
-      "when": 1750947552364,
-      "tag": "0024_puzzling_thunderbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "6",
-      "when": 1750981309356,
-      "tag": "0025_supreme_grey_gargoyle",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "6",
-      "when": 1751029690180,
-      "tag": "0026_majestic_thaddeus_ross",
-      "breakpoints": true
     }
   ]
 }

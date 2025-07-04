@@ -61,6 +61,7 @@ export const reservas = sqliteTable('reservas', {
 	estado: text({ enum: ["Pendiente", "Entregada", "Cancelada", "Devuelto"] }).default('Pendiente').notNull(),
 	importeTotal: real().notNull(),
 	fechaCreacion: integer({ mode: 'timestamp' }).notNull(), 
+	fechaDevolucion: integer({ mode: 'timestamp' }),
 	importeAdicionales: real().default(0)
 })
 
