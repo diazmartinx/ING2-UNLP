@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { modelosVehiculos, categoriasVehiculos, politicasCancelacion, unidadesVehiculos, reservas } from '$lib/server/db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -77,13 +77,13 @@ export const actions = {
             const porcentajeReembolsoParcialRaw = formData.get('porcentajeReembolsoParcial');
             let porcentajeReembolsoParcial: number | null = null;
 
-            // Check for duplicate model
+            // Check for duplicate model (case insensitive)
             const existingModel = await db.select()
                 .from(modelosVehiculos)
                 .where(
                     and(
-                        eq(modelosVehiculos.marca, marca),
-                        eq(modelosVehiculos.modelo, modelo)
+                        sql`LOWER(${modelosVehiculos.marca}) = LOWER(${marca})`,
+                        sql`LOWER(${modelosVehiculos.modelo}) = LOWER(${modelo})`
                     )
                 );
 

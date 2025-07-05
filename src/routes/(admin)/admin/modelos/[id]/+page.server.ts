@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit'; // Added fail
 import { Buffer } from 'buffer'; // Import Buffer
 
@@ -176,6 +176,30 @@ export const actions = {
         if (Object.keys(errors).length > 0) {
             return fail(400, {
                 errors,
+                marca: fields.marca?.toString() ?? '',
+                modeloNombre: fields.modeloNombre?.toString() ?? '',
+                capacidadPasajeros: fields.capacidadPasajeros?.toString() ?? '',
+                precioPorDia: fields.precioPorDia?.toString() ?? '',
+                tipoPolitica: fields.tipoPolitica?.toString() ?? '',
+                porcentajeReembolsoParcial: fields.porcentajeReembolsoParcial?.toString() ?? '',
+                categoriaId: fields.categoriaId?.toString() ?? ''
+            });
+        }
+
+        // Check for duplicate model (case insensitive) excluding current model
+        const existingModel = await db.select()
+            .from(modelosVehiculos)
+            .where(
+                and(
+                    sql`LOWER(${modelosVehiculos.marca}) = LOWER(${fields.marca!.toString().trim()})`,
+                    sql`LOWER(${modelosVehiculos.modelo}) = LOWER(${fields.modeloNombre!.toString().trim()})`,
+                    sql`${modelosVehiculos.id} != ${modeloId}`
+                )
+            );
+
+        if (existingModel.length > 0) {
+            return fail(400, { 
+                message: 'Ya existe un modelo con la misma marca y modelo',
                 marca: fields.marca?.toString() ?? '',
                 modeloNombre: fields.modeloNombre?.toString() ?? '',
                 capacidadPasajeros: fields.capacidadPasajeros?.toString() ?? '',
