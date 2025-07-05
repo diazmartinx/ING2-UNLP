@@ -10,9 +10,10 @@
     
     interface Reserva {
         id: number;
-        estado: "Pendiente" | "Entregada" | "Cancelada";
+        estado: "Pendiente" | "Entregada" | "Cancelada" | "Devuelto";
         fechaInicio: Date;
         fechaFin: Date;
+        fechaDevolucion: Date | null;
         patenteUnidadAsignada: string | null;
         modeloReservado: string;
         marcaReservada: string;
@@ -107,10 +108,14 @@
                 <div>
                     <p><span class="font-semibold">Fecha Inicio:</span> {new Date(reserva.fechaInicio).toLocaleDateString()}</p>
                     <p><span class="font-semibold">Fecha Fin:</span> {new Date(reserva.fechaFin).toLocaleDateString()}</p>
+                    {#if reserva.fechaDevolucion}
+                        <p><span class="font-semibold">Fecha Devolución:</span> {new Date(reserva.fechaDevolucion).toLocaleDateString()}</p>
+                    {/if}
                     <p class="mt-2">
                         <span class="font-semibold">Estado:</span>
                         <span class="px-3 py-1 rounded-full text-sm font-medium {reserva.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' : 
-                            reserva.estado === 'Entregada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            reserva.estado === 'Entregada' ? 'bg-green-100 text-green-800' : 
+                            reserva.estado === 'Devuelto' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}">
                             {reserva.estado}
                         </span>
                     </p>

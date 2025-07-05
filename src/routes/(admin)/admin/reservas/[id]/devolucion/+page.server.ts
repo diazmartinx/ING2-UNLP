@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ params }) => {
         estado: reservas.estado,
         fechaInicio: reservas.fechaInicio,
         fechaFin: reservas.fechaFin,
+        fechaDevolucion: reservas.fechaDevolucion,
         patenteUnidadAsignada: reservas.patenteUnidadAsignada,
         modeloReservado: sql<string>`(SELECT m.modelo FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
         marcaReservada: sql<string>`(SELECT m.marca FROM modelos_vehiculos m WHERE m.id = ${reservas.idModeloReservado})`,
@@ -162,10 +163,11 @@ export const actions: Actions = {
                 });
             }
 
-            // Update the reservation state to Devuelto
+            // Update the reservation state to Devuelto and set the return date
             await db.update(reservas)
                 .set({
-                    estado: 'Devuelto'
+                    estado: 'Devuelto',
+                    fechaDevolucion: new Date()
                 })
                 .where(eq(reservas.id, parseInt(reservaId.toString())));
 

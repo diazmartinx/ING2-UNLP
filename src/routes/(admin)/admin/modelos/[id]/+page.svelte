@@ -1,294 +1,272 @@
 <script lang="ts">
-    import type { ActionData, PageData } from './$types';
+    import type { PageData } from './$types';
     import { enhance } from '$app/forms';
-    import { invalidateAll, goto } from '$app/navigation';
-    import { onDestroy } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { invalidateAll } from '$app/navigation';
 
-    // Definir tipos robustos para form y errores
-    type FormErrors = {
-        [key: string]: string | undefined;
-        marca?: string;
-        modeloNombre?: string;
-        capacidadPasajeros?: string;
-        precioPorDia?: string;
-        tipoPolitica?: string;
-        porcentajeReembolsoParcial?: string;
-        categoriaId?: string;
-        imagen?: string;
-    };
-    type FormType = {
-        errors?: FormErrors;
-        marca?: string;
-        modeloNombre?: string;
-        capacidadPasajeros?: string;
-        precioPorDia?: string;
-        tipoPolitica?: string;
-        porcentajeReembolsoParcial?: string;
-        categoriaId?: string;
-    } | undefined;
-
-    let { data, form }: { data: PageData, form: FormType } = $props();
+    let { data }: { data: PageData } = $props();
 
     // Base data from the server (reactive to `data` prop changes)
     let modelo = $derived(data.modelo);
     let categoria = $derived(data.categoria);
     let politica = $derived(data.politica);
+    let categorias = $derived(data.categorias);
+    let puedeEditarMarcaModelo = $derived(data.puedeEditarMarcaModelo);
 
-    // Form input states, initialized from `form` (if available on error) or static defaults.
-    let marca = $state(form?.marca ?? data.modelo.marca ?? '');
-    let modeloNombre = $state(form?.modeloNombre ?? data.modelo.modelo ?? '');
-    let capacidadPasajeros = $state(form?.capacidadPasajeros ? parseInt(form.capacidadPasajeros) : data.modelo.capacidadPasajeros ?? 0);
-    let precioPorDia = $state(form?.precioPorDia ? parseFloat(form.precioPorDia) : data.modelo.precioPorDia ?? 0);
-    let porcentajeReembolsoParcial = $state(form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : data.modelo.porcentajeReembolsoParcial ?? null);
-    let selectedTipoPolitica = $state(form?.tipoPolitica ?? data.politica?.tipoPolitica ?? 'Sin Reembolso');
-    let selectedCategoriaId = $state(form?.categoriaId ?? data.modelo.idCategoria?.toString() ?? '');
-    
-    // State for loading and success message
-    let loading = $state(false);
-    let successMessage = $state('');
+    // Estados para el formulario de edición
+    let editError = $state('');
+    let editDisplayImageUrl = $state('');
+    let editSelectedFile = $state<File | null>(null);
+    let showEditSuccessToast = $state(false);
 
-    // State for image handling
-    let selectedFile = $state<File | null>(null);
-    let displayImageUrl = $state('');
-    let createImageError = $state(false);
-
-    // Effect to reset form fields to latest data when `data` prop changes (e.g., after successful update)
-    // and to repopulate from `form` if there are errors.
+    // Inicializar los valores del formulario
     $effect(() => {
-        const hasFormErrors = form && form.errors && Object.keys(form.errors).length > 0;
-        if (hasFormErrors) {
-            marca = form?.marca ?? marca;
-            modeloNombre = form?.modeloNombre ?? modeloNombre;
-            capacidadPasajeros = form?.capacidadPasajeros ? parseInt(form.capacidadPasajeros) : capacidadPasajeros;
-            precioPorDia = form?.precioPorDia ? parseFloat(form.precioPorDia) : precioPorDia;
-            porcentajeReembolsoParcial = form?.porcentajeReembolsoParcial != null ? parseFloat(form.porcentajeReembolsoParcial) : porcentajeReembolsoParcial;
-            selectedTipoPolitica = form?.tipoPolitica ?? selectedTipoPolitica;
-            selectedCategoriaId = form?.categoriaId ?? selectedCategoriaId;
-        } else {
-            marca = data.modelo.marca;
-            modeloNombre = data.modelo.modelo;
-            capacidadPasajeros = data.modelo.capacidadPasajeros;
-            precioPorDia = data.modelo.precioPorDia;
-            porcentajeReembolsoParcial = data.modelo.porcentajeReembolsoParcial ?? null;
-            selectedTipoPolitica = data.politica?.tipoPolitica ?? 'Sin Reembolso';
-            selectedCategoriaId = data.modelo.idCategoria?.toString() ?? '';
+        if (modelo) {
+            editDisplayImageUrl = modelo.imagenUrl || '';
         }
     });
 
-    function handleImageInput(e: Event) {
+    function handleEditImageInput(e: Event) {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
-            if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(displayImageUrl);
-            }
-            selectedFile = input.files[0];
-            displayImageUrl = URL.createObjectURL(selectedFile);
-            createImageError = false;
+            editSelectedFile = input.files[0];
+            editDisplayImageUrl = URL.createObjectURL(editSelectedFile);
         }
     }
 
-    function handleImageError() {
-        displayImageUrl = '/no-image-icon.svg';
-        createImageError = true;
+    async function mostrarExitoEdicion() {
+        showEditSuccessToast = true;
+        await invalidateAll();
+        setTimeout(() => {
+            showEditSuccessToast = false;
+            goto('/admin/modelos');
+        }, 2000);
     }
 
-    function handleImageLoad() {
-        createImageError = false;
+    function cancelarEdicion() {
+        goto('/admin/modelos');
     }
-
-    async function showSuccessAndRedirect() {
-        // No mostrar mensaje local, la redirección se maneja en el enhance
-    }
-
-    onDestroy(() => {
-        if (displayImageUrl && displayImageUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(displayImageUrl);
-        }
-    });
 </script>
 
-<!-- Success Message -->
-{#if successMessage}
-    <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6 max-w-2xl mx-auto mt-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm font-medium text-green-800">{successMessage}</p>
-            </div>
+<div class="toast toast-top toast-end z-50">
+    {#if showEditSuccessToast}
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>¡Modelo editado exitosamente!</span>
         </div>
-    </div>
-{/if}
+    {/if}
+</div>
 
 <div class="container mx-auto p-4">
-    {#if modelo} 
-        <h1 class="text-3xl font-bold mb-6 text-center">{modelo.marca} {modelo.modelo}</h1>        
-            <form method="POST" enctype="multipart/form-data" use:enhance={() => {
-                loading = true;
-                successMessage = '';
+    {#if modelo}
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Editar Modelo: {modelo.marca} {modelo.modelo}</h1>
+            <button 
+                class="btn btn-ghost" 
+                onclick={cancelarEdicion}
+            >
+                ← Volver a Modelos
+            </button>
+        </div>
                 
-                return async ({ result, update }) => {
-                    loading = false;
-                    
-                    if (result.type === 'success' && result.data?.success) {
-                        if (result.data?.redirect && typeof result.data.redirect === 'string') {
-                            window.location.href = result.data.redirect;
-                        } else {
-                            await update({ reset: false, invalidateAll: true });
-                            showSuccessAndRedirect();
+        <div class="card bg-base-100 shadow-lg  mx-auto">
+            <div class="card-body">
+                <form 
+                    method="POST" 
+                    action="?/edit"
+                    enctype="multipart/form-data"
+                    use:enhance={({ formData }) => {
+                        if (editSelectedFile) {
+                            formData.append('imagen', editSelectedFile);
                         }
-                    } else {
-                        await update({ reset: false, invalidateAll: true });
-                    }
-                };
-            }} class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <!-- General Form Messages -->
+                        
+                        return async ({ result }) => {
+                            if (result.type === 'failure') {
+                                editError = (result.data as { message: string })?.message || 'Error al editar el modelo';
+                            } else if (result.type === 'success') {
+                                mostrarExitoEdicion();
+                            }
+                        };
+                    }}
+                >
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Columna izquierda: Información básica -->
+                        <div class="space-y-4">
+                            <div class="form-control">
+                                <label class="label" for="marca">
+                                    <span class="label-text font-semibold">Marca</span>
+                                    {#if !puedeEditarMarcaModelo}
+                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
+                                    {/if}
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="marca" 
+                                    name="marca" 
+                                    class="input input-bordered w-full {!puedeEditarMarcaModelo ? 'bg-base-200 cursor-not-allowed' : ''}" 
+                                    value={modelo.marca}
+                                    required 
+                                    disabled={!puedeEditarMarcaModelo}
+                                />
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="modelo">
+                                    <span class="label-text font-semibold">Modelo</span>
+                                    {#if !puedeEditarMarcaModelo}
+                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
+                                    {/if}
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="modelo" 
+                                    name="modelo" 
+                                    class="input input-bordered w-full {!puedeEditarMarcaModelo ? 'bg-base-200 cursor-not-allowed' : ''}" 
+                                    value={modelo.modelo}
+                                    required 
+                                    disabled={!puedeEditarMarcaModelo}
+                                />
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label" for="idCategoria">
+                                    <span class="label-text font-semibold">Categoría</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="idCategoria"
+                                    class="input input-bordered w-full bg-base-200 cursor-not-allowed" 
+                                    value={categoria?.nombre || 'Sin categoría'}
+                                    disabled
+                                />
+                            </div>
 
-            <div>
-                {#if modelo.imagenUrl}
-                    <img src={modelo.imagenUrl} alt="Imagen del vehículo {modelo.marca} {modelo.modelo}" class="w-full h-auto object-cover rounded-lg shadow-lg mb-4">
-                {:else}
-                    <div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg shadow-lg mb-4">
-                        <span class="text-gray-500">Imagen no disponible</span>
-                    </div>
-                {/if}
-                
-                <div class="mb-4">
-                    <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Cambiar Imagen:</label>
-                    <input 
-                        type="file" 
-                        id="imagen" 
-                        name="imagen" 
-                        class="file-input file-input-bordered w-full" 
-                        accept="image/*"
-                        onchange={handleImageInput}
-                    />
-                    {#if form?.errors?.imagen}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.imagen}</p>
-                    {/if}
-                </div>
+                            <div class="form-control">
+                                <label class="label" for="capacidadPasajeros">
+                                    <span class="label-text font-semibold">Capacidad de Pasajeros</span>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="capacidadPasajeros" 
+                                    name="capacidadPasajeros" 
+                                    class="input input-bordered w-full" 
+                                    value={modelo.capacidadPasajeros}
+                                    required 
+                                    min="1" 
+                                />
+                            </div>
 
-                {#if displayImageUrl}
-                    <div class="flex justify-center mt-2 mb-4">
-                        <img
-                            src={displayImageUrl}
-                            alt="Preview imagen"
-                            class="h-40 w-40 object-cover rounded border"
-                            style="max-width: 160px; max-height: 160px;"
-                            onerror={handleImageError}
-                            onload={handleImageLoad}
-                        />
-                    </div>
-                {/if}
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold mb-4">Detalles del Modelo</h2>
-                
-                <input type="hidden" name="id" value={modelo.id} />
+                            <div class="form-control">
+                                <label class="label" for="precioPorDia">
+                                    <span class="label-text font-semibold">Precio por Día</span>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="precioPorDia" 
+                                    name="precioPorDia" 
+                                    class="input input-bordered w-full" 
+                                    value={modelo.precioPorDia}
+                                    required 
+                                    min="1" 
+                                    
+                                />
+                            </div>
+                        </div>
 
-                <div class="mb-4">
-                    <label for="marca" class="block text-sm font-medium text-gray-700 mb-1">Marca:</label>
-                    <input type="text" id="marca" name="marca" bind:value={marca} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    {#if form?.errors?.marca}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.marca}</p>
-                    {/if}
-                </div>
+                        <!-- Columna derecha: Imagen y políticas -->
+                        <div class="">
+                            <div class="form-control">
+                                <label class="label" for="imagen">
+                                    <span class="label-text font-semibold">Imagen del Vehículo</span>
+                                    <span class="label-text-alt">Opcional - Deja vacío para mantener la actual</span>
+                                </label>
+                                <input 
+                                    type="file" 
+                                    id="imagen" 
+                                    name="imagen" 
+                                    class="file-input file-input-bordered w-full" 
+                                    accept="image/*"
+                                    onchange={handleEditImageInput} 
+                                />
+                            </div>
 
-                <div class="mb-4">
-                    <label for="modeloNombre" class="block text-sm font-medium text-gray-700 mb-1">Modelo:</label>
-                    <input type="text" id="modeloNombre" name="modeloNombre" bind:value={modeloNombre} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    {#if form?.errors?.modeloNombre}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.modeloNombre}</p>
-                    {/if}
-                </div>
+                            {#if editDisplayImageUrl}
+                                <div class="flex justify-center">
+                                    <div class="avatar">
+                                        <div class="w-60 rounded-lg">
+                                            <img 
+                                                src={editDisplayImageUrl} 
+                                                alt="Vista previa" 
+                                                class="object-cover"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
 
-                <div class="mb-4">
-                    <label for="capacidadPasajeros" class="block text-sm font-medium text-gray-700 mb-1">Capacidad de Pasajeros:</label>
-                    <input type="number" id="capacidadPasajeros" name="capacidadPasajeros" bind:value={capacidadPasajeros} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    {#if form?.errors?.capacidadPasajeros}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.capacidadPasajeros}</p>
-                    {/if}
-                </div>
-
-                <div class="mb-4">
-                    <label for="precioPorDia" class="block text-sm font-medium text-gray-700 mb-1">Precio por Día:</label>
-                    <input type="number" step="0.01" id="precioPorDia" name="precioPorDia" bind:value={precioPorDia} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    {#if form?.errors?.precioPorDia}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.precioPorDia}</p>
-                    {/if}
-                </div>
-                
-                <div class="mb-4">
-                    <label for="categoriaId" class="block text-sm font-medium text-gray-700 mb-1">Categoría:</label>
-                    <select id="categoriaId" name="categoriaId" bind:value={selectedCategoriaId} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        {#each data.categorias as categoria}
-                            <option value={categoria.id.toString()}>{categoria.nombre}</option>
-                        {/each}
-                    </select>
-                    {#if form?.errors?.categoriaId}
-                        <p class="text-red-500 text-sm mt-1">{form.errors.categoriaId}</p>
-                    {/if}
-                </div>
-
-                {#if politica || form?.tipoPolitica} <!-- Show policy section if initial policy exists or if form has a type (e.g. on error) -->
-                    <h3 class="text-xl font-semibold mt-4 mb-2">Política de Cancelación</h3>
-                    
-                    <div class="mb-4">
-                        <label for="tipoPolitica" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Política:</label>
-                        <select id="tipoPolitica" name="tipoPolitica" bind:value={selectedTipoPolitica} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="Reembolso Total">Reembolso Total</option>
-                            <option value="Reembolso Parcial">Reembolso Parcial</option>
-                            <option value="Sin Reembolso">Sin Reembolso</option>
-                        </select>
-                        {#if form?.errors?.tipoPolitica}
-                            <p class="text-red-500 text-sm mt-1">{form.errors.tipoPolitica}</p>
-                        {/if}
-                    </div>
-
-                    {#if selectedTipoPolitica === 'Reembolso Parcial'}
-                        <div class="mb-4">
-                            <label for="porcentajeReembolsoParcial" class="block text-sm font-medium text-gray-700 mb-1">Porcentaje de Reembolso Parcial (%):</label>
-                            <input type="number" step="0.01" id="porcentajeReembolsoParcial" name="porcentajeReembolsoParcial" bind:value={porcentajeReembolsoParcial} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ej: 10 para 10%" />
-                            {#if form?.errors?.porcentajeReembolsoParcial}
-                                <p class="text-red-500 text-sm mt-1">{form.errors.porcentajeReembolsoParcial}</p>
+                            {#if politica}
+                                <div class="form-control mt-4">
+                                    <label class="label" for="politicaCancelacion">
+                                        <span class="label-text font-semibold">Política de Cancelación</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="politicaCancelacion"
+                                        class="input input-bordered w-full bg-base-200 cursor-not-allowed" 
+                                        value={politica.tipoPolitica}
+                                        disabled
+                                    />
+                                </div>
+                                {#if politica.tipoPolitica === 'Reembolso Parcial' && modelo.porcentajeReembolsoParcial !== null}
+                                    <div class="form-control mt-4">
+                                        <label class="label" for="porcentajeReembolsoParcial">
+                                            <span class="label-text font-semibold">Porcentaje de Reembolso</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="porcentajeReembolsoParcial"
+                                            class="input input-bordered w-full bg-base-200 cursor-not-allowed" 
+                                            value={`${modelo.porcentajeReembolsoParcial}%`}
+                                            disabled
+                                        />
+                                    </div>
+                                {/if}
                             {/if}
                         </div>
-                    {/if}
-                {/if}
+                    </div>
 
-                <div class="mt-6 flex justify-end space-x-3">
-                    <a href={`/admin/modelos`} class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
-                        Cancelar
-                    </a>
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {#if loading}
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    {#if editError}
+                        <div class="alert alert-error mt-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Guardando cambios...
-                        {:else}
+                            <span>{editError}</span>
+                        </div>
+                    {/if}
+
+                    <div class="card-actions justify-end mt-6 gap-4">
+                        <button type="button" class="btn btn-ghost" onclick={cancelarEdicion}>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
                             Guardar Cambios
-                        {/if}
-                    </button>
-                </div>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     {:else}
         <p class="text-center text-xl text-red-500">No se pudo cargar la información del modelo.</p>
     {/if}
 </div>
 
 <style>
-    /* Puedes agregar estilos específicos aquí si es necesario */
     .container {
-        max-width: 1000px;
+        max-width: 1200px;
     }
 </style>

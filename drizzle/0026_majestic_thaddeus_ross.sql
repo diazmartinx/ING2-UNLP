@@ -1,1 +1,0 @@
-ALTER TABLE `reservas` ADD `importeAdicionales` real DEFAULT 0;

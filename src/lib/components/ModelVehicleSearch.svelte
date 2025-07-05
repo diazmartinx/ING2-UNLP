@@ -11,6 +11,8 @@
         categoria: string;
         politicaCancelacion: string;
         porcentajeReembolsoParcial: number | null;
+        reservasActivas?: number;
+        unidadesAsignadas?: number;
     }
     
     interface Categoria {

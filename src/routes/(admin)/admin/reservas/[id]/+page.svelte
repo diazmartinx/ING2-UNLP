@@ -8,6 +8,7 @@
         fechaInicio: number;
         fechaFin: number;
         fechaCreacion: number;
+        fechaDevolucion: number | null;
         estado: string;
         dniCliente: string;
         patenteUnidadAsignada: string;
@@ -39,6 +40,8 @@
                 return 'bg-green-100 text-green-800';
             case 'Cancelada':
                 return 'bg-red-100 text-red-800';
+            case 'Devuelto':
+                return 'bg-blue-100 text-blue-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -142,6 +145,9 @@
                                 <p><span class="font-medium">Fecha de Inicio:</span> {formatDateOnly(reserva.fechaInicio)}</p>
                                 <p><span class="font-medium">Fecha de Fin:</span> {formatDateOnly(reserva.fechaFin)}</p>
                                 <p><span class="font-medium">Fecha de Creación:</span> {formatDateTime(reserva.fechaCreacion)}</p>
+                                {#if reserva.fechaDevolucion}
+                                    <p><span class="font-medium">Fecha de Devolución:</span> {formatDateTime(reserva.fechaDevolucion)}</p>
+                                {/if}
                             </div>
                             <div>
                                 <p><span class="font-medium">Importe de Reserva:</span> {formatCurrency(reserva.importeTotal - reserva.importeAdicionales)}</p>
