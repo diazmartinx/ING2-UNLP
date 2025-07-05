@@ -59,7 +59,7 @@
             <h2 class="text-3xl font-bold text-gray-800">Reservas Activas</h2>
             <a 
                 href="/admin/reservas-historicas" 
-                class="btn btn-outline btn-primary"
+                class="btn btn-outline btn-primary cursor-pointer"
             >
                 Ver Historial de Reservas
             </a>
@@ -99,7 +99,7 @@
 
         <button 
             onclick={buscarReservas}
-            class="btn btn-primary"
+            class="btn btn-primary cursor-pointer"
         >
             Buscar
         </button>
@@ -129,7 +129,7 @@
                         <th>Unidad Asignada</th>
                         <th>
                             <button 
-                                class="flex items-center gap-2"
+                                class="flex items-center gap-2 cursor-pointer"
                                 onclick={toggleSort}
                             >
                                 Fecha Inicio
@@ -164,31 +164,44 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="flex space-x-2">
+                                <div class="flex items-center gap-2">
                                     <a 
                                         href="/admin/reservas/{reserva.id}" 
-                                        class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                                        class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
                                     >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
                                         Detalles
                                     </a>
                                     {#if reserva.estado === 'Pendiente'}
                                         <a
                                             href="/admin/reservas/{reserva.id}/asignar-unidad"
-                                            class="font-medium text-green-600 dark:text-green-500 hover:underline cursor-pointer"
+                                            class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors cursor-pointer"
                                         >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
                                             Asignar Vehículo
                                         </a>
                                         <a
                                             href="/admin/reservas/{reserva.id}/cancelar"
-                                            class="font-medium text-red-600 dark:text-red-500 hover:underline cursor-pointer"
+                                            class="inline-flex items-center gap-1 rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
                                         >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Cancelar
                                         </a>
                                     {:else if reserva.estado === 'Entregada'}
                                         <a
                                             href="/admin/reservas/{reserva.id}/devolucion"
-                                            class="font-medium text-yellow-600 dark:text-yellow-500 hover:underline cursor-pointer"
+                                            class="inline-flex items-center gap-1 rounded-md bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 hover:bg-yellow-100 transition-colors cursor-pointer"
                                         >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                            </svg>
                                             Devolución Vehículo
                                         </a>
                                     {/if}
