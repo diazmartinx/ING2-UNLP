@@ -160,8 +160,8 @@
             </svg>
             <span>¡Modelo eliminado exitosamente!</span>
         </div>
+        {/if}
     </div>
-{/if}
 
 {#if showToast}
     <div class="fixed top-4 right-4 z-50">
