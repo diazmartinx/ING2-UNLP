@@ -3,6 +3,7 @@
     import { invalidate } from '$app/navigation';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
+    import { onMount } from 'svelte';
 
     let { data }: { data: PageData } = $props();
 
@@ -12,6 +13,7 @@
     let estadoFiltro = $state('Todos');
     let reservas = $state(data.reservas);
     let sortOrder = $state<'asc' | 'desc'>('desc');
+    let showToast = $state(false);
 
     type Reserva = {
         id: number;
@@ -34,6 +36,18 @@
         reservas = data.reservas;
     });
 
+    onMount(() => {
+        if (data.toast === 'unidad-asignada' || data.toast === 'reserva-cancelada' || data.toast === 'vehiculo-devuelto') {
+            showToast = true;
+            setTimeout(() => {
+                showToast = false;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('toast');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }, 3000);
+        }
+    });
+
     async function buscarReservas() {
         const params = new URLSearchParams();
         if (dniBusqueda) params.set('dni', dniBusqueda);
@@ -52,6 +66,27 @@
     }
     
 </script>
+
+{#if showToast}
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+                {#if data.toast === 'unidad-asignada'}
+                    Unidad asignada exitosamente
+                {:else if data.toast === 'reserva-cancelada'}
+                    Reserva cancelada exitosamente
+                {:else if data.toast === 'vehiculo-devuelto'}
+                    Vehículo devuelto exitosamente
+                {:else}
+                    Operación completada exitosamente
+                {/if}
+            </span>
+        </div>
+    </div>
+{/if}
 
 <div class="flex flex-col gap-6">
     <div class="flex justify-between items-center">

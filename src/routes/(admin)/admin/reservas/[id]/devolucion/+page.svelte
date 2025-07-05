@@ -2,6 +2,8 @@
     import type { PageData } from './$types';
     import { invalidate } from '$app/navigation';
     import { goto } from '$app/navigation';
+    import { enhance } from '$app/forms';
+    import type { SubmitFunction } from '@sveltejs/kit';
 
     let { data }: { data: PageData } = $props();
     const reserva = (data.reserva as unknown as Reserva[])[0];
@@ -21,38 +23,24 @@
     let successMessage = $state('');
     let loading = $state(false);
 
-
-    async function confirmarDevolucion() {
-        try {
-            loading = true;
-            error = '';
-            successMessage = '';
-
-            const formData = new FormData();
-            formData.append('reservaId', reserva.id.toString());
-            formData.append('estado', 'Devuelto');
-
-            const response = await fetch('?/confirmarDevolucion', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.type === 'success') {
-                successMessage = 'Vehículo devuelto exitosamente';
-                setTimeout(() => {
-                    goto('/admin/reservas');
-                }, 1500);
-            } else {
-                error = result.data?.error || 'Error al confirmar la devolución';
-            }
-        } catch (err) {
-            error = 'Error al comunicarse con el servidor';
-        } finally {
+    const submitDevolucion: SubmitFunction = () => {
+        loading = true;
+        error = '';
+        successMessage = '';
+        
+        return async ({ result }) => {
             loading = false;
-        }
-    }
+            
+            if (result.type === 'success') {
+                if (result.data?.redirect) {
+                    window.location.href = result.data.redirect;
+                }
+            } else if (result.type === 'failure') {
+                error = result.data?.error || 'Error al confirmar la devolución';
+                successMessage = '';
+            }
+        };
+    };
 </script>
 
 <div class="flex flex-col gap-6">
@@ -136,24 +124,29 @@
             <h3 class="card-title">Confirmar Devolución</h3>
             <p class="text-lg mb-4">¿Estás seguro que deseas confirmar la devolución de este vehículo?</p>
             
-            <div class="card-actions justify-end gap-4">
-                <a href="/admin/reservas?estado=Entregada" class="btn" class:disabled={loading}>No, volver</a>
-                <button 
-                    class="btn btn-primary"
-                    onclick={confirmarDevolucion}
-                    disabled={loading}
-                >
-                    {#if loading}
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Confirmando...
-                    {:else}
-                        Sí, confirmar devolución
-                    {/if}
-                </button>
-            </div>
+            <form method="POST" action="?/confirmarDevolucion" use:enhance={submitDevolucion}>
+                <input type="hidden" name="reservaId" value={reserva.id} />
+                <input type="hidden" name="estado" value="Devuelto" />
+                
+                <div class="card-actions justify-end gap-4">
+                    <a href="/admin/reservas?estado=Entregada" class="btn" class:disabled={loading}>No, volver</a>
+                    <button 
+                        type="submit"
+                        class="btn btn-primary"
+                        disabled={loading}
+                    >
+                        {#if loading}
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Confirmando...
+                        {:else}
+                            Sí, confirmar devolución
+                        {/if}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div> 

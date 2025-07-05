@@ -9,6 +9,7 @@ export const load = (async ({ url }) => {
     const searchParams = url.searchParams;
     const dniCliente = searchParams.get('dni') || '';
     const estado = searchParams.get('estado'); // Puede ser undefined
+    const toast = searchParams.get('toast') || '';
 
     const conditions = [];
 
@@ -47,7 +48,8 @@ export const load = (async ({ url }) => {
     const reservasList = await finalQuery;
 
     return {
-        reservas: reservasList
+        reservas: reservasList,
+        toast
     };
 }) satisfies PageServerLoad;
 
