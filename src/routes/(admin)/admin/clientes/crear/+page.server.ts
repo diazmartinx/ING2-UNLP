@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { generatePassword } from '$lib/utils';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { hash } from '@node-rs/argon2';
 import { sendNewUserEmail } from '$lib/server/resend';
 
@@ -27,9 +27,9 @@ export const actions: Actions = {
             return fail(400, { error: 'Todos los campos son requeridos' });
         }
 
-        // Check if email is already in use
+        // Check if email is already in use (case-insensitive)
         const existingUser = await db.query.usuarios.findFirst({
-            where: eq(usuarios.email, email)
+            where: sql`LOWER(${usuarios.email}) = LOWER(${email})`
         });
 
         if (existingUser) {
@@ -43,6 +43,11 @@ export const actions: Actions = {
 
         if (age < 18) {
             return fail(400, { error: 'El cliente debe tener al menos 18 años' });
+        }
+
+        // Validar DNI
+        if (!/^\d{7,8}$/.test(dni)) {
+            return fail(400, { error: 'El DNI debe tener 7 u 8 dígitos' });
         }
 
         // Generar contraseña aleatoria
@@ -66,15 +71,34 @@ export const actions: Actions = {
             }
 
             // Enviar email con la contraseña
-            await sendNewUserEmail(email, nombre, password);
+            let emailEnviado = false;
+            try {
+                await sendNewUserEmail(email, nombre, password);
+                emailEnviado = true;
+            } catch (emailError) {
+                emailEnviado = false;
+            }
 
-            return {
-                success: true
-            };
+            // Redirigir según si el email se envió o no
+            if (emailEnviado) {
+                return {
+                    success: true,
+                    redirect: '/admin/clientes?toast=cliente-creado'
+                };
+            } else {
+                return {
+                    success: true,
+                    redirect: '/admin/clientes?toast=cliente-creado-sin-email'
+                };
+            }
         } catch (error) {
-            console.error('Error al crear usuario:', error);
+            if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+                // Es un redirect, relanzar
+                throw error;
+            }
             return fail(500, {
-                error: 'Error al crear el usuario'
+                error: 'Error al crear el usuario',
+                debug: error instanceof Error ? error.message : String(error)
             });
         }
     }

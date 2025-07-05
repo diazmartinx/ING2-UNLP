@@ -2,11 +2,15 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
 
 	export let data: PageData;
 	let isEditing = false;
 	let showSuccessToast = false;
 	let fechaError = '';
+	let showPasswordToast = false;
+	let toastTimeout: ReturnType<typeof setTimeout>;
+	const svgSuccess = `<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />`;
 
 	// Función para ajustar la fecha a UTC-3
 	function adjustToUTC3(date: string | Date | null): string {
@@ -85,6 +89,21 @@
 			input.setCustomValidity('');
 		}
 	}
+
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			const params = new URLSearchParams(window.location.search);
+			if (params.get('toast') === 'contrasena') {
+				showPasswordToast = true;
+				params.delete('toast');
+				window.history.replaceState({}, '', `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`);
+				clearTimeout(toastTimeout);
+				toastTimeout = setTimeout(() => {
+					showPasswordToast = false;
+				}, 3000);
+			}
+		}
+	});
 </script>
 
 <div class="toast toast-top toast-end z-50">
@@ -97,6 +116,30 @@
 		</div>
 	{/if}
 </div>
+
+{#if showPasswordToast}
+	<div class="fixed top-4 right-4 z-50 animate-in slide-in-from-right-2 duration-300">
+		<div class="flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3 shadow-lg">
+			<div class="flex-shrink-0">
+				<svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+					{@html svgSuccess}
+				</svg>
+			</div>
+			<div class="flex-1">
+				<p class="text-sm font-medium text-green-800">Contraseña cambiada exitosamente</p>
+			</div>
+			<button
+				on:click={() => showPasswordToast = false}
+				class="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+				aria-label="Cerrar notificación"
+			>
+				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+				</svg>
+			</button>
+		</div>
+	</div>
+{/if}
 
 <div class="container mx-auto px-4 py-8">
 	<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">

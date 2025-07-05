@@ -4,9 +4,13 @@ import { eq } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load = (async () => {
-    const adicionalesData = await db.select().from(adicionales)
-    return { adicionales: adicionalesData };
+export const load = (async ({ url }) => {
+    const toast = url.searchParams.get('toast') || '';
+    const adicionalesData = await db.select().from(adicionales);
+    return { 
+        adicionales: adicionalesData,
+        toast
+    };
 }) satisfies PageServerLoad;
 
 export const actions = {

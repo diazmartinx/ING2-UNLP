@@ -89,7 +89,7 @@
 
     const submitClient: SubmitFunction = () => {
         if (!validateForm()) {
-            return;
+            return { cancel: true } as any;
         }
         
         loading = true;
@@ -100,15 +100,9 @@
             loading = false;
             
             if (result.type === 'success') {
-                successMessage = 'Cliente creado exitosamente. Se ha enviado un email con la contraseña.';
-                errorMessage = '';
-                // Reset form
-                nombre = '';
-                apellido = '';
-                dni = '';
-                fechaNacimiento = '';
-                email = '';
-                telefono = '';
+                if (result.data?.redirect) {
+                    window.location.href = result.data.redirect;
+                }
             } else if (result.type === 'failure') {
                 errorMessage = result.data?.error || 'Error al crear el cliente';
                 successMessage = '';

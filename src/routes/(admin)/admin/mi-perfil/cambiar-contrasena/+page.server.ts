@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
@@ -53,8 +53,6 @@ export const actions: Actions = {
 			return fail(500, { error: 'Error al actualizar la contraseña' });
 		}
 
-		return {
-			success: 'Contraseña actualizada correctamente'
-		};
+		throw redirect(303, '/admin/mi-perfil?toast=contrasena');
 	}
 };

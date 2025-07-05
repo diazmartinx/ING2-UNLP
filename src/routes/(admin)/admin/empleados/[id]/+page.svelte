@@ -14,21 +14,13 @@
 	let telefono = $state(data.empleado?.telefono ?? '');
 	let fechaNacimiento = $state(data.empleado?.fechaNacimiento ?? '');
 
-	let mensajeExito = $state('');
 	let mensajeError = $state('');
+	let loading = $state(false);
 
 	// Estado para controlar si está en modo edición
 	let isEditing = $state(false);
 
-	// Función helper para restaurar valores originales
-	function restaurarValoresOriginales() {
-		nombre = data.empleado?.nombre ?? '';
-		apellido = data.empleado?.apellido ?? '';
-		dni = data.empleado?.dni;
-		email = data.empleado?.email ?? '';
-		telefono = data.empleado?.telefono ?? '';
-		fechaNacimiento = data.empleado?.fechaNacimiento ?? '';
-	}
+
 
 	// Función para activar modo edición
 	function enableEditing() {
@@ -38,7 +30,13 @@
 	// Función para cancelar edición y restaurar valores originales
 	function cancelEditing() {
 		isEditing = false;
-		restaurarValoresOriginales();
+		// Restaurar valores originales
+		nombre = data.empleado?.nombre ?? '';
+		apellido = data.empleado?.apellido ?? '';
+		dni = data.empleado?.dni;
+		email = data.empleado?.email ?? '';
+		telefono = data.empleado?.telefono ?? '';
+		fechaNacimiento = data.empleado?.fechaNacimiento ?? '';
 	}
 </script>
 
@@ -50,40 +48,30 @@
 		</a>
 	</div>
 
-	{#if mensajeExito}
-		<div class="alert alert-success mt-2">{mensajeExito}</div>
-	{/if}
+
 	{#if mensajeError}
 		<div class="alert alert-error mt-2">{mensajeError}</div>
 	{/if}
     
     <div>
         <form method="POST" action="?/guardar" use:enhance={() => {
+			loading = true;
 			return async ({ result, update }) => {
-				// Limpiar mensajes anteriores
-				mensajeExito = '';
-				mensajeError = '';
-				
-				// Invalidar datos si la operación fue exitosa
-				if (result.type === 'success') {
-					await invalidateAll();
-					// Desactivar modo edición después de guardar exitosamente
-					isEditing = false;
-					mensajeExito = typeof result.data?.message === 'string' ? result.data.message : 'Empleado actualizado exitosamente';
-					setTimeout(() => {
-						mensajeExito = '';
-					}, 3000);
-					// Actualizar el formulario con los nuevos datos solo en caso de éxito
-					await update();
-					restaurarValoresOriginales();
-				}
+				loading = false;
 				if (result.type === 'failure') {
 					mensajeError = typeof result.data?.error === 'string' ? result.data.error : 'Error al actualizar el empleado';
 					setTimeout(() => {
 						mensajeError = '';
 					}, 3000);
-					// No actualizar el formulario en caso de error para mantener los datos ingresados
 				}
+				// Actualizar el formulario con los nuevos datos
+				await update();
+				nombre = data.empleado?.nombre ?? '';
+				apellido = data.empleado?.apellido ?? '';
+				dni = data.empleado?.dni;
+				email = data.empleado?.email ?? '';
+				telefono = data.empleado?.telefono ?? '';
+				fechaNacimiento = data.empleado?.fechaNacimiento ?? '';
 			};
 		}}
 		>
@@ -122,12 +110,20 @@
 				    {:else}
 					<div class="flex w-full flex-col">
 						<div class="grid place-items-center mb-1 justify-items-start">
-							<button type="submit" class="btn btn-soft btn-primary">
-								Guardar
+							<button type="submit" class="btn btn-soft btn-primary" disabled={loading}>
+								{#if loading}
+									<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+									Guardando...
+								{:else}
+									Guardar
+								{/if}
 							</button>
 						</div>
 						<div class="grid place-items-center mt-1 justify-items-start">
-							<button type="button" class="btn btn-soft" onclick={cancelEditing}>
+							<button type="button" class="btn btn-soft" onclick={cancelEditing} disabled={loading}>
 								Cancelar
 							</button>
 						</div>

@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
 	let adicionales = $state([...data.adicionales]);
@@ -9,6 +10,7 @@
 	let error = $state('');
 	let mostrarDialogo = $state(false);
 	let adicionalAEliminar: { id: number; nombre: string; precioPorDia: number } | null = $state(null);
+	let showToast = $state(false);
 
 	function iniciarEdicion(adicional: { id: number; nombre: string; precioPorDia: number }) {
 		adicionalAEliminar = null;
@@ -24,7 +26,30 @@
 		adicionalAEliminar = adicional;
 		mostrarDialogo = true;
 	}
+
+	onMount(() => {
+		if (data.toast === 'adicional-creado') {
+			showToast = true;
+			setTimeout(() => {
+				showToast = false;
+				const url = new URL(window.location.href);
+				url.searchParams.delete('toast');
+				window.history.replaceState({}, '', url.pathname + url.search);
+			}, 3000);
+		}
+	});
 </script>
+
+{#if showToast}
+	<div class="fixed top-4 right-4 z-50">
+		<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded shadow-lg flex items-center gap-2">
+			<svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			<span>Adicional creado exitosamente</span>
+		</div>
+	</div>
+{/if}
 
 <div class="container mx-auto p-4">
 	<div class="mb-6 flex items-center justify-between">

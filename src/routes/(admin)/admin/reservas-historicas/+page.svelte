@@ -9,7 +9,7 @@
     let error = $state('');
     let successMessage = $state('');
     let dniBusqueda = $state('');
-    let estadoFiltro = $state('Cancelada');
+    let estadoFiltro = $state('Todos');
     let reservas = $state(data.reservas);
     let sortOrder = $state<'asc' | 'desc'>('desc');
 
@@ -30,14 +30,14 @@
     $effect(() => {
         const params = $page.url.searchParams;
         dniBusqueda = params.get('dni') || '';
-        estadoFiltro = params.get('estado') || 'Cancelada';
+        estadoFiltro = params.get('estado') || 'Todos';
         reservas = data.reservas;
     });
 
     async function buscarReservas() {
         const params = new URLSearchParams();
         if (dniBusqueda) params.set('dni', dniBusqueda);
-        if (estadoFiltro) params.set('estado', estadoFiltro);
+        if (estadoFiltro && estadoFiltro !== 'Todos') params.set('estado', estadoFiltro);
         await goto(`?${params.toString()}`);
         await invalidate('app:reservas');
     }
@@ -91,6 +91,7 @@
                 bind:value={estadoFiltro}
                 class="select select-bordered w-full"
             >
+                <option value="Todos">Todos</option>
                 <option value="Cancelada">Cancelada</option>
                 <option value="Devuelto">Devuelto</option>
             </select>
@@ -162,11 +163,15 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="flex space-x-2">
+                                <div class="flex items-center gap-2">
                                     <a 
                                         href="/admin/reservas-historicas/{reserva.id}" 
-                                        class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                                        class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
                                     >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
                                         Detalles
                                     </a>
                                 </div>

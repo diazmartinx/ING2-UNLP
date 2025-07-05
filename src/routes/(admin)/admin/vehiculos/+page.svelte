@@ -76,12 +76,10 @@
 			mostrarConfirmacion = false;
 
 			if (result.type === 'success') {
-				vehiculos = vehiculos.map((v) =>
-					v.patente === patenteSeleccionada ? { ...v, estado: nuevoEstado } : v
-				);
-				await invalidate('app:vehiculos');
+				// Refresh data without page reload
+				await invalidateAll();
 				patenteSeleccionada = '';
-				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : nuevoEstado === 'Inhabilitado' ? 'inhabilitado' : 'habilitado'} exitosamente`;
+				successMessage = `Vehículo ${nuevoEstado === 'Dado de baja' ? 'dado de baja' : nuevoEstado === 'Inhabilitado' ? 'puesto en mantenimiento' : 'habilitado'} exitosamente`;
 				
 				// Auto-hide toast after 4 seconds
 				setTimeout(() => {
@@ -114,7 +112,7 @@
 <div class="mb-6 flex items-center justify-between">
 	<h2 class="text-3xl font-bold text-gray-800">Vehículos</h2>
 	<div class="flex items-center gap-4">
-		<button onclick={() => (mostrarModal = true)} type="button" class="btn btn-primary">
+		<button onclick={() => (mostrarModal = true)} type="button" class="btn btn-primary cursor-pointer">
 			Crear Nuevo vehículo
 		</button>
 	</div>
@@ -134,7 +132,7 @@
 			</div>
 			<button
 				onclick={() => successMessage = ''}
-				class="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+				class="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors cursor-pointer"
 				aria-label="Cerrar notificación"
 			>
 				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -180,28 +178,66 @@
 						{anio}
 					</th>
 					<td class="px-6 py-4">
-						{estado}
+						{#if estado === 'Inhabilitado'}
+							<span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+								</svg>
+								En mantenimiento
+							</span>
+						{:else if estado === 'Habilitado'}
+							<span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+								</svg>
+								Habilitado
+							</span>
+						{:else if estado === 'Dado de baja'}
+							<span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+								Dado de baja
+							</span>
+						{:else}
+							{estado}
+						{/if}
 					</td>
 					<td class="px-6 py-4">
-						<div class="flex space-x-2">
+						<div class="flex items-center gap-2">
 							<a
 								href="./vehiculos/{patente}"
-								class="font-medium text-blue-600 hover:underline dark:text-blue-500">Detalles</a
+								class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
 							>
+								<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+								</svg>
+								Detalles
+							</a>
+							
 							{#if estado == 'Habilitado'}
 								<button
 									onclick={() => confirmarAccion(patente, 'Inhabilitado')}
 									type="button"
-									class="text-600 font-medium hover:underline dark:text-red-500 cursor-pointer"
+									class="inline-flex items-center gap-1 rounded-md bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 hover:bg-yellow-100 transition-colors cursor-pointer"
 								>
-									Inhabilitar
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									</svg>
+									Poner en mantenimiento
 								</button>
 							{:else if estado == 'Inhabilitado'}
 								<button
 									onclick={() => confirmarAccion(patente, 'Habilitado')}
 									type="button"
-									class="text-600 font-medium hover:underline dark:text-red-500 cursor-pointer"
+									class="inline-flex items-center gap-1 rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors cursor-pointer"
 								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+									</svg>
 									Habilitar
 								</button>
 							{/if}
@@ -210,8 +246,11 @@
 								<button
 									onclick={() => confirmarAccion(patente, 'Dado de baja')}
 									type="button"
-									class="font-medium text-red-600 hover:underline dark:text-red-500 cursor-pointer"
+									class="inline-flex items-center gap-1 rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
 								>
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
 									Dar de baja
 								</button>
 							{/if}
@@ -226,7 +265,13 @@
 {#if mostrarConfirmacion}
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 		<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-			<h3 class="mb-4 text-xl font-semibold">Confirmar {accionSeleccionada}</h3>
+			<h3 class="mb-4 text-xl font-semibold">
+				{#if accionSeleccionada === 'Inhabilitado'}
+					Confirmar Poner en Mantenimiento
+				{:else}
+					Confirmar {accionSeleccionada}
+				{/if}
+			</h3>
 			{#if error}
 				<div class="mb-4 text-red-500">{error}</div>
 				<div class="flex justify-end">
@@ -236,7 +281,7 @@
 							error = '';
 						}}
 						type="button"
-						class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+						class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 cursor-pointer transition-colors"
 					>
 						Cerrar
 					</button>
@@ -249,7 +294,7 @@
 					</p>
 				{:else if accionSeleccionada === 'Inhabilitado'}
 					<p class="mb-4">
-						¿Está seguro que desea <span class="font-bold">inhabilitar</span> el vehículo con
+						¿Está seguro que desea <span class="font-bold">poner en mantenimiento</span> el vehículo con
 						patente {patenteSeleccionada}?
 					</p>
 				{:else if accionSeleccionada === 'Habilitado'}
@@ -262,14 +307,14 @@
 					<button
 						onclick={cancelarAccion}
 						type="button"
-						class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+						class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 cursor-pointer transition-colors"
 					>
 						Cancelar
 					</button>
 					<button
 						onclick={() => actualizarEstadoVehiculo(accionSeleccionada as EstadoVehiculo)}
 						type="button"
-						class="rounded-md px-4 py-2 text-white {accionSeleccionada === 'Habilitado' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}"
+						class="rounded-md px-4 py-2 text-white cursor-pointer transition-colors {accionSeleccionada === 'Habilitado' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}"
 					>
 						Confirmar
 					</button>
@@ -345,14 +390,14 @@
 						error = '';
 					}}
 					type="button"
-					class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+					class="rounded-md bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 cursor-pointer transition-colors"
 				>
 					Cancelar
 				</button>
 				<button
 					onclick={agregarVehiculo}
 					type="button"
-					class="rounded-md bg-violet-600 px-4 py-2 text-white hover:bg-violet-700"
+					class="rounded-md bg-violet-600 px-4 py-2 text-white hover:bg-violet-700 cursor-pointer transition-colors"
 				>
 					Aceptar
 				</button>

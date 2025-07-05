@@ -18,12 +18,17 @@
     }
 
     // Estado reactivo optimizado
-    $: ({ fechaInicio, fechaFin, ubicacion } = data);
+    $: ({ ubicacion } = data);
     $: ubicacionDecoded = decodeURIComponent(ubicacion);
+    
+    // Variables separadas para las fechas - solo se inicializan una vez
+    let fechaInicio = data.fechaInicio;
+    let fechaFin = data.fechaFin;
     let mensajeSolapamiento = '';
 
     afterNavigate(() => {
-        // Los valores se actualizan automáticamente con el estado reactivo
+        // Limpiar filtros cuando cambian los parámetros
+        limpiarFiltros();
     });
 
     function formatDate(dateStr: string): string {
@@ -203,7 +208,7 @@
                 </label>
                 <select 
                     id="ubicacion"
-                    bind:value={ubicacion}
+                    bind:value={ubicacionDecoded}
                     class="select select-bordered w-full"
                     required
                 >
@@ -221,7 +226,7 @@
     </div>
 
     <h1 class="text-2xl font-bold mb-4">Resultados de Búsqueda</h1>
-    <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(fechaInicio)}</strong> hasta el <strong>{formatDate(fechaFin)}</strong> en <strong>{ubicacionDecoded}</strong>.</p>
+    <p class="mb-6">Buscando alquileres desde el <strong>{formatDate(data.fechaInicio)}</strong> hasta el <strong>{formatDate(data.fechaFin)}</strong> en <strong>{data.ubicacion}</strong>.</p>
     
     <!-- Nueva estructura de dos columnas -->
     <div class="flex flex-col md:flex-row gap-8">

@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, unidadesVehiculos, modelosVehiculos, adicionales, reservasAdicionales } from '$lib/server/db/schema';
@@ -208,9 +208,14 @@ export const actions: Actions = {
             }
 
             return {
-                type: 'success'
+                success: true,
+                redirect: '/admin/reservas?toast=unidad-asignada'
             };
         } catch (err) {
+            if (err && typeof err === 'object' && 'status' in err && 'location' in err) {
+                // Es un redirect, relanzar
+                throw err;
+            }
             console.error('Error al actualizar reserva:', err);
             return {
                 type: 'error',

@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { reservas, modelosVehiculos, politicasCancelacion } from '$lib/server/db/schema';
@@ -100,9 +100,14 @@ export const actions: Actions = {
                 .where(eq(reservas.id, parseInt(reservaId.toString())));
 
             return {
-                type: 'success'
+                success: true,
+                redirect: '/admin/reservas?toast=reserva-cancelada'
             };
         } catch (err) {
+            if (err && typeof err === 'object' && 'status' in err && 'location' in err) {
+                // Es un redirect, relanzar
+                throw err;
+            }
             console.error('Error al cancelar la reserva:', err);
             return fail(500, {
                 type: 'error',

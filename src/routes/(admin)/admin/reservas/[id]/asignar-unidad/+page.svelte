@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import { goto } from '$app/navigation';
+    import { enhance } from '$app/forms';
+    import type { SubmitFunction } from '@sveltejs/kit';
 
     let { data }: { data: PageData } = $props();
     const reserva = data.reserva[0];
@@ -57,50 +59,29 @@
         adicionalesSeleccionados[id] = adicionalesSeleccionados[id] === 1 ? 0 : 1;
     }
 
-    async function asignarUnidad() {
+    const submitAsignar: SubmitFunction = () => {
         if (!patenteSeleccionada) {
             error = 'Se debe seleccionar una unidad';
-            return;
+            return { cancel: true } as any;
         }
+        
         loading = true;
         error = '';
         successMessage = '';
-        try {
-            const formData = new FormData();
-            formData.append('reservaId', reserva.id.toString());
-            formData.append('estado', 'Entregada');
-            formData.append('patente', patenteSeleccionada);
-
-            // Adicionales: solo los seleccionados
-            const adicionalesStr = Object.entries(adicionalesSeleccionados)
-                .filter(([, seleccionado]) => seleccionado === 1)
-                .map(([id]) => id)
-                .join(',');
-            if (adicionalesStr) {
-                formData.append('adicionales', adicionalesStr);
-            }
-
-            const response = await fetch('?/asignarUnidad', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.type === 'success') {
-                successMessage = 'Unidad asignada exitosamente';
-                setTimeout(() => {
-                    goto('/admin/reservas');
-                }, 1500);
-            } else {
-                error = result.data?.error || 'Error al asignar la unidad';
-            }
-        } catch (err) {
-            error = 'Error al comunicarse con el servidor';
-        } finally {
+        
+        return async ({ result }) => {
             loading = false;
-        }
-    }
+            
+            if (result.type === 'success') {
+                if (result.data?.redirect) {
+                    window.location.href = result.data.redirect;
+                }
+            } else if (result.type === 'failure') {
+                error = result.data?.error || 'Error al asignar la unidad';
+                successMessage = '';
+            }
+        };
+    };
 </script>
 
 <div class="flex flex-col gap-6">
@@ -307,24 +288,31 @@
                 </div>
             {/if}
 
-            <div class="card-actions justify-end mt-4">
-                <button 
-                    class="btn btn-primary"
-                    onclick={asignarUnidad}
-                    disabled={!patenteSeleccionada || loading}
-                >
-                    {#if loading}
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            {@html svgIcons.loading.circle}
-                            {@html svgIcons.loading.path}
-                        </svg>
-                        Asignando vehículo...
-                    {:else}
-                        Asignar vehículo
-                    {/if}
-                </button>
-                <a href="/admin/reservas" class="btn" class:disabled={loading}>Cancelar</a>
-            </div>
+            <form method="POST" action="?/asignarUnidad" use:enhance={submitAsignar}>
+                <input type="hidden" name="reservaId" value={reserva.id} />
+                <input type="hidden" name="estado" value="Entregada" />
+                <input type="hidden" name="patente" value={patenteSeleccionada} />
+                <input type="hidden" name="adicionales" value={Object.entries(adicionalesSeleccionados).filter(([, seleccionado]) => seleccionado === 1).map(([id]) => id).join(',')} />
+                
+                <div class="card-actions justify-end mt-4">
+                    <button 
+                        type="submit"
+                        class="btn btn-primary"
+                        disabled={!patenteSeleccionada || loading}
+                    >
+                        {#if loading}
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                {@html svgIcons.loading.circle}
+                                {@html svgIcons.loading.path}
+                            </svg>
+                            Asignando vehículo...
+                        {:else}
+                            Asignar vehículo
+                        {/if}
+                    </button>
+                    <a href="/admin/reservas" class="btn" class:disabled={loading}>Cancelar</a>
+                </div>
+            </form>
         </div>
     </div>
 

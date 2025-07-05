@@ -2,7 +2,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
 import { eq, and, ne, like, sql } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 
 // Función helper para formatear fecha a YYYY-MM-DD
 function formatDateForInput(date: Date | string | null): string {
@@ -129,8 +129,12 @@ export const actions: Actions = {
 			if (updated.rowsAffected === 0) {
 				return fail(404, { error: 'Empleado no encontrado' });
 			}
-			return { success: true, message: 'Empleado actualizado exitosamente' };
+			throw redirect(302, '/admin/empleados?toast=empleado-actualizado');
 		} catch (err) {
+			if (err && typeof err === 'object' && 'status' in err && 'location' in err) {
+				// Es un redirect, relanzar
+				throw err;
+			}
 			console.error('Error al actualizar empleado:', err);
 			return fail(500, { error: 'Error interno al actualizar el empleado' });
 		}

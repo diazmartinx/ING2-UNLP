@@ -2,7 +2,7 @@ import { db } from '$lib/server/db';
 import { eq, sql } from "drizzle-orm"
 import { adicionales } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 
 export const load = (async () => {
 	return {};
@@ -39,6 +39,6 @@ export const actions = {
             precioPorDia 
         });
 
-        return { success: true, message: 'Adicional creado exitosamente' };
+        return { success: true };
     }
 };

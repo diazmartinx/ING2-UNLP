@@ -6,6 +6,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const busqueda = url.searchParams.get('buscar') || '';
+	const toast = url.searchParams.get('toast') || '';
 	
 	let empleadoData;
 	
@@ -33,7 +34,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	
 	return {
 		empleado: empleadoData,
-		busqueda
+		busqueda,
+		toast
 	};
 };
 
