@@ -71,7 +71,7 @@
 
     const submitEmployee: SubmitFunction = () => {
         if (!validateForm()) {
-            return;
+            return { cancel: true } as any;
         }
         
         loading = true;

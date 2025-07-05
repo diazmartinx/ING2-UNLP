@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { generatePassword } from '$lib/utils';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { hash } from '@node-rs/argon2';
 import { sendNewUserEmail } from '$lib/server/resend';
 
@@ -27,9 +27,9 @@ export const actions: Actions = {
             return fail(400, { error: 'Todos los campos son requeridos' });
         }
 
-        // Check if email is already in use
+        // Check if email is already in use (case-insensitive)
         const existingUser = await db.query.usuarios.findFirst({
-            where: eq(usuarios.email, email)
+            where: sql`LOWER(${usuarios.email}) = LOWER(${email})`
         });
 
         if (existingUser) {
