@@ -6,7 +6,6 @@
     let { data }: { data: PageData } = $props();
     
     let loading = $state(false);
-    let successMessage = $state('');
     let errorMessage = $state('');
     
     // Form fields
@@ -75,23 +74,17 @@
         }
         
         loading = true;
-        successMessage = '';
         errorMessage = '';
         
         return async ({ result }) => {
             loading = false;
             
             if (result.type === 'success') {
-                successMessage = 'Empleado creado exitosamente. Se ha enviado la contraseña por correo electrónico.';
-                errorMessage = '';
-                // Reset form
-                nombre = '';
-                apellido = '';
-                dni = '';
-                email = '';
+                if (result.data?.redirect) {
+                    window.location.href = result.data.redirect;
+                }
             } else if (result.type === 'failure') {
                 errorMessage = result.data?.error || 'Error al crear el empleado';
-                successMessage = '';
             }
         };
     };
@@ -107,21 +100,7 @@
             <p class="text-gray-600">Complete los datos del nuevo empleado. Se enviará una contraseña temporal por correo electrónico.</p>
         </div>
 
-        <!-- Success Message -->
-        {#if successMessage}
-            <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-green-800">{successMessage}</p>
-                    </div>
-                </div>
-            </div>
-        {/if}
+
 
         <!-- Error Message -->
         {#if errorMessage}
