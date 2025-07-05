@@ -5,6 +5,7 @@
     import { enhance } from '$app/forms';
     import { invalidateAll } from '$app/navigation';
     import ModelVehicleSearch from '$lib/components/ModelVehicleSearch.svelte';
+    import { onMount } from 'svelte';
 
     interface Modelo {
         id: number;
@@ -44,7 +45,6 @@
     let selectedPolitica = $state('');
     let porcentajeReembolsoParcial = $state('');
     let porcentajeReembolsoParcialError = $state('');
-    let showSuccessToast = $state(false);
     let displayImageUrl = $state('');
     let selectedFile = $state<File | null>(null);
 
@@ -52,8 +52,8 @@
     let showDeleteModal = $state(false);
     let modeloAEliminar = $state<Modelo | null>(null);
     let deleteError = $state('');
-    let showDeleteSuccessToast = $state(false);
     let showToast = $state(false);
+    let toastMessage = $state('');
     let createLoading = $state(false);
     let deleteLoading = $state(false);
 
@@ -71,14 +71,7 @@
         deleteError = '';
     }
 
-    // Función para mostrar éxito y recargar datos
-    async function mostrarExitoEliminacion() {
-        showDeleteSuccessToast = true;
-        await invalidateAll();
-        setTimeout(() => {
-            showDeleteSuccessToast = false;
-        }, 3000);
-    }
+
 
         
 
@@ -134,34 +127,23 @@
         }
     }
 
-    async function showSuccessAndRedirect() {
-        showSuccessToast = true;
-        await invalidateAll();
-        setTimeout(() => {
-            showSuccessToast = false;
-        }, 1500);
-    }
+
+
+    onMount(() => {
+        if (data.toast === 'modelo-actualizado') {
+            showToast = true;
+            toastMessage = 'Modelo actualizado exitosamente';
+            setTimeout(() => {
+                showToast = false;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('toast');
+                window.history.replaceState({}, '', url.pathname + url.search);
+            }, 3000);
+        }
+    });
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo creado exitosamente!</span>
-        </div>
-    {/if}
-    
-    {#if showDeleteSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo eliminado exitosamente!</span>
-        </div>
-        {/if}
-    </div>
+
 
 {#if showToast}
     <div class="fixed top-4 right-4 z-50">
@@ -169,13 +151,7 @@
             <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>
-                {#if data.toast === 'modelo-actualizado'}
-                    Modelo actualizado exitosamente
-                {:else}
-                    Operación completada exitosamente
-                {/if}
-            </span>
+            <span>{toastMessage}</span>
         </div>
     </div>
 {/if}
@@ -281,16 +257,21 @@
                 createLoading = true;
                 createError = '';
                 
-                return async ({ result }) => {
-                    createLoading = false;
-                    
-                    if (result.type === 'failure') {
-                        createError = (result.data as { message: string })?.message || 'Error al crear el modelo';
-                    } else if (result.type === 'success') {
-                        closeModal();
-                        showSuccessAndRedirect();
-                    }
-                };
+                                        return async ({ result }) => {
+                            createLoading = false;
+                            
+                            if (result.type === 'failure') {
+                                createError = (result.data as { message: string })?.message || 'Error al crear el modelo';
+                            } else if (result.type === 'success') {
+                                closeModal();
+                                await invalidateAll();
+                                showToast = true;
+                                toastMessage = 'Modelo creado exitosamente';
+                                setTimeout(() => {
+                                    showToast = false;
+                                }, 3000);
+                            }
+                        };
             }}
         >
             <div class="form-control">
@@ -473,16 +454,21 @@
                 deleteLoading = true;
                 deleteError = '';
                 
-                return async ({ result }) => {
-                    deleteLoading = false;
-                    
-                    if (result.type === 'failure') {
-                        deleteError = (result.data as { message: string })?.message || 'Error al eliminar el modelo';
-                    } else if (result.type === 'success') {
-                        cerrarModalEliminacion();
-                        mostrarExitoEliminacion();
-                    }
-                };
+                                        return async ({ result }) => {
+                            deleteLoading = false;
+                            
+                            if (result.type === 'failure') {
+                                deleteError = (result.data as { message: string })?.message || 'Error al eliminar el modelo';
+                            } else if (result.type === 'success') {
+                                cerrarModalEliminacion();
+                                await invalidateAll();
+                                showToast = true;
+                                toastMessage = 'Modelo eliminado exitosamente';
+                                setTimeout(() => {
+                                    showToast = false;
+                                }, 3000);
+                            }
+                        };
             }}
         >
             <input type="hidden" name="id" value={modeloAEliminar.id} />

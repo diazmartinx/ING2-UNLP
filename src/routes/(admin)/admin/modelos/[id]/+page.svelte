@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
-    import { goto } from '$app/navigation';
     import { invalidateAll } from '$app/navigation';
 
     let { data }: { data: PageData } = $props();
@@ -17,7 +16,7 @@
     let editError = $state('');
     let editDisplayImageUrl = $state('');
     let editSelectedFile = $state<File | null>(null);
-    let showEditSuccessToast = $state(false);
+    let editLoading = $state(false);
 
     // Inicializar los valores del formulario
     $effect(() => {
@@ -34,41 +33,20 @@
         }
     }
 
-    async function mostrarExitoEdicion() {
-        showEditSuccessToast = true;
-        await invalidateAll();
-        setTimeout(() => {
-            showEditSuccessToast = false;
-            goto('/admin/modelos');
-        }, 2000);
-    }
 
-    function cancelarEdicion() {
-        goto('/admin/modelos');
-    }
+
+
 </script>
 
-<div class="toast toast-top toast-end z-50">
-    {#if showEditSuccessToast}
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>¡Modelo editado exitosamente!</span>
-        </div>
-    {/if}
-</div>
+
 
 <div class="container mx-auto p-4">
     {#if modelo}
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">Editar Modelo: {modelo.marca} {modelo.modelo}</h1>
-            <button 
-                class="btn btn-ghost" 
-                onclick={cancelarEdicion}
-            >
+        <div class="mb-8">
+            <a href="/admin/modelos" class="link">
                 ← Volver a Modelos
-            </button>
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Editar Modelo: {modelo.marca} {modelo.modelo}</h1>
         </div>
                 
         <div class="card bg-base-100 shadow-lg  mx-auto">
@@ -78,15 +56,22 @@
                     action="?/edit"
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
+                        editLoading = true;
+                        editError = '';
+                        
                         if (editSelectedFile) {
                             formData.append('imagen', editSelectedFile);
                         }
                         
                         return async ({ result }) => {
+                            editLoading = false;
+                            
                             if (result.type === 'failure') {
                                 editError = (result.data as { message: string })?.message || 'Error al editar el modelo';
                             } else if (result.type === 'success') {
-                                mostrarExitoEdicion();
+                                if ((result.data as { redirect?: string })?.redirect) {
+                                    window.location.href = (result.data as { redirect: string }).redirect;
+                                }
                             }
                         };
                     }}
@@ -141,6 +126,12 @@
                                     value={categoria?.nombre || 'Sin categoría'}
                                     disabled
                                 />
+                                <!-- Campo hidden para enviar el idCategoria al servidor -->
+                                <input 
+                                    type="hidden" 
+                                    name="idCategoria" 
+                                    value={modelo.idCategoria || ''} 
+                                />
                             </div>
 
                             <div class="form-control">
@@ -177,6 +168,22 @@
 
                         <!-- Columna derecha: Imagen y políticas -->
                         <div class="">
+                            {#if editDisplayImageUrl}
+                                <div class="flex justify-center mb-4">
+                                    <div class="border-2 border-gray-200 rounded-lg p-2 bg-gray-50">
+                                        <div class="avatar">
+                                            <div class="w-60 rounded-lg overflow-hidden">
+                                                <img 
+                                                    src={editDisplayImageUrl} 
+                                                    alt="Vista previa" 
+                                                    class="object-cover w-full h-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+
                             <div class="form-control">
                                 <label class="label" for="imagen">
                                     <span class="label-text font-semibold">Imagen del Vehículo</span>
@@ -191,20 +198,6 @@
                                     onchange={handleEditImageInput} 
                                 />
                             </div>
-
-                            {#if editDisplayImageUrl}
-                                <div class="flex justify-center">
-                                    <div class="avatar">
-                                        <div class="w-60 rounded-lg">
-                                            <img 
-                                                src={editDisplayImageUrl} 
-                                                alt="Vista previa" 
-                                                class="object-cover"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            {/if}
 
                             {#if politica}
                                 <div class="form-control mt-4">
@@ -247,14 +240,22 @@
                     {/if}
 
                     <div class="card-actions justify-end mt-6 gap-4">
-                        <button type="button" class="btn btn-ghost" onclick={cancelarEdicion}>
+                        <button type="button" class="btn btn-ghost" onclick={() => window.location.href = '/admin/modelos'} disabled={editLoading}>
                             Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Guardar Cambios
+                        <button type="submit" class="btn btn-primary" disabled={editLoading}>
+                            {#if editLoading}
+                                <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Guardando...
+                            {:else}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Guardar Cambios
+                            {/if}
                         </button>
                     </div>
                 </form>

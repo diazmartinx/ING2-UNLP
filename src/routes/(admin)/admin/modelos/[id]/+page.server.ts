@@ -99,9 +99,13 @@ export const actions = {
             const id = parseInt(params.id as string);
             const marca = formData.get('marca') as string;
             const modelo = formData.get('modelo') as string;
-            const capacidadPasajeros = parseInt(formData.get('capacidadPasajeros') as string);
-            const precioPorDia = parseFloat(formData.get('precioPorDia') as string);
-            const idCategoria = parseInt(formData.get('idCategoria') as string);
+            const capacidadPasajerosRaw = formData.get('capacidadPasajeros') as string;
+            const precioPorDiaRaw = formData.get('precioPorDia') as string;
+            const idCategoriaRaw = formData.get('idCategoria') as string;
+            
+            const capacidadPasajeros = parseInt(capacidadPasajerosRaw);
+            const precioPorDia = parseFloat(precioPorDiaRaw);
+            const idCategoria = idCategoriaRaw ? parseInt(idCategoriaRaw) : NaN;
 
             if (!id || isNaN(id)) {
                 return fail(400, { message: 'ID del modelo no válido' });
@@ -167,8 +171,12 @@ export const actions = {
                 return fail(400, { message: 'Ya existe otro modelo con la misma marca y modelo' });
             }
 
-            if (!marca || !modelo || !capacidadPasajeros || !precioPorDia || !idCategoria) {
-                return fail(400, { message: 'Todos los campos son requeridos' });
+            if (!marca || !modelo || isNaN(capacidadPasajeros) || isNaN(precioPorDia)) {
+                return fail(400, { message: 'Los campos marca, modelo, capacidad de pasajeros y precio por día son requeridos' });
+            }
+
+            if (capacidadPasajeros <= 0 || precioPorDia <= 0) {
+                return fail(400, { message: 'La capacidad de pasajeros y el precio por día deben ser mayores a 0' });
             }
 
             // Preparar los datos para actualizar (sin incluir idPoliticaCancelacion)
@@ -176,9 +184,13 @@ export const actions = {
                 marca,
                 modelo,
                 capacidadPasajeros,
-                precioPorDia,
-                idCategoria
+                precioPorDia
             };
+
+            // Solo incluir idCategoria si es un número válido
+            if (!isNaN(idCategoria)) {
+                updateData.idCategoria = idCategoria;
+            }
 
             // Manejar la imagen si se proporciona una nueva
             const imagen = formData.get('imagen') as File;
@@ -204,7 +216,10 @@ export const actions = {
                     .set(updateData)
                     .where(eq(modelosVehiculos.id, id));
                     
-                return { success: true };
+                return {
+                    success: true,
+                    redirect: '/admin/modelos?toast=modelo-actualizado'
+                };
             } catch (error) {
                 console.error('Error detallado:', error);
                 if (error instanceof Error) {
