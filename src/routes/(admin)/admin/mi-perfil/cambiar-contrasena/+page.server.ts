@@ -20,18 +20,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Todos los campos son obligatorios' });
 		}
 
-		if (newPassword !== newPasswordConfirm) {
-			return fail(400, { error: 'Las contraseñas no coinciden' });
-		}
-
-		if (newPassword === currentPassword) {
-			return fail(400, { error: 'La nueva contraseña no puede ser igual a la contraseña actual' });
-		}
-
-		if (newPassword.length < 6) {
-			return fail(400, { error: 'La contraseña debe tener al menos 6 caracteres' });
-		}
-
+		// Primera verificación: validar la contraseña actual
 		const user = await db.query.usuarios.findFirst({
 			where: eq(usuarios.id, locals.user.id)
 		});
@@ -42,6 +31,19 @@ export const actions: Actions = {
 		const isCurrentPasswordValid = await verify(user.passwordHash, currentPassword);
 		if (!isCurrentPasswordValid) {
 			return fail(400, { error: 'La contraseña actual no es correcta' });
+		}
+
+		// Verificaciones de la nueva contraseña
+		if (newPassword !== newPasswordConfirm) {
+			return fail(400, { error: 'Las contraseñas no coinciden' });
+		}
+
+		if (newPassword === currentPassword) {
+			return fail(400, { error: 'La nueva contraseña no puede ser igual a la contraseña actual' });
+		}
+
+		if (newPassword.length < 6) {
+			return fail(400, { error: 'La contraseña debe tener al menos 6 caracteres' });
 		}
 
 		const newPasswordHash = await hash(newPassword);

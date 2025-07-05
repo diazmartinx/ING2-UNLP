@@ -68,6 +68,23 @@
                    matchesPrice && matchesCapacity;
         })
     );
+
+    // Función para limpiar todos los filtros
+    function clearFilters() {
+        searchQuery = '';
+        selectedCategory = '';
+        priceRange = { min: 0, max: Infinity };
+        passengerCapacity = 0;
+    }
+
+    // Verificar si hay filtros aplicados
+    let hasActiveFilters = $derived(
+        searchQuery !== '' || 
+        selectedCategory !== '' || 
+        priceRange.min !== 0 || 
+        priceRange.max !== Infinity || 
+        passengerCapacity !== 0
+    );
 </script>
 
 <div class="bg-base-200 p-4 rounded-lg mb-6">
@@ -120,13 +137,28 @@
                 bind:value={passengerCapacity}
             >
                 <option value={0}>Cualquier capacidad</option>
-                <option value={2}>2+ pasajeros</option>
-                <option value={4}>4+ pasajeros</option>
-                <option value={6}>6+ pasajeros</option>
-                <option value={8}>8+ pasajeros</option>
+                <option value={2}>1+ pasajeros</option>
+                <option value={4}>3+ pasajeros</option>
+                <option value={6}>5+ pasajeros</option>
+                <option value={8}>7+ pasajeros</option>
             </select>
         </div>
     </div>
+    
+    <!-- Botón para limpiar filtros -->
+    {#if hasActiveFilters}
+        <div class="flex justify-center mt-4">
+            <button 
+                class="btn btn-outline btn-sm gap-2" 
+                onclick={clearFilters}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Limpiar filtros
+            </button>
+        </div>
+    {/if}
 </div>
 
 <div class="flex flex-col gap-6">
