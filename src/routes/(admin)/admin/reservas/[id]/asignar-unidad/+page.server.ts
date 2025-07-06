@@ -126,6 +126,7 @@ export const actions: Actions = {
             }));
         }
 
+
         if (!reservaId || !estado) {
             return {
                 type: 'error',
@@ -161,44 +162,56 @@ export const actions: Actions = {
         }
 
         try {
-            // Obtener datos de la reserva para calcular días
-            const [reservaRow] = await db.select({
+            // Obtener datos completos de la reserva y modelo reservado
+            const [reservaCompleta] = await db.select({
                 fechaInicio: reservas.fechaInicio,
-                fechaFin: reservas.fechaFin
+                fechaFin: reservas.fechaFin,
+                idModeloReservado: reservas.idModeloReservado
             }).from(reservas).where(eq(reservas.id, reservaId));
 
+            const [modeloReservado] = await db.select({
+                precioPorDia: modelosVehiculos.precioPorDia
+            }).from(modelosVehiculos).where(eq(modelosVehiculos.id, reservaCompleta.idModeloReservado));
+
+            // Calcular cantidad de días (ambos extremos incluidos)
+            const fechaInicio = new Date(reservaCompleta.fechaInicio);
+            const fechaFin = new Date(reservaCompleta.fechaFin);
+            const diffMs = fechaFin.getTime() - fechaInicio.getTime();
+            const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+            // Calcular importe base de la reserva
+            const importeBase = modeloReservado.precioPorDia * dias;
+
+            // Calcular importe de adicionales
             let importeAdicionales = 0;
             if (adicionalesParsed.length > 0) {
-                console.log('Adicionales seleccionados:', adicionalesParsed);
-                // Traer precios de los adicionales seleccionados
                 const adicionalesIds = adicionalesParsed.map(a => a.id);
                 const adicionalesPrecios = await db.select({
                     id: adicionales.id,
                     precioPorDia: adicionales.precioPorDia
                 }).from(adicionales).where(inArray(adicionales.id, adicionalesIds));
-
-                // Calcular cantidad de días (inclusive)
-                const fechaInicio = new Date(reservaRow.fechaInicio);
-                const fechaFin = new Date(reservaRow.fechaFin);
-                const diffMs = fechaFin.getTime() - fechaInicio.getTime();
-                const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1;
-
-                // Calcular el importe total de adicionales
                 for (const adicional of adicionalesParsed) {
                     const precio = adicionalesPrecios.find(a => a.id === adicional.id)?.precioPorDia ?? 0;
-                    importeAdicionales += precio * adicional.cantidad * dias; // adicional.cantidad siempre es 1
+                    importeAdicionales += precio * adicional.cantidad * dias;
                 }
             }
-            console.log('Importe adicionales calculado:', importeAdicionales);
+
+            // Calcular el nuevo importe total
+            const nuevoImporteTotal = importeBase + importeAdicionales;
+
             await db.update(reservas)
                 .set({
                     patenteUnidadAsignada: estado === 'Entregada' ? patente : null,
                     estado: estado,
-                    importeAdicionales: importeAdicionales
+                    importeAdicionales: importeAdicionales,
+                    importeTotal: nuevoImporteTotal
                 })
                 .where(eq(reservas.id, reservaId));
 
             // Guardar adicionales
+            // Primero, eliminar los adicionales anteriores de la reserva
+            await db.delete(reservasAdicionales).where(eq(reservasAdicionales.idReserva, reservaId));
+            
             if (adicionalesParsed.length > 0) {
                 const inserts = adicionalesParsed.map(a => ({
                     idReserva: reservaId,
