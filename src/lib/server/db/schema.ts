@@ -68,7 +68,8 @@ export const reservas = sqliteTable('reservas', {
 export const adicionales = sqliteTable('adicionales', {
 	id: integer().primaryKey({ autoIncrement: true }),
 	nombre: text().notNull(),
-	precioPorDia: real().notNull()
+	precioPorDia: real().notNull(), 
+	eliminado: integer().notNull().default(0), // no me deja usar booleano qsy
 })
 
 export const reservasAdicionales = sqliteTable('reservas_adicionales', {

@@ -6,7 +6,10 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async ({ url }) => {
     const toast = url.searchParams.get('toast') || '';
-    const adicionalesData = await db.select().from(adicionales);
+    const adicionalesData = await db
+        .select()
+        .from(adicionales)
+        .where(eq(adicionales.eliminado, 0));
     return { 
         adicionales: adicionalesData,
         toast
@@ -18,37 +21,32 @@ export const actions = {
         const formData = await request.formData();
         const id = Number(formData.get('id'));
 
-        await db.delete(adicionales).where(eq(adicionales.id, id));
-        const adicionalesData = await db.select().from(adicionales);
+        await db.update(adicionales)
+            .set({ eliminado: 1 })
+            .where(eq(adicionales.id, id));
+        const adicionalesData = await db
+            .select()
+            .from(adicionales)
+            .where(eq(adicionales.eliminado, 0));
         return { success: true, adicionales: adicionalesData };
     },
 
     editar: async ({ request }) => {
         const formData = await request.formData();
         const id = Number(formData.get('id'));
-        const nombre = formData.get('nombre')?.toString();
         const precioPorDia = Number(formData.get('precioPorDia'));
 
-        if (!nombre || !precioPorDia) {
+        if (!precioPorDia) {
             return fail(400, { error: 'Todos los campos son requeridos' });
         }
 
-        // Verificar si ya existe un adicional con ese nombre
-        const existente = await db
+        await db.update(adicionales)
+            .set({ precioPorDia })
+            .where(eq(adicionales.id, id));
+        const adicionalesData = await db
             .select()
             .from(adicionales)
-            .where(eq(adicionales.nombre, nombre));
-
-        if (existente.length > 0 && existente[0].id !== id) {
-            return fail(400, { error: 'Ya existe un adicional con ese nombre' });
-        }
-
-        await db
-            .update(adicionales)
-            .set({ nombre, precioPorDia })
-            .where(eq(adicionales.id, id));
-        
-        const adicionalesData = await db.select().from(adicionales);
+            .where(eq(adicionales.eliminado, 0));
         return { success: true, adicionales: adicionalesData };
     }
 } satisfies Actions;
