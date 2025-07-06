@@ -37,7 +37,7 @@ export const actions = {
         const precioPorDia = Number(formData.get('precioPorDia'));
 
         if (!precioPorDia) {
-            return fail(400, { error: 'Todos los campos son requeridos' });
+            return fail(400, { error: 'El campo precio por día no puede quedar en blanco' });
         }
 
         await db.update(adicionales)
