@@ -1,0 +1,1 @@
+ALTER TABLE `adicionales` ADD `eliminado` integer DEFAULT 0 NOT NULL;

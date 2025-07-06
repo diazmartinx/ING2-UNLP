@@ -98,7 +98,7 @@ export const load: PageServerLoad = async ({ params }) => {
         ),
 
         // Adicionales disponibles
-        db.select().from(adicionales)
+        db.select().from(adicionales).where(eq(adicionales.eliminado, 0))
     ]);
 
     return {
