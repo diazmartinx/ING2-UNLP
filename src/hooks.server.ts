@@ -16,12 +16,21 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-    const { session, user } = await auth.validateSessionToken(sessionToken);
+    const { session, user, error } = await auth.validateSessionToken(sessionToken);
 
 	if (session) {
 		auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 	} else {
 		auth.deleteSessionTokenCookie(event);
+		
+		// Si hay un error específico (usuario inactivo), redirigir con el mensaje
+		if (error) {
+			const redirectUrl = new URL('/ingresar', event.url);
+			redirectUrl.searchParams.set('error', error);
+			redirect(302, redirectUrl.toString());
+		}
+		
+		// Solo redirigir normalmente si no hay error específico
 		if (event.url.pathname.startsWith('/admin')) {
 			redirect(302, '/ingresar');
 		}
