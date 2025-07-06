@@ -32,8 +32,13 @@ export const load: PageServerLoad = async (event) => {
         }
         return redirect(302, '/');
     }
+    
+    // Obtener el mensaje de error desde los parámetros de la URL
+    const error = event.url.searchParams.get('error');
+    
     return {
-        user: event.locals.user || null // Pasa el usuario actual al frontend
+        user: event.locals.user || null, // Pasa el usuario actual al frontend
+        error: error || null // Pasa el mensaje de error si existe
     };
 };
 

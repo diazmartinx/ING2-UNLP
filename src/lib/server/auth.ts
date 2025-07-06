@@ -28,25 +28,38 @@ export async function createSession(token: string, userId: number) {
 
 export async function validateSessionToken(token: string) {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-	const [result] = await db
+	
+	// Primero verificamos si existe la sesión sin filtrar por estado
+	const [sessionResult] = await db
 		.select({
-			// Adjust user table here to tweak returned data
 			user: table.usuarios,
 			session: table.session
 		})
 		.from(table.session)
 		.innerJoin(table.usuarios, eq(table.session.userId, table.usuarios.id))
-		.where(and(eq(table.session.id, sessionId), eq(table.usuarios.estado, 'activo')));
+		.where(eq(table.session.id, sessionId));
 
-	if (!result) {
-		return { session: null, user: null };
+	if (!sessionResult) {
+		return { session: null, user: null, error: null };
 	}
-	const { session, user } = result;
+
+	// Si el usuario está inactivo, retornamos un error específico
+	if (sessionResult.user.estado === 'inactivo') {
+		// Invalidamos la sesión del usuario inactivo
+		await db.delete(table.session).where(eq(table.session.id, sessionId));
+		return { 
+			session: null, 
+			user: null, 
+			error: 'Su cuenta ha sido dada de baja. No puede iniciar sesión.' 
+		};
+	}
+
+	const { session, user } = sessionResult;
 
 	const sessionExpired = Date.now() >= session.expiresAt.getTime();
 	if (sessionExpired) {
 		await db.delete(table.session).where(eq(table.session.id, session.id));
-		return { session: null, user: null };
+		return { session: null, user: null, error: null };
 	}
 
 	const renewSession = Date.now() >= session.expiresAt.getTime() - DAY_IN_MS * 15;
@@ -58,7 +71,7 @@ export async function validateSessionToken(token: string) {
 			.where(eq(table.session.id, session.id));
 	}
 
-	return { session, user };
+	return { session, user, error: null };
 }
 
 export type SessionValidationResult = Awaited<ReturnType<typeof validateSessionToken>>;
