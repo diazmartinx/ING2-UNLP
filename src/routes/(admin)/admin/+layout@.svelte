@@ -31,6 +31,10 @@
             href: '/admin/empleados'
         },
         {
+            label: 'Mis Reservas',
+            href: '/admin/mis-reservas'
+        },
+        {
             label: 'Reservas',
             href: '/admin/reservas'
         },
@@ -48,6 +52,10 @@
         {
             label: 'Reservas',
             href: '/admin/reservas'
+        },
+        {
+            label: 'Mis Reservas',
+            href: '/admin/mis-reservas'
         },
         {
             label: 'Vehículos en Mantenimiento',

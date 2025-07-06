@@ -17,7 +17,7 @@ export const load = (async ({ locals }) => {
         .where(eq(usuarios.id, session.userId))
         .limit(1);
 
-    if (!usuario.length || usuario[0].rol !== 'cliente') {
+    if (!usuario.length || (usuario[0].rol !== 'cliente' && usuario[0].rol !== 'admin' && usuario[0].rol !== 'empleado')) {
         throw error(403, 'No tienes permiso para acceder a esta página');
     }
 
