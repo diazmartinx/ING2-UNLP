@@ -1,12 +1,8 @@
-import { db } from '$lib/server/db';
 import type { LayoutServerLoad } from './$types';
-import {unidadesVehiculos} from '$lib/server/db/schema';
 
-export async function load({params}){
-    const vehiculos = await db.select().from(unidadesVehiculos);
-
-    return {
-        vehiculos
-    };
-}
+export const load: LayoutServerLoad = async () => {
+    // Este layout no necesita cargar datos adicionales
+    // Los datos del vehículo se cargan en +page.server.ts
+    return {};
+};
 

@@ -25,8 +25,8 @@ export const load = (async ({ url }) => {
     const modelosConConteos = await Promise.all(
         modelos.map(async (modelo) => {
             
-            // Contar todas las reservas (cualquier estado)
-            const reservasActivasResult = await db.select({ count: count() })
+            // Contar todas las reservas del modelo (cualquier estado)
+            const totalReservasResult = await db.select({ count: count() })
                 .from(reservas)
                 .where(eq(reservas.idModeloReservado, modelo.id));
 
@@ -35,12 +35,12 @@ export const load = (async ({ url }) => {
                 .from(unidadesVehiculos)
                 .where(eq(unidadesVehiculos.idModelo, modelo.id));
 
-            const reservasActivas = reservasActivasResult[0]?.count || 0;
+            const totalReservas = totalReservasResult[0]?.count || 0;
             const unidadesAsignadas = unidadesAsignadasResult[0]?.count || 0;
 
             return {
                 ...modelo,
-                reservasActivas,
+                reservasActivas: totalReservas, // Mantener el nombre para compatibilidad con el frontend
                 unidadesAsignadas
             };
         })
@@ -156,57 +156,70 @@ export const actions = {
 
     
     eliminarModelo: async ({ request }) => {
-    const formData = await request.formData();
-    
-    try {
-        const id = parseInt(formData.get('id') as string);
+        const formData = await request.formData();
         
-        if (!id || isNaN(id)) {
-            return fail(400, { message: 'ID del modelo no válido' });
-        }
+        try {
+            const id = parseInt(formData.get('id') as string);
+            
+            if (!id || isNaN(id)) {
+                return fail(400, { message: 'ID del modelo no válido' });
+            }
 
-        // Verificar si el modelo existe
-        const modeloExistente = await db.select()
-            .from(modelosVehiculos)
-            .where(eq(modelosVehiculos.id, id));
+            // Verificar si el modelo existe
+            const modeloExistente = await db.select()
+                .from(modelosVehiculos)
+                .where(eq(modelosVehiculos.id, id));
 
-        if (modeloExistente.length === 0) {
-            return fail(404, { message: 'El modelo no existe' });
-        }
+            if (modeloExistente.length === 0) {
+                return fail(404, { message: 'El modelo no existe' });
+            }
 
-        //verificar si el modelo tiene reservas de cualquier tipo
-        const reservasActivas = await db.select()
-            .from(reservas)
-            .where(eq(reservas.idModeloReservado, id));
+            // Verificar si el modelo tiene reservas directas (cualquier estado)
+            const reservasDirectas = await db.select()
+                .from(reservas)
+                .where(eq(reservas.idModeloReservado, id));
 
-        if (reservasActivas.length > 0) {
-            return fail(400, { message: 'No se puede eliminar el modelo porque tiene reservas activas' });
-        }
+            if (reservasDirectas.length > 0) {
+                return fail(400, { message: 'No se puede eliminar el modelo porque tiene reservas asociadas' });
+            }
 
-        // verificar vehículos asignados al modelo
-        const vehiculosAsignados = await db.select()
-            .from(unidadesVehiculos)
-            .where(eq(unidadesVehiculos.idModelo, id));
-
-        // eliminar vehiculos asignados al modelo
-        if (vehiculosAsignados.length > 0) {
-            await db.delete(unidadesVehiculos)
+            // Obtener vehículos asignados al modelo
+            const vehiculosAsignados = await db.select()
+                .from(unidadesVehiculos)
                 .where(eq(unidadesVehiculos.idModelo, id));
-        }
 
-        // Eliminar el modelo
-        await db.delete(modelosVehiculos)
-            .where(eq(modelosVehiculos.id, id));
+            // Verificar si algún vehículo del modelo tiene reservas
+            if (vehiculosAsignados.length > 0) {
+                // Verificar si existe al menos una reserva con vehículo del modelo
+                const reservasConVehiculos = await db.select({ count: count() })
+                    .from(reservas)
+                    .innerJoin(unidadesVehiculos, eq(reservas.patenteUnidadAsignada, unidadesVehiculos.patente))
+                    .where(eq(unidadesVehiculos.idModelo, id));
 
-        return { success: true, message: 'Modelo eliminado exitosamente' };
-        
-    } catch (error) {
-        console.error('Error al eliminar modelo:', error);
-        if (error instanceof Error) {
-            return fail(500, { message: `Error al eliminar el modelo: ${error.message}` });
+                const totalReservasConVehiculos = reservasConVehiculos[0]?.count || 0;
+
+                if (totalReservasConVehiculos > 0) {
+                    return fail(400, { message: 'No se puede eliminar el modelo porque tiene vehículos con reservas asociadas' });
+                }
+
+                // Si no hay reservas con vehículos del modelo, eliminar las unidades
+                await db.delete(unidadesVehiculos)
+                    .where(eq(unidadesVehiculos.idModelo, id));
+            }
+
+            // Eliminar el modelo
+            await db.delete(modelosVehiculos)
+                .where(eq(modelosVehiculos.id, id));
+
+            return { success: true, message: 'Modelo eliminado exitosamente' };
+            
+        } catch (error) {
+            console.error('Error al eliminar modelo:', error);
+            if (error instanceof Error) {
+                return fail(500, { message: `Error al eliminar el modelo: ${error.message}` });
+            }
+            return fail(500, { message: 'Error interno del servidor' });
         }
-        return fail(500, { message: 'Error interno del servidor' });
     }
-}
 
 } satisfies Actions;
