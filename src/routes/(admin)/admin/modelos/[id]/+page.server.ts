@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { modelosVehiculos, categoriasVehiculos, politicasCancelacion, unidadesVehiculos, reservas } from '$lib/server/db/schema';
-import { eq, and, or, inArray } from 'drizzle-orm';
+import { modelosVehiculos, categoriasVehiculos, politicasCancelacion } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import { Buffer } from 'buffer';
 import type { PageServerLoad, Actions } from './$types';
@@ -26,23 +26,6 @@ export const load = (async ({ params }) => {
 
     if (!result || !result.modelos_vehiculos) {
         throw error(404, `Modelo con ID ${modeloId} no encontrado.`);
-    }
-
-    // Verificar si se puede editar marca y modelo
-    const vehiculosAsignados = await db.select({ patente: unidadesVehiculos.patente })
-        .from(unidadesVehiculos)
-        .where(eq(unidadesVehiculos.idModelo, modeloId));
-
-    let puedeEditarMarcaModelo = true;
-    if (vehiculosAsignados.length > 0) {
-        // Si tiene vehículos, verificar si alguno tiene reservas de cualquier tipo
-        const patentes = vehiculosAsignados.map(v => v.patente);
-        const reservasExistentes = await db.select({ id: reservas.id })
-            .from(reservas)
-            .where(inArray(reservas.patenteUnidadAsignada, patentes))
-            .limit(1);
-
-        puedeEditarMarcaModelo = reservasExistentes.length === 0;
     }
 
     // Obtener todas las categorías disponibles
@@ -86,8 +69,7 @@ export const load = (async ({ params }) => {
         categoria: result.categorias_vehiculos, // This can be null
         politica: result.politicas_cancelacion, // This should ideally not be null based on schema, but leftJoin handles it
         categorias: todasLasCategorias,
-        politicas: todasLasPoliticas,
-        puedeEditarMarcaModelo
+        politicas: todasLasPoliticas
     };
 }) satisfies PageServerLoad;
 
@@ -129,32 +111,6 @@ export const actions = {
 
             if (!modeloActual) {
                 return fail(404, { message: 'El modelo no existe' });
-            }
-
-            // Verificar si marca o modelo han cambiado
-            const marcaCambio = modeloActual.marca !== marca;
-            const modeloCambio = modeloActual.modelo !== modelo;
-
-            if (marcaCambio || modeloCambio) {
-                // Verificar si el modelo tiene vehículos asignados
-                const vehiculosAsignados = await db.select({ patente: unidadesVehiculos.patente })
-                    .from(unidadesVehiculos)
-                    .where(eq(unidadesVehiculos.idModelo, id));
-
-                if (vehiculosAsignados.length > 0) {
-                    // Si tiene vehículos, verificar si alguno tiene reservas de cualquier tipo
-                    const patentes = vehiculosAsignados.map(v => v.patente);
-                    const reservasExistentes = await db.select({ id: reservas.id })
-                        .from(reservas)
-                        .where(inArray(reservas.patenteUnidadAsignada, patentes))
-                        .limit(1);
-
-                    if (reservasExistentes.length > 0) {
-                        return fail(400, { 
-                            message: 'No se pueden modificar la marca y/o modelo porque existen vehículos con reservas asociadas' 
-                        });
-                    }
-                }
             }
 
             // Check for duplicate model (excluding current model)

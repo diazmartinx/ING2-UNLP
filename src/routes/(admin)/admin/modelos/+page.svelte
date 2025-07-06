@@ -203,6 +203,10 @@
                                         <span class="badge badge-outline px-3 py-1 text-base">{modelo.capacidadPasajeros} pasajeros</span>
                                     </p>
                                     <p class="flex items-center gap-2">
+                                        <span class="font-semibold text-gray-600 text-lg">Reservas totales:</span>
+                                        <span class="badge px-3 py-1 text-base">{modelo.reservasActivas || 0} reservas</span>
+                                    </p>
+                                    <p class="flex items-center gap-2">
                                         <span class="font-semibold text-gray-600 text-lg">Autos asignados:</span>
                                         <span class="badge px-3 py-1 text-base">{modelo.unidadesAsignadas || 0} unidades</span>
                                     </p>
@@ -423,7 +427,7 @@
                     {modeloAEliminar.marca} {modeloAEliminar.modelo}
                 </p>
                 <p class="text-sm text-gray-600">
-                    Reservas activas: {modeloAEliminar.reservasActivas || 0}
+                    Reservas totales: {modeloAEliminar.reservasActivas || 0}
                 </p>
                 <p class="text-sm text-gray-600">
                     Unidades asignadas: {modeloAEliminar.unidadesAsignadas || 0}
@@ -434,7 +438,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
-                <span><strong>Advertencia:</strong> También se eliminarán las unidades asignadas al modelo.</span>
+                <span><strong>Advertencia:</strong> Esta acción eliminará el modelo y todas sus unidades de vehículos asociadas (solo si no tienen reservas).</span>
             </div>
         </div>
 

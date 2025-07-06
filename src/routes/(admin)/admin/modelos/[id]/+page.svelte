@@ -10,7 +10,6 @@
     let categoria = $derived(data.categoria);
     let politica = $derived(data.politica);
     let categorias = $derived(data.categorias);
-    let puedeEditarMarcaModelo = $derived(data.puedeEditarMarcaModelo);
 
     // Estados para el formulario de edición
     let editError = $state('');
@@ -82,36 +81,28 @@
                             <div class="form-control">
                                 <label class="label" for="marca">
                                     <span class="label-text font-semibold">Marca</span>
-                                    {#if !puedeEditarMarcaModelo}
-                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
-                                    {/if}
                                 </label>
                                 <input 
                                     type="text" 
                                     id="marca" 
                                     name="marca" 
-                                    class="input input-bordered w-full {!puedeEditarMarcaModelo ? 'bg-base-200 cursor-not-allowed' : ''}" 
+                                    class="input input-bordered w-full" 
                                     value={modelo.marca}
                                     required 
-                                    disabled={!puedeEditarMarcaModelo}
                                 />
                             </div>
                             
                             <div class="form-control">
                                 <label class="label" for="modelo">
                                     <span class="label-text font-semibold">Modelo</span>
-                                    {#if !puedeEditarMarcaModelo}
-                                        <span class="label-text-alt">No se puede editar - Tiene vehículos con reservas</span>
-                                    {/if}
                                 </label>
                                 <input 
                                     type="text" 
                                     id="modelo" 
                                     name="modelo" 
-                                    class="input input-bordered w-full {!puedeEditarMarcaModelo ? 'bg-base-200 cursor-not-allowed' : ''}" 
+                                    class="input input-bordered w-full" 
                                     value={modelo.modelo}
                                     required 
-                                    disabled={!puedeEditarMarcaModelo}
                                 />
                             </div>
                             

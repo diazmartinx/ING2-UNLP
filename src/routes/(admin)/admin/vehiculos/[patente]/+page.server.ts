@@ -18,16 +18,34 @@ export async function load ({ params }) {
 
     const vehiculo = vehiculos[0];
     const reservasVehiculo = await db.select().from(reservas).where(eq(reservas.patenteUnidadAsignada, vehiculo.patente));
-    const sucursal = await db.select().from(sucursales).where(eq(sucursales.id, Number(vehiculo.idSucursal)));
-    const modelo = await db.select().from(modelosVehiculos).where(eq(modelosVehiculos.id, Number(vehiculo.idModelo)));
-    const categoria = await db.select().from(categoriasVehiculos).where(eq(categoriasVehiculos.id, Number(modelo[0].idCategoria)));
+    
+    // Obtener sucursal si existe
+    let sucursal = null;
+    if (vehiculo.idSucursal) {
+        const sucursalResult = await db.select().from(sucursales).where(eq(sucursales.id, Number(vehiculo.idSucursal)));
+        sucursal = sucursalResult[0] || null;
+    }
+    
+    // Obtener modelo si existe
+    let modelo = null;
+    let categoria = null;
+    if (vehiculo.idModelo) {
+        const modeloResult = await db.select().from(modelosVehiculos).where(eq(modelosVehiculos.id, Number(vehiculo.idModelo)));
+        modelo = modeloResult[0] || null;
+        
+        // Obtener categoría si el modelo existe y tiene categoría
+        if (modelo && modelo.idCategoria) {
+            const categoriaResult = await db.select().from(categoriasVehiculos).where(eq(categoriasVehiculos.id, Number(modelo.idCategoria)));
+            categoria = categoriaResult[0] || null;
+        }
+    }
     
     const vehiculoFinal = {
         ...vehiculo,
         reservas: reservasVehiculo,
-        sucursal: sucursal[0],
-        modelo: modelo[0],
-        categoria: categoria[0]
+        sucursal,
+        modelo,
+        categoria
     };
 
     return {
