@@ -74,6 +74,13 @@
             currency: 'ARS'
         }).format(amount);
     }
+
+    function calcularDiasReserva(fechaInicio: number, fechaFin: number): number {
+        const inicio = new Date(fechaInicio);
+        const fin = new Date(fechaFin);
+        const diferencia = fin.getTime() - inicio.getTime();
+        return Math.ceil(diferencia / (1000 * 60 * 60 * 24)) + 1;   //se considera el día de inicio y el de fin
+    }
 </script>
 
 <div class="container mx-auto px-4 py-8">
@@ -156,7 +163,7 @@
                                         <span class="font-medium">Adicionales:</span>
                                         <ul class="list-disc ml-6">
                                             {#each adicionalesReserva as adicional}
-                                                <li>{adicional.nombre}</li>
+                                                <li>{adicional.nombre} ({formatCurrency(adicional.precioPorDia * calcularDiasReserva(reserva.fechaInicio, reserva.fechaFin))})</li>
                                             {/each}
                                         </ul>
                                     </div>
