@@ -29,7 +29,9 @@
     let successMessage = $state('');
     let loading = $state(false);
     let patenteSeleccionada = $state('');
-    let adicionalesSeleccionados: Record<number, number> = {};
+    let adicionalesSeleccionados = $state<Record<number, number>>({});
+
+
 
     // SVG Components como strings para evitar duplicación
     const svgIcons = {
@@ -56,7 +58,10 @@
     };
 
     function toggleAdicional(id: number) {
-        adicionalesSeleccionados[id] = adicionalesSeleccionados[id] === 1 ? 0 : 1;
+        adicionalesSeleccionados = {
+            ...adicionalesSeleccionados,
+            [id]: adicionalesSeleccionados[id] === 1 ? 0 : 1
+        };
     }
 
     const submitAsignar: SubmitFunction = () => {
@@ -68,6 +73,8 @@
         loading = true;
         error = '';
         successMessage = '';
+        
+
         
         return async ({ result }) => {
             loading = false;
