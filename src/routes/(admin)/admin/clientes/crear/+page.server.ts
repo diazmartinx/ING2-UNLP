@@ -50,6 +50,18 @@ export const actions: Actions = {
             return fail(400, { error: 'El DNI debe tener 7 u 8 dígitos' });
         }
 
+		// Validar unicidad de DNI si se proporciona
+		if (dni) {
+			const [existingUserByDni] = await db
+				.select()
+				.from(usuarios)
+				.where(eq(usuarios.dni, dni));
+
+			if (existingUserByDni) {
+				return fail(400, { error: 'El DNI ya está en uso por otro usuario' });
+			}
+		}
+
         // Generar contraseña aleatoria
         const password = generatePassword();
         const hashedPassword = await hash(password);
