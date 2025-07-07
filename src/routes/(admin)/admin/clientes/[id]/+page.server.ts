@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { usuarios } from '$lib/server/db/schema';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, like, ne, sql } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 
 // Función helper para formatear fecha a YYYY-MM-DD
@@ -71,10 +71,10 @@ export const actions: Actions = {
 		const [existingUserByEmail] = await db
 			.select()
 			.from(usuarios)
-			.where(and(eq(usuarios.email, email), ne(usuarios.id, id)));
+			.where(and(like(sql`lower(${usuarios.email})`, email.toLowerCase()), ne(usuarios.id, id)));
 
 		if (existingUserByEmail) {
-			return fail(400, { error: 'El correo electrónico ya está en uso por otro cliente' });
+			return fail(400, { error: 'El email ya está en uso por otro usuario' });
 		}
 
 		// Validar unicidad de DNI si se proporciona
@@ -85,7 +85,7 @@ export const actions: Actions = {
 				.where(and(eq(usuarios.dni, dni), ne(usuarios.id, id)));
 
 			if (existingUserByDni) {
-				return fail(400, { error: 'El DNI ya está en uso por otro cliente' });
+				return fail(400, { error: 'El DNI ya está en uso por otro usuario' });
 			}
 		}
 
