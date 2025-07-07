@@ -106,7 +106,7 @@ export const load = (async ({ locals, url }) => {
         adicionalMasVendido = adicionalesStats.reduce((max, item) => item.cantidad > max.cantidad ? item : max, adicionalesStats[0]);
     }
 
-    // Listado de reservas con detalles y datos para cálculo de devoluciones
+    // Listado de reservas con detalles
     const reservasListado = await db
         .select({
             id: reservas.id,
@@ -115,9 +115,7 @@ export const load = (async ({ locals, url }) => {
             estado: reservas.estado,
             importeTotal: reservas.importeTotal,
             importeAdicionales: reservas.importeAdicionales,
-            usuario: usuarios.nombre,
-            idModeloReservado: reservas.idModeloReservado,
-            politicaCancelacion: sql`(SELECT tipoPolitica FROM politicas_cancelacion WHERE id = modelos_vehiculos.idPoliticaCancelacion)`
+            usuario: usuarios.nombre
         })
         .from(reservas)
         .leftJoin(modelosVehiculos, sql`${modelosVehiculos.id} = ${reservas.idModeloReservado}`)
@@ -126,44 +124,6 @@ export const load = (async ({ locals, url }) => {
         .leftJoin(usuarios, sql`${usuarios.id} = ${reservas.idUsuario}`)
         .where(whereClause)
         .orderBy(sql`fechaCreacion DESC`);
-
-    // Traer políticas de cancelación y porcentajes de todos los modelos usados en las reservas
-    const modelosIds = [...new Set(reservasListado.map(r => r.idModeloReservado))];
-    let politicasPorModelo: Record<string, { tipoPolitica: string; porcentajeReembolsoParcial: number | null } > = {};
-    if (modelosIds.length > 0) {
-        // Usar .where(inArray(...)) para Drizzle
-        const { inArray } = await import('drizzle-orm');
-        const modelosPoliticas = await db
-            .select({
-                id: modelosVehiculos.id,
-                tipoPolitica: sql`(SELECT tipoPolitica FROM politicas_cancelacion WHERE id = ${modelosVehiculos.idPoliticaCancelacion})`,
-                porcentajeReembolsoParcial: modelosVehiculos.porcentajeReembolsoParcial
-            })
-            .from(modelosVehiculos)
-            .where(inArray(modelosVehiculos.id, modelosIds));
-        politicasPorModelo = Object.fromEntries(modelosPoliticas.map(m => [String(m.id), { tipoPolitica: String(m.tipoPolitica), porcentajeReembolsoParcial: m.porcentajeReembolsoParcial }]));
-    }
-
-    // Calcular monto total a devolver según política de cancelación
-    let totalADevolver = 0;
-	let subtotalReembolsoTotal = 0;
-	let subtotalReembolsoParcial = 0;
-
-    for (const reserva of reservasListado) {
-        const politica = politicasPorModelo[String(reserva.idModeloReservado)];
-        if (!politica) continue;
-        if (reserva.estado !== 'Cancelada') continue;
-        if (politica.tipoPolitica === 'Reembolso Total') {
-			const monto = reserva.importeTotal ?? 0;
-            totalADevolver += monto;
-			subtotalReembolsoTotal += monto;
-        } else if (politica.tipoPolitica === 'Reembolso Parcial' && politica.porcentajeReembolsoParcial != null) {
-			const monto = (reserva.importeTotal ?? 0) * (politica.porcentajeReembolsoParcial / 100);
-            totalADevolver += monto;
-			subtotalReembolsoParcial += monto;
-        }
-        // Sin Reembolso: no suma nada
-    }
 
     return {
         cantidadPorSucursal,
@@ -175,9 +135,6 @@ export const load = (async ({ locals, url }) => {
         totalIngresos,
         totalIngresosAdicionales,
         adicionalMasVendido,
-        reservasListado,
-        totalADevolver,
-		subtotalReembolsoTotal,
-		subtotalReembolsoParcial
+        reservasListado
     };
 }) satisfies PageServerLoad;
