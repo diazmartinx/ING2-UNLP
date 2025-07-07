@@ -38,9 +38,6 @@
         totalReservas: number;
         totalIngresos: number;
         totalIngresosAdicionales: number;
-		totalADevolver: number;
-		subtotalReembolsoTotal: number;
-		subtotalReembolsoParcial: number;
     }
 
     let { data } = $props<{ data: CustomPageData }>();
@@ -293,7 +290,7 @@
     <!-- Totales -->
     <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold mb-4 text-center">Totales</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="text-center">
                 <h3 class="font-medium text-gray-600 mb-2">Total de Reservas</h3>
                 <p class="text-2xl font-bold text-gray-800">{data.totalReservas}</p>
@@ -309,31 +306,6 @@
                 <p class="text-2xl font-bold text-yellow-700">
                     $ {(data.totalIngresosAdicionales ?? 0).toLocaleString('es-AR')}
                 </p>
-            </div>
-            <div class="text-center">
-                <h3 class="font-medium text-gray-600 mb-2">Total a Devolver por Cancelaciones</h3>
-                <p class="text-2xl font-bold text-red-700">
-                    $ {(data.totalADevolver ?? 0).toLocaleString('es-AR')}
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Devoluciones -->
-    <div class="bg-white rounded-lg shadow p-6 mt-6">
-        <h2 class="text-lg font-semibold mb-4 text-center">Devoluciones por Cancelación</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="text-center p-4 border rounded-lg">
-                <p class="text-xl font-bold text-blue-600">${data.subtotalReembolsoTotal.toFixed(2)}</p>
-                <p class="text-gray-500">Reembolso Total</p>
-            </div>
-            <div class="text-center p-4 border rounded-lg">
-                <p class="text-xl font-bold text-orange-600">${data.subtotalReembolsoParcial.toFixed(2)}</p>
-                <p class="text-gray-500">Reembolso Parcial</p>
-            </div>
-            <div class="text-center bg-gray-100 p-4 rounded-lg">
-                <p class="text-xl font-bold text-red-600">${data.totalADevolver.toFixed(2)}</p>
-                <p class="text-gray-500 font-semibold">Total a Devolver</p>
             </div>
         </div>
     </div>
@@ -351,7 +323,6 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Total</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Importe Adicional</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Política Cancelación</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
                     </tr>
                 </thead>
@@ -364,7 +335,6 @@
                             <td class="px-4 py-2">{reserva.estado ?? 'Sin estado'}</td>
                             <td class="px-4 py-2">{reserva.importeTotal != null ? `$ ${reserva.importeTotal.toLocaleString('es-AR')}` : 'Sin importe'}</td>
                             <td class="px-4 py-2">{reserva.importeAdicionales != null ? `$ ${reserva.importeAdicionales.toLocaleString('es-AR')}` : 'Sin adicional'}</td>
-                            <td class="px-4 py-2">{reserva.politicaCancelacion ?? 'Sin política'}</td>
                             <td class="px-4 py-2">{reserva.usuario ?? 'Sin usuario'}</td>
                         </tr>
                     {/each}

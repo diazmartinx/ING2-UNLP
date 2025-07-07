@@ -54,7 +54,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         });
     }
 
-    const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
+    const diasTotales = Math.ceil((new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const importeReserva = modeloVehiculo[0].precioPorDia * diasTotales;
     let importeTotal = importeReserva;
 
@@ -111,7 +111,7 @@ export const actions: Actions = {
             });
         }
 
-        const diasTotales = (new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24);
+        const diasTotales = Math.ceil((new Date(fechaFin + 'T00:00:00-03:00').getTime() - new Date(fechaInicio + 'T00:00:00-03:00').getTime()) / (1000 * 60 * 60 * 24)) + 1;
         const importeReserva = modeloVehiculo.precioPorDia * diasTotales;
         let importeTotal = importeReserva;
 
