@@ -112,23 +112,39 @@ export const actions: Actions = {
             const data = await request.json();
             const { patente, nuevoEstado } = data;
 
-            // Verificar si hay reservas pendientes
-            const reservasPendientes = await db
-                .select()
-                .from(reservas)
-                .where(
-                    and(
-                        eq(reservas.patenteUnidadAsignada, patente),
-                        eq(reservas.estado, 'Pendiente')
-                    )
-                )
-                .limit(1);
+            // Verificar si hay reservas relacionadas (cualquier estado) cuando se intenta dar de baja
+            if (nuevoEstado === 'Dado de baja') {
+                const reservasRelacionadas = await db
+                    .select()
+                    .from(reservas)
+                    .where(eq(reservas.patenteUnidadAsignada, patente))
+                    .limit(1);
 
-            if (reservasPendientes.length > 0) {
-                return fail(400, {
-                    success: false,
-                    error: 'La unidad posee reservas pendientes'
-                });
+                if (reservasRelacionadas.length > 0) {
+                    return fail(400, {
+                        success: false,
+                        error: 'No se puede dar de baja la unidad porque tiene reservas asociadas'
+                    });
+                }
+            } else {
+                // Para otros estados (Habilitado/Inhabilitado), solo verificar reservas pendientes
+                const reservasPendientes = await db
+                    .select()
+                    .from(reservas)
+                    .where(
+                        and(
+                            eq(reservas.patenteUnidadAsignada, patente),
+                            eq(reservas.estado, 'Pendiente')
+                        )
+                    )
+                    .limit(1);
+
+                if (reservasPendientes.length > 0) {
+                    return fail(400, {
+                        success: false,
+                        error: 'La unidad posee reservas pendientes'
+                    });
+                }
             }
 
             // Actualizar el estado del vehículo
